@@ -8,6 +8,8 @@ import android.graphics.Color
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -83,8 +85,11 @@ class LauncherActivity : ComponentActivity() {
     }
 
     /** Debug builds only: `--es importDb <path>` triggers the file import without the document picker. */
+    var debugManyApps by androidx.compose.runtime.mutableStateOf(false)
+
     private fun handleDebugIntent(i: Intent?) {
         if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE == 0) return
+        if (i?.getBooleanExtra("debugManyApps", false) == true) debugManyApps = true
         i?.getStringExtra("importDb")?.let { state.importConfirm = ImportRequest.FromFile(android.net.Uri.fromFile(File(it))) }
         // Debug only: --es debugGroup "Held,Tapped1,Tapped2" simulates hold + extra-finger taps + release.
         i?.getStringExtra("debugGroup")?.split(",")?.let { labels ->

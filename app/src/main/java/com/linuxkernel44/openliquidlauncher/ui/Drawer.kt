@@ -23,6 +23,13 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.launch
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -61,7 +68,9 @@ fun AppDrawer(
     var query by remember { mutableStateOf("") }
     val focus = LocalFocusManager.current
     val filtered = remember(all, query) {
-        if (query.isBlank()) all else all.filter { it.label.contains(query.trim(), ignoreCase = true) }
+        // Debug builds only: --ez debugManyApps repeats the list to test scrolling with a long list.
+        val base = if (state.activity.debugManyApps) (0 until 8).flatMap { all } else all
+        if (query.isBlank()) base else base.filter { it.label.contains(query.trim(), ignoreCase = true) }
     }
     LaunchedEffect(state.drawerTarget) { if (!state.drawerTarget) { query = ""; focus.clearFocus() } }
 
@@ -102,14 +111,17 @@ fun AppDrawer(
                 LaunchedEffect(ch, imeOpen) { if (!imeOpen) baseCellH = ch }
                 if (imeOpen) {
                     val cellH = if (baseCellH > 0.dp) baseCellH else 96.dp
+                    val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
                     androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
                         columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(cols),
+                        state = gridState,
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        items(filtered.size, key = { filtered[it].id }) { i ->
+                        items(filtered.size, key = { "${it}_${filtered[it].id}" }) { i ->
                             DrawerCell(filtered[i], state, settings, badges, Modifier.fillMaxWidth().height(cellH).padding(2.dp))
                         }
                     }
+                    GlassScrollHandle(gridState, cols, filtered.map { it.label }, backdrop, style, Modifier.align(Alignment.CenterEnd).fillMaxHeight())
                 } else {
                     HorizontalPager(pager, Modifier.fillMaxSize()) { page ->
                         Box(Modifier.fillMaxSize()) {
@@ -159,3 +171,88 @@ private fun DrawerCell(app: AppInfo, state: LauncherState, settings: LauncherSet
         selected = app.id in state.stackIds,
     )
 }
+
+
+/**
+ * A liquid glass scroll handle for the grid: shows the position while scrolling, fades out when idle, and can be dragged
+ * to jump through the list (with a bubble showing the first letter of the app under the grid's top edge).
+ */
+@Composable
+fun GlassScrollHandle(
+    gridState: androidx.compose.foundation.lazy.grid.LazyGridState,
+    columns: Int,
+    labels: List<String>,
+    backdrop: Backdrop,
+    style: GlassStyle,
+    modifier: Modifier = Modifier,
+) {
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    var dragging by remember { mutableStateOf(false) }
+    var visible by remember { mutableStateOf(false) }
+    val scrolling = gridState.isScrollInProgress
+    LaunchedEffect(scrolling, dragging) {
+        if (scrolling || dragging) visible = true else { kotlinx.coroutines.delay(900); visible = false }
+    }
+    val alpha by androidx.compose.animation.core.animateFloatAsState(if (visible) 1f else 0f, label = "handleAlpha")
+    val totalRows = (labels.size + columns - 1) / columns
+    val visibleRows = (gridState.layoutInfo.visibleItemsInfo.size / columns).coerceAtLeast(1)
+    if (totalRows <= visibleRows || alpha <= 0.01f && !dragging) return
+    val progress by remember(gridState, totalRows, visibleRows) {
+        androidx.compose.runtime.derivedStateOf {
+            val first = gridState.firstVisibleItemIndex / columns
+            (first.toFloat() / (totalRows - visibleRows).coerceAtLeast(1)).coerceIn(0f, 1f)
+        }
+    }
+    val thumbH = 56.dp
+    var trackPx by remember { mutableStateOf(1f) }
+    val thumbPx = with(density) { thumbH.toPx() }
+    val letter = labels.getOrNull((gridState.firstVisibleItemIndex).coerceIn(0, (labels.size - 1).coerceAtLeast(0)))?.firstOrNull()?.uppercaseChar()?.toString().orEmpty()
+    val widthAnim by androidx.compose.animation.core.animateDpAsState(if (dragging) 14.dp else 8.dp, label = "handleW")
+
+    fun jumpTo(y: Float) {
+        val f = ((y - thumbPx / 2) / (trackPx - thumbPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
+        val row = (f * (totalRows - visibleRows).coerceAtLeast(0)).toInt()
+        scope.launch { gridState.scrollToItem((row * columns).coerceIn(0, (labels.size - 1).coerceAtLeast(0))) }
+    }
+
+    Box(
+        modifier
+            .width(44.dp)
+            .padding(vertical = 6.dp)
+            .androidx_onSizeChanged { trackPx = it.height.toFloat() }
+            .pointerInput(totalRows, visibleRows) {
+                detectVerticalDragGestures(
+                    onDragStart = { dragging = true; jumpTo(it.y) },
+                    onDragEnd = { dragging = false },
+                    onDragCancel = { dragging = false },
+                ) { change, _ -> change.consume(); jumpTo(change.position.y) }
+            },
+    ) {
+        val y = with(density) { ((trackPx - thumbPx).coerceAtLeast(0f) * progress).toInt() }
+        Box(
+            Modifier
+                .align(Alignment.TopEnd)
+                .offset { androidx.compose.ui.unit.IntOffset(0, y) }
+                .padding(end = 4.dp)
+                .graphicsLayer { this.alpha = alpha }
+                .size(widthAnim, thumbH)
+                .liquidGlass(
+                    backdrop, style.copy(refractionHeight = 5f, refractionAmount = 8f, blur = 2f),
+                    RoundedCornerShape(50), surfaceAlpha = 0.30f,
+                ),
+        )
+        if (dragging && letter.isNotEmpty()) {
+            Box(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .offset { androidx.compose.ui.unit.IntOffset(-with(density) { 44.dp.roundToPx() }, y) }
+                    .size(60.dp)
+                    .liquidGlass(backdrop, style.copy(refractionHeight = 10f, refractionAmount = 16f), CircleShape, surfaceAlpha = 0.30f),
+                contentAlignment = Alignment.Center,
+            ) { GText(letter, size = 24f, weight = androidx.compose.ui.text.font.FontWeight.Bold) }
+        }
+    }
+}
+
+private fun Modifier.androidx_onSizeChanged(f: (androidx.compose.ui.unit.IntSize) -> Unit) = this.onSizeChanged(f)
