@@ -208,13 +208,71 @@ fun FolderOverlay(state: LauncherState, folderId: Long, settings: LauncherSettin
 
 // ---- edit bar ---------------------------------------------------------------------------------
 
+private enum class EditIconKind { Widgets, Wallpaper, Settings, Done }
+
+/** Small line icons drawn on a canvas (no icon library needed). */
+@Composable
+private fun EditIcon(kind: EditIconKind, modifier: Modifier = Modifier) {
+    androidx.compose.foundation.Canvas(modifier.size(24.dp)) {
+        val w = size.width
+        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = w * 0.085f, cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round,
+        )
+        val c = Color.White
+        fun rr(x: Float, y: Float, s: Float) = drawRoundRect(
+            c, androidx.compose.ui.geometry.Offset(x * w, y * w), androidx.compose.ui.geometry.Size(s * w, s * w),
+            androidx.compose.ui.geometry.CornerRadius(0.07f * w), style = stroke,
+        )
+        when (kind) {
+            EditIconKind.Widgets -> { rr(0.1f, 0.1f, 0.36f); rr(0.54f, 0.1f, 0.36f); rr(0.1f, 0.54f, 0.36f); rr(0.54f, 0.54f, 0.36f) }
+            EditIconKind.Wallpaper -> {
+                drawRoundRect(c, androidx.compose.ui.geometry.Offset(0.1f * w, 0.16f * w), androidx.compose.ui.geometry.Size(0.8f * w, 0.68f * w), androidx.compose.ui.geometry.CornerRadius(0.1f * w), style = stroke)
+                drawCircle(c, 0.07f * w, androidx.compose.ui.geometry.Offset(0.34f * w, 0.38f * w), style = stroke)
+                val m = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(0.14f * w, 0.78f * w); lineTo(0.42f * w, 0.52f * w); lineTo(0.58f * w, 0.66f * w); lineTo(0.7f * w, 0.55f * w); lineTo(0.88f * w, 0.74f * w)
+                }
+                drawPath(m, c, style = stroke)
+            }
+            EditIconKind.Settings -> {
+                for ((y, k) in listOf(0.24f to 0.32f, 0.5f to 0.66f, 0.76f to 0.42f)) {
+                    drawLine(c, androidx.compose.ui.geometry.Offset(0.12f * w, y * w), androidx.compose.ui.geometry.Offset(0.88f * w, y * w), stroke.width, androidx.compose.ui.graphics.StrokeCap.Round)
+                    drawCircle(Color(0xFF3A3F55), 0.1f * w, androidx.compose.ui.geometry.Offset(k * w, y * w))
+                    drawCircle(c, 0.1f * w, androidx.compose.ui.geometry.Offset(k * w, y * w), style = stroke)
+                }
+            }
+            EditIconKind.Done -> {
+                val p = androidx.compose.ui.graphics.Path().apply { moveTo(0.18f * w, 0.54f * w); lineTo(0.42f * w, 0.76f * w); lineTo(0.84f * w, 0.26f * w) }
+                drawPath(p, c, style = androidx.compose.ui.graphics.drawscope.Stroke(width = w * 0.11f, cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+            }
+        }
+    }
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.EditButton(
+    label: String, kind: EditIconKind, backdrop: Backdrop, style: GlassStyle, onClick: () -> Unit,
+) {
+    Column(
+        Modifier.weight(1f)
+            .liquidGlass(backdrop, style.copy(refractionHeight = minOf(style.refractionHeight, 10f)), RoundedCornerShape(22.dp), surfaceAlpha = style.surfaceAlpha + 0.06f)
+            .pressScale(onClick)
+            .padding(vertical = 7.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        EditIcon(kind)
+        GText(label, size = 10.5f, weight = FontWeight.SemiBold)
+    }
+}
+
+/** Four equal buttons that always fit the screen width, whatever the font size or density. */
 @Composable
 fun EditBar(state: LauncherState, backdrop: Backdrop, style: GlassStyle, onWallpaper: () -> Unit, modifier: Modifier = Modifier) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-        GlassButton("Widgets", backdrop, style) { state.showWidgetPicker = true }
-        GlassButton("Wallpaper", backdrop, style, onClick = onWallpaper)
-        GlassButton("Settings", backdrop, style) { state.showSettings = true }
-        GlassButton("Done", backdrop, style) { state.editMode = false }
+    Row(modifier.fillMaxWidth().padding(horizontal = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        EditButton("Widgets", EditIconKind.Widgets, backdrop, style) { state.showWidgetPicker = true }
+        EditButton("Wallpaper", EditIconKind.Wallpaper, backdrop, style, onWallpaper)
+        EditButton("Settings", EditIconKind.Settings, backdrop, style) { state.showSettings = true }
+        EditButton("Done", EditIconKind.Done, backdrop, style) { state.editMode = false }
     }
 }
 

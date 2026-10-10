@@ -132,11 +132,11 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
                 onDoubleTap = { state.lockScreen() },
                 modifier = Modifier.weight(1f).fillMaxWidth().padding(start = 6.dp, end = 6.dp, top = 62.dp, bottom = 6.dp),
             )
-            if (state.editMode) {
-                EditBar(state, backdrop, style, onPickWallpaper, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 10.dp))
-            } else if (layout.pages > 1) {
-                PageDots(layout.pages, pagerState.currentPage, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 10.dp))
-            } else Box(Modifier.height(24.dp))
+            // Fixed height whether it shows the page dots or the edit bar, so the grid never changes size in edit mode.
+            Box(Modifier.fillMaxWidth().height(60.dp), contentAlignment = Alignment.Center) {
+                if (state.editMode) EditBar(state, backdrop, style, onPickWallpaper)
+                else if (layout.pages > 1) PageDots(layout.pages, pagerState.currentPage)
+            }
             Dock(state, settings, badges, backdrop, style, Modifier.padding(bottom = 6.dp))
             Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))
         }

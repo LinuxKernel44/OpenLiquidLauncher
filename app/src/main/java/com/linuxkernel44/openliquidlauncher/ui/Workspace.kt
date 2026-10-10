@@ -31,6 +31,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.kyant.backdrop.Backdrop
 import com.linuxkernel44.openliquidlauncher.data.AppItem
@@ -51,6 +52,7 @@ fun HomeItemView(
     style: GlassStyle,
     modifier: Modifier = Modifier,
     showLabel: Boolean = settings.showLabels,
+    iconSize: Dp = 56.dp,
 ) {
     val hidden = state.dragPayload?.item?.id == item.id
     val m = modifier.alpha(if (hidden) 0f else 1f)
@@ -60,12 +62,14 @@ fun HomeItemView(
             AppCell(
                 app, settings, badges[app.packageName] ?: 0,
                 m.itemGestures(state, { DragPayload(item = item) }, onTap = { state.launch(app, it) }),
+                iconSize = iconSize,
                 showLabel = showLabel,
             )
         }
         is FolderItem -> FolderCell(
             item, state.apps::byId, settings, backdrop, style,
             m.itemGestures(state, { DragPayload(item = item) }, onTap = { state.openFolderId = item.id }),
+            iconSize = iconSize,
             showLabel = showLabel,
         )
         is WidgetItem -> WidgetCell(item, state, backdrop, style, m)
@@ -142,6 +146,8 @@ fun Workspace(
                                     .offset(cw * p.x, ch * p.y)
                                     .size(cw * p.spanX, ch * p.spanY)
                                     .padding(if (p.item is WidgetItem) 4.dp else 2.dp),
+                                // Never taller than the cell: icon + label must fit, whatever the number of rows.
+                                iconSize = (ch - 4.dp - (if (settings.showLabels) 22.dp else 0.dp)).coerceIn(32.dp, 56.dp),
                             )
                         }
                     }
