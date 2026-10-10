@@ -63,7 +63,7 @@ fun SettingsScreen(
 
     Box(
         Modifier.fillMaxSize()
-            .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur + 16f), RoundedCornerShape(0.dp), surfaceAlpha = style.surfaceAlpha + 0.14f)
+            .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur + 16f), RoundedCornerShape(0.dp), surfaceAlpha = style.surfaceAlpha + 0.14f, edges = false)
             .clickable(interactionSource = null, indication = null) { },
     ) {
         Column(

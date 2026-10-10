@@ -20,7 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.GraphicsLayerScope
-import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.Shadow as TextShadow
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -36,6 +36,8 @@ import com.kyant.backdrop.drawBackdrop
 import com.kyant.backdrop.effects.blur
 import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.effects.vibrancy
+import com.kyant.backdrop.highlight.Highlight
+import com.kyant.backdrop.shadow.Shadow
 import com.linuxkernel44.openliquidlauncher.data.LauncherSettings
 
 /** User-tunable parameters of the liquid glass material (see Settings). */
@@ -65,6 +67,8 @@ fun Modifier.liquidGlass(
     surfaceAlpha: Float = style.surfaceAlpha,
     tint: Color = Color.Unspecified,
     layerBlock: (GraphicsLayerScope.() -> Unit)? = null,
+    /** Rim light + drop shadow; turn off for full-screen sheets, where they just draw a frame along the screen edges. */
+    edges: Boolean = true,
 ): Modifier = drawBackdrop(
     backdrop = backdrop,
     shape = { shape },
@@ -77,6 +81,8 @@ fun Modifier.liquidGlass(
             chromaticAberration = style.dispersion,
         )
     },
+    highlight = if (edges) ({ Highlight.Default }) else null,
+    shadow = if (edges) ({ Shadow.Default }) else null,
     layerBlock = layerBlock,
     onDrawSurface = {
         if (tint != Color.Unspecified) drawRect(tint)
@@ -88,7 +94,7 @@ val GlassText = TextStyle(
     color = Color.White,
     fontSize = 12.sp,
     fontWeight = FontWeight.Medium,
-    shadow = Shadow(Color.Black.copy(alpha = 0.45f), blurRadius = 6f),
+    shadow = TextShadow(Color.Black.copy(alpha = 0.45f), blurRadius = 6f),
     textAlign = TextAlign.Center,
 )
 

@@ -75,9 +75,11 @@ fun AppDrawer(
         Modifier
             .fillMaxSize()
             .liquidGlass(
-                backdrop, style.copy(refractionHeight = 0f, blur = style.blur + 14f), // no lens: it warps the edges of a full-screen sheet
-                RoundedCornerShape(topStart = 38.dp, topEnd = 38.dp),
+                backdrop, style.copy(refractionHeight = 0f, blur = style.blur + 20f), // no lens: it warps the edges of a full-screen sheet
+                // Square corners: rounded ones leave sharp wallpaper showing around the sheet.
+                RoundedCornerShape(0.dp),
                 surfaceAlpha = style.surfaceAlpha * 0.9f + 0.06f,
+                edges = false,
                 layerBlock = {
                     translationY = (1f - progress) * size.height * 0.92f
                     alpha = (progress * 1.6f).coerceIn(0f, 1f) * fade
