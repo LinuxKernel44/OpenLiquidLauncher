@@ -10,6 +10,8 @@
         tools:ignore="ScopedStorage" />
 
     <!-- Optional: let us read the home layout of other launchers when they allow it (Import in Settings). -->
+    <!-- Optional, granted once over adb: lets the importer read the stock launcher's layout via dumpsys. -->
+    <uses-permission android:name="android.permission.DUMP" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS" />
     <uses-permission android:name="com.android.launcher3.permission.READ_SETTINGS" />
     <uses-permission android:name="net.oneplus.launcher.permission.READ_SETTINGS" />
@@ -18,6 +20,7 @@
     <uses-permission android:name="com.google.android.apps.nexuslauncher.permission.READ_SETTINGS" />
 
     <queries>
+        <package android:name="moe.shizuku.privileged.api" />
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.HOME" />
@@ -52,6 +55,15 @@
                 <category android:name="android.intent.category.LAUNCHER_APP" />
             </intent-filter>
         </activity>
+
+        <!-- Receives the Shizuku binder so the importer can run `dumpsys` with shell rights (optional). -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:enabled="true"
+            android:exported="true"
+            android:multiprocess="false"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
         <service
             android:name=".service.BadgeListenerService"

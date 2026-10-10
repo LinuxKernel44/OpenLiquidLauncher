@@ -11,8 +11,8 @@ android {
         applicationId = "com.linuxkernel44.openliquidlauncher"
         minSdk = 33
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.2.1"
+        versionCode = 4
+        versionName = "0.3.0"
         androidResources.localeFilters += arrayOf("en")
     }
 
@@ -46,4 +46,6 @@ dependencies {
     implementation(libs.compose.material.ripple)
     implementation(libs.kyant.backdrop)
     implementation(libs.kyant.shapes)
+    implementation(libs.shizuku.api)
+    implementation(libs.shizuku.provider)
 }

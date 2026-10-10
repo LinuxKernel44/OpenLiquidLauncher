@@ -127,12 +127,13 @@ fun SettingsScreen(
             Section("Import", backdrop, style) {
                 Hint("Bring your home screen over from another launcher, like the stock OnePlus (OxygenOS) one.")
                 ButtonRow("Import from my current launcher") { state.activity.beginImportFromLauncher() }
-                ButtonRow("Import from launcher.db file…") { state.activity.pickLauncherDb() }
+                ButtonRow("Import using Shizuku (recommended on OxygenOS)") { state.activity.beginImportWithShizuku() }
+                ButtonRow("Import from launcher.db / dump file…") { state.activity.pickLauncherDb() }
             }
 
             Section("System", backdrop, style) {
                 ButtonRow("Set as default launcher") { state.openDefaultHomeSettings() }
-                Hint("OpenLiquidLauncher 0.2.1 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
+                Hint("OpenLiquidLauncher 0.3.0 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
             }
         }
     }

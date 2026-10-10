@@ -25,7 +25,11 @@ Kotlin + Jetpack Compose, single `app` module, package `com.linuxkernel44.openli
 - `ensureInitialLayout` must stay idempotent (activity can be recreated).
 
 ## Layout import
-`data/LauncherImporter.kt` reads Launcher3-style `favorites` rows (container -100 desktop / -101 hotseat / >0 folder id; itemType 0 app, 2 folder, 4 widget) from either a provider (`content://<authority>/favorites`) or a launcher.db copy, and turns them into an `ImportPlan` applied by `LauncherActivity.applyImport`. System launchers usually protect their provider with a signature-level permission, so the file route is the reliable one. Debug builds accept `--es importDb <path>` on the launch intent to test without the document picker.
+`data/LauncherImporter.kt` has three sources, all producing an `ImportPlan` applied by `LauncherActivity.applyImport`:
+- **Provider / launcher.db**: Launcher3-style `favorites` rows (container -100 desktop / -101 hotseat / >0 folder id; itemType 0 app, 2 folder, 4 widget). System launchers usually protect the provider (OxygenOS returns an *empty* cursor), so this rarely works on stock ROMs.
+- **dumpsys** (`importFromDump`): `dumpsys activity <launcher>/.Launcher` prints the view hierarchy with `WorkspaceItemInfo(...)` tags; pages are the `CellLayout`s under the `Workspace`, positions come from view bounds / `cellWidth`,`cellHeight` of the `SizeSpacingConfig` line. Folders only expose preview titles (max 9). Needs shell rights: via **Shizuku** (`ShizukuBridge`, `Shizuku.newProcess` through reflection, keep rules in proguard-rules.pro) or a one-time `pm grant ... android.permission.DUMP`.
+- Debug builds accept `--es importDb <path>` (db or dump text) and `--ez importDumpsys true [--ez shizuku true]` on the launch intent for testing.
+The last raw dump is saved to `files/last_dump.txt` to debug parsing.
 
 ## Build & run
 ```

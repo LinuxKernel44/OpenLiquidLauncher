@@ -56,7 +56,7 @@ sealed interface DropTarget {
 class MenuState(val payload: DragPayload, val anchor: Rect)
 
 sealed interface ImportRequest {
-    data class FromLauncher(val sources: List<LauncherSource>) : ImportRequest
+    data class FromLauncher(val sources: List<LauncherSource>, val shizuku: Boolean = false) : ImportRequest
     data class FromFile(val uri: Uri) : ImportRequest
 }
 

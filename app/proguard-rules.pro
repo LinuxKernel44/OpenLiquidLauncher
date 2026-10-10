@@ -1,1 +1,3 @@
 -keep class com.linuxkernel44.openliquidlauncher.service.** { *; }
+-keep class rikka.shizuku.** { *; }
+-keep class moe.shizuku.** { *; }

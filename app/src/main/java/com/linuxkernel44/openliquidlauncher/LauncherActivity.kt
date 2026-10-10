@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import com.linuxkernel44.openliquidlauncher.data.ImportException
 import com.linuxkernel44.openliquidlauncher.data.ImportPlan
 import com.linuxkernel44.openliquidlauncher.data.PendingWidget
+import com.linuxkernel44.openliquidlauncher.data.ShizukuBridge
 import com.linuxkernel44.openliquidlauncher.data.WallpaperMode
 import com.linuxkernel44.openliquidlauncher.ui.ImportRequest
 import kotlinx.coroutines.Dispatchers
@@ -64,6 +65,7 @@ class LauncherActivity : ComponentActivity() {
     private fun handleDebugIntent(i: Intent?) {
         if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE == 0) return
         i?.getStringExtra("importDb")?.let { state.importConfirm = ImportRequest.FromFile(android.net.Uri.fromFile(File(it))) }
+        if (i?.getBooleanExtra("importDumpsys", false) == true) runImport(ImportRequest.FromLauncher(state.importer.findSources(), shizuku = i.getBooleanExtra("shizuku", false)))
     }
 
     override fun onStart() { super.onStart(); app.widgetHost.startListening() }
@@ -91,6 +93,18 @@ class LauncherActivity : ComponentActivity() {
         else state.importConfirm = ImportRequest.FromLauncher(sources)
     }
 
+    fun beginImportWithShizuku() {
+        when {
+            !ShizukuBridge.isInstalled(this) -> state.importMessage = "Shizuku isn't installed. Get it from github.com/RikkaApps/Shizuku, start it, then try again."
+            !ShizukuBridge.isRunning() -> state.importMessage = "Shizuku isn't running. Start it from the Shizuku app, then try again."
+            else -> {
+                val sources = runCatching { state.importer.findSources() }.getOrDefault(emptyList())
+                if (sources.isEmpty()) state.importMessage = "No other launcher was found on this device."
+                else state.importConfirm = ImportRequest.FromLauncher(sources, shizuku = true)
+            }
+        }
+    }
+
     fun pickLauncherDb() = pickDb.launch(arrayOf("*/*"))
 
     fun runImport(req: ImportRequest) {
@@ -100,17 +114,17 @@ class LauncherActivity : ComponentActivity() {
             val result = withContext(Dispatchers.IO) {
                 runCatching {
                     when (req) {
-                        is ImportRequest.FromLauncher -> {
-                            val errors = ArrayList<String>()
-                            req.sources.firstNotNullOfOrNull { src ->
-                                try { state.importer.importFromProvider(src) } catch (e: ImportException) { errors += e.message.orEmpty(); null }
-                            } ?: throw ImportException(errors.distinct().joinToString("\n\n") + "\n\nIf you can get a copy of the launcher's launcher.db (root or a backup tool), use \"Import from launcher.db file\".")
-                        }
+                        is ImportRequest.FromLauncher -> planFromSources(req.sources, req.shizuku)
                         is ImportRequest.FromFile -> {
-                            val tmp = File(cacheDir, "import.db")
+                            val tmp = File(cacheDir, "import.tmp")
                             contentResolver.openInputStream(req.uri)?.use { i -> tmp.outputStream().use { o -> i.copyTo(o) } }
                                 ?: throw ImportException("Could not open that file.")
-                            try { state.importer.importFromDatabase(tmp) } finally { tmp.delete() }
+                            try {
+                                val head = tmp.inputStream().use { it.readNBytes(15).decodeToString() }
+                                // A launcher.db (SQLite) or a text dump of the launcher (adb shell dumpsys activity ...).
+                                if (head.startsWith("SQLite format 3")) state.importer.importFromDatabase(tmp)
+                                else state.importer.importFromDump(tmp.readText())
+                            } finally { tmp.delete() }
                         }
                     }
                 }
@@ -118,6 +132,33 @@ class LauncherActivity : ComponentActivity() {
             state.importBusy = false
             result.onSuccess(::applyImport).onFailure { state.importMessage = it.message ?: "Import failed." }
         }
+    }
+
+    /** Per launcher: its content provider first, then the `dumpsys` route (works on OxygenOS, needs the DUMP grant). */
+    private suspend fun planFromSources(sources: List<com.linuxkernel44.openliquidlauncher.data.LauncherSource>, shizukuOnly: Boolean): ImportPlan {
+        val errors = ArrayList<String>()
+        // Shizuku (shell rights) is used when asked for, or automatically if it already runs and we hold its permission.
+        var useShizuku = shizukuOnly || ShizukuBridge.hasPermission()
+        if (shizukuOnly) {
+            if (!ShizukuBridge.isRunning()) throw ImportException("Shizuku isn't running. Start it from the Shizuku app, then try again.")
+            if (!ShizukuBridge.requestPermission()) throw ImportException("Shizuku permission was denied. Allow OpenLiquidLauncher in the Shizuku app and try again.")
+        }
+        for (src in sources) {
+            if (!shizukuOnly) try { return withContext(Dispatchers.IO) { state.importer.importFromProvider(src) } } catch (e: ImportException) { errors += e.message.orEmpty() }
+            val comp = state.importer.homeActivityOf(src.packageName) ?: continue
+            try {
+                var text = withContext(Dispatchers.IO) { state.importer.dumpLauncher(comp, useShizuku) }
+                if (!state.importer.hasLayout(text)) {
+                    // The launcher isn't alive: open it briefly so there is a window to dump, then come back.
+                    startActivity(Intent().setComponent(comp).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    kotlinx.coroutines.delay(2500)
+                    text = withContext(Dispatchers.IO) { state.importer.dumpLauncher(comp, useShizuku) }
+                    startActivity(Intent(this, LauncherActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
+                }
+                return withContext(Dispatchers.IO) { state.importer.importFromDump(text) }
+            } catch (e: ImportException) { errors += "${src.label}: ${e.message}" }
+        }
+        throw ImportException(errors.distinct().joinToString("\n\n"))
     }
 
     private fun applyImport(plan: ImportPlan) {
@@ -129,6 +170,7 @@ class LauncherActivity : ComponentActivity() {
         state.importMessage = buildString {
             append("Imported ${plan.apps} apps and ${plan.folders} folders on ${state.layout.pages} page(s).")
             if (plan.skipped > 0) append("\n${plan.skipped} item(s) couldn't be imported (not installed or unsupported).")
+            if (plan.partialFolders > 0) append("\n${plan.partialFolders} folder(s) hold more apps than the launcher shows in their preview; only the visible ones were imported.")
             if (plan.widgets.isNotEmpty()) append("\n${plan.widgets.size} widget(s) will now ask for your confirmation.")
         }
         importQueue.clear(); importQueue += plan.widgets
