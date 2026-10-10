@@ -141,7 +141,8 @@ fun AppDrawer(
             val requester = remember { FocusRequester() }
             Box(
                 Modifier.fillMaxWidth().padding(horizontal = 18.dp).padding(bottom = 14.dp, top = 4.dp).height(52.dp)
-                    .liquidGlass(backdrop, style, style.round(50), surfaceAlpha = style.surfaceAlpha + 0.08f)
+                    // No lens (on a thin bar it smears the backdrop around the edge); same blur as the drawer sheet so the bar blends in.
+                    .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur * 6f), style.round(50), surfaceAlpha = style.surfaceAlpha + 0.10f)
                     .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterStart,
             ) {
