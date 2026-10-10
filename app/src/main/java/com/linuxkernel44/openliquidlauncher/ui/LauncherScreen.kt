@@ -68,6 +68,13 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
             if (state.drawerTarget) state.closeDrawer()
         }
     }
+    // Dragging an app out of the drawer: let the drawer fade away (it stays composed to keep receiving the gesture)
+    // so the home screen, which is hidden while the drawer is open, becomes visible as a drop target.
+    LaunchedEffect(state.dragPayload != null && state.dragFromOverlay && state.drawerTarget) {
+        if (state.dragPayload != null && state.dragFromOverlay && state.drawerTarget) {
+            state.drawerProgress.animateTo(0f, androidx.compose.animation.core.tween(220))
+        }
+    }
     BackHandler(enabled = state.anyOverlay) { scope.launch { state.dismissOverlays() } }
 
     val overlayFade by animateFloatAsState(if (state.dragFromOverlay && state.dragPayload != null) 0f else 1f, label = "overlayFade")

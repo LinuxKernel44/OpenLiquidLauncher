@@ -47,8 +47,8 @@ class DragPayload(
 }
 
 sealed interface DropTarget {
-    data class Cell(val page: Int, val x: Int, val y: Int, val spanX: Int = 1, val spanY: Int = 1, val mergeWith: Long? = null) : DropTarget
-    data class Slot(val index: Int, val mergeWith: Long? = null) : DropTarget
+    data class Cell(val page: Int, val x: Int, val y: Int, val spanX: Int = 1, val spanY: Int = 1, val mergeWith: Long? = null, val push: Boolean = false) : DropTarget
+    data class Slot(val index: Int, val mergeWith: Long? = null, val push: Boolean = false) : DropTarget
     data object Remove : DropTarget
     data object Uninstall : DropTarget
 }
@@ -169,10 +169,12 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
             val slotW = dockRect.width / n
             val i = ((p.x - dockRect.left) / slotW).toInt().coerceIn(0, n - 1)
             val occ = layout.dock.getOrNull(i)
+            val fx = (p.x - dockRect.left) / slotW - i
             return when {
                 occ == null || occ.id == payload.itemId -> DropTarget.Slot(i)
-                payload.isApp && (occ is AppItem || occ is FolderItem) -> DropTarget.Slot(i, mergeWith = occ.id)
-                else -> null
+                // Centre of the icon: make a folder; anywhere else: slide the dock icons over to make room.
+                payload.isApp && (occ is AppItem || occ is FolderItem) && kotlin.math.abs(fx - 0.5f) < 0.28f -> DropTarget.Slot(i, mergeWith = occ.id)
+                else -> DropTarget.Slot(i, push = true)
             }
         }
         if (workspaceRect.contains(p)) {
@@ -189,9 +191,14 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
                 return if (layout.isFree(page, x, y, sx, sy, payload.itemId)) DropTarget.Cell(page, x, y, sx, sy) else null
             }
             val occ = layout.placedAt(page, cx, cy, payload.itemId)
+            val fx = (p.x - workspaceRect.left) / cw - cx
+            val fy = (p.y - workspaceRect.top) / ch - cy
+            val centre = kotlin.math.abs(fx - 0.5f) < 0.28f && kotlin.math.abs(fy - 0.5f) < 0.28f
             return when {
                 occ == null -> DropTarget.Cell(page, cx, cy)
-                payload.isApp && (occ.item is AppItem || occ.item is FolderItem) -> DropTarget.Cell(page, cx, cy, mergeWith = occ.item.id)
+                // On the centre of an app/folder: merge into a folder. Elsewhere on the cell: the icons move aside (pushed).
+                payload.isApp && centre && (occ.item is AppItem || occ.item is FolderItem) -> DropTarget.Cell(page, cx, cy, mergeWith = occ.item.id)
+                occ.spanX == 1 && occ.spanY == 1 -> DropTarget.Cell(page, cx, cy, push = true)
                 else -> null
             }
         }
@@ -211,12 +218,14 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
                 newItem ?: return
                 removeFromSourceFolder(payload)
                 if (target.mergeWith != null) (newItem as? AppItem)?.let { layout.mergeInto(it, target.mergeWith) }
+                else if (target.push) layout.insertPushing(newItem, target.page, target.x, target.y)
                 else layout.placeOnWorkspace(newItem, target.page, target.x, target.y)
             }
             is DropTarget.Slot -> {
                 newItem ?: return
                 removeFromSourceFolder(payload)
                 if (target.mergeWith != null) (newItem as? AppItem)?.let { layout.mergeInto(it, target.mergeWith) }
+                else if (target.push) layout.insertDockPushing(newItem, target.index)
                 else layout.placeInDock(newItem, target.index)
             }
         }

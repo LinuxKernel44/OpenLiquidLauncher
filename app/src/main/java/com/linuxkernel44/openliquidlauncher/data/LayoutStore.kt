@@ -124,6 +124,38 @@ class LayoutStore(private val context: Context, private val settings: SettingsSt
         changed()
     }
 
+    /**
+     * Inserts [item] at a cell and pushes what was there forward (row-major) until a free cell absorbs the chain.
+     * Widgets stay put; the chain overflows onto the next page when a page is full.
+     */
+    fun insertPushing(item: Item, page: Int, x: Int, y: Int) {
+        detach(item.id)
+        val cols = columns; val perPage = cols * rows
+        var pg = page; var pos = y * cols + x
+        var carry: Item? = item
+        while (carry != null) {
+            if (pos >= perPage) { pg++; pos = 0; if (pg > 20) break }
+            val cx = pos % cols; val cy = pos / cols
+            val occ = placedAt(pg, cx, cy)
+            if (occ != null && (occ.spanX > 1 || occ.spanY > 1)) { pos++; continue }
+            if (occ != null) placed.remove(occ)
+            placed += Placed(carry, pg, cx, cy)
+            carry = occ?.item
+            pos++
+        }
+        pages = maxOf(pages, pg + 1)
+        changed()
+    }
+
+    /** Same idea in the dock: shift icons to the right; the last one goes to the home screen if the dock is full. */
+    fun insertDockPushing(item: Item, slot: Int) {
+        detach(item.id)
+        var carry: Item? = item; var i = slot
+        while (carry != null && i < dock.size) { val occ = dock[i]; dock[i] = carry; carry = occ; i++ }
+        carry?.let { addToFirstFree(it) }
+        changed()
+    }
+
     fun placeInDock(item: Item, slot: Int) {
         detach(item.id)
         if (slot in dock.indices) dock[slot] = item

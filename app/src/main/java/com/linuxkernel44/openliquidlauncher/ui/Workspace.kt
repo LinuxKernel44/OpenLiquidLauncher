@@ -163,7 +163,7 @@ fun Workspace(
                                 .offset(sideMargin + cw * t.x, ch * t.y)
                                 .size(cw * t.spanX, ch * t.spanY)
                                 .padding(4.dp)
-                                .background(Color.White.copy(alpha = if (t.mergeWith != null) 0.30f else 0.16f), RoundedCornerShape(22.dp)),
+                                .background(Color.White.copy(alpha = if (t.mergeWith != null) 0.30f else if (t.push) 0.10f else 0.16f), RoundedCornerShape(22.dp)),
                         )
                     }
                 }
