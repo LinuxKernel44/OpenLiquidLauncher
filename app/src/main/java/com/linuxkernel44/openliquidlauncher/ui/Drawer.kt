@@ -196,8 +196,13 @@ fun GlassScrollHandle(
     }
     val alpha by androidx.compose.animation.core.animateFloatAsState(if (visible) 1f else 0f, label = "handleAlpha")
     val totalRows = (labels.size + columns - 1) / columns
-    val visibleRows = (gridState.layoutInfo.visibleItemsInfo.size / columns).coerceAtLeast(1)
-    if (totalRows <= visibleRows || alpha <= 0.01f && !dragging) return
+    val fitRows = run {
+        val info = gridState.layoutInfo
+        val rowH = info.visibleItemsInfo.firstOrNull()?.size?.height?.coerceAtLeast(1) ?: 1
+        (info.viewportSize.height - info.beforeContentPadding - info.afterContentPadding) / rowH
+    }
+    // Never leave composition while the handle is being dragged: that would cut the gesture.
+    if ((totalRows <= fitRows || alpha <= 0.01f) && !dragging) return
 
     // Pixel-accurate scroll position (row index + offset inside the row), so the handle glides instead of stepping per row.
     fun rowPx() = gridState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.height?.toFloat()?.coerceAtLeast(1f) ?: 1f
@@ -227,17 +232,25 @@ fun GlassScrollHandle(
         gridState.dispatchRawDelta(f * maxScroll() - scrollPos())
     }
 
+    val dragToState = androidx.compose.runtime.rememberUpdatedState<(Float) -> Unit>({ y -> dragTo(y) })
+    val gridProgressState = androidx.compose.runtime.rememberUpdatedState(gridProgress)
+
     Box(
         modifier
             .width(44.dp)
             .padding(vertical = 6.dp)
             .androidx_onSizeChanged { trackPx = it.height.toFloat() }
-            .pointerInput(totalRows, visibleRows) {
-                detectVerticalDragGestures(
-                    onDragStart = { dragProgress = gridProgress; dragging = true; dragTo(it.y) },
-                    onDragEnd = { dragging = false },
-                    onDragCancel = { dragging = false },
-                ) { change, _ -> change.consume(); dragTo(change.position.y) }
+            .pointerInput(Unit) {
+                // Keyed on Unit and reading the latest callbacks: the handle must not restart its gesture while scrolling.
+                try {
+                    detectVerticalDragGestures(
+                        onDragStart = { dragProgress = gridProgressState.value; dragging = true; dragToState.value(it.y) },
+                        onDragEnd = { dragging = false },
+                        onDragCancel = { dragging = false },
+                    ) { change, _ -> change.consume(); dragToState.value(change.position.y) }
+                } finally {
+                    dragging = false
+                }
             },
     ) {
         val y = with(density) { ((trackPx - thumbPx).coerceAtLeast(0f) * progress).toInt() }
