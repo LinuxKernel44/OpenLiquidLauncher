@@ -141,7 +141,7 @@ fun AppDrawer(
             val requester = remember { FocusRequester() }
             Box(
                 Modifier.fillMaxWidth().padding(horizontal = 18.dp).padding(bottom = 14.dp, top = 4.dp).height(52.dp)
-                    .liquidGlass(backdrop, style, RoundedCornerShape(50), surfaceAlpha = style.surfaceAlpha + 0.08f)
+                    .liquidGlass(backdrop, style, style.round(50), surfaceAlpha = style.surfaceAlpha + 0.08f)
                     .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterStart,
             ) {

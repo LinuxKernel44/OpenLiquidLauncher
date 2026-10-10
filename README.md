@@ -28,6 +28,9 @@ Notes: apps are matched by component so only installed apps are imported. With S
 - **Folder with several fingers:** hold an app with one finger and tap other apps with your other fingers (they get a green tick), then lift the first finger: all of them become one folder. Hold a folder and tap apps to add them to it.
 - Lift a held app without dragging or tapping others to open its menu.
 
+## Roundness
+Settings → Liquid glass → **Roundness** (0–100, default 50 = the original look): corner roundness of every glass element — folders, dock, buttons, menus, cards, sheets and dialogs — from nearly square to fully round.
+
 ## Droplet look
 Settings → Liquid glass → **Droplet look** (0–100, default 0 = the original look): makes small glass elements (folders, dock, edit buttons, drop zones, menus, scroll handle) clearer, rounder and more refractive, with a brighter rim and a soft inner shadow.
 

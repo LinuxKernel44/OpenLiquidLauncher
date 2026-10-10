@@ -63,10 +63,12 @@ data class GlassStyle(
     val quality: Int = 2,
     /** 0..1 droplet look for small elements (see `small` in [liquidGlass]). */
     val droplet: Float = 0f,
+    /** 0..1 corner roundness (0.5 = original). */
+    val roundness: Float = 0.5f,
 ) {
     companion object {
         fun from(s: LauncherSettings) = GlassStyle(
-            s.glassBlur, s.glassRefractionHeight, s.glassRefractionAmount, s.glassSurfaceAlpha, s.glassDispersion, s.glassQuality, s.glassDroplet,
+            s.glassBlur, s.glassRefractionHeight, s.glassRefractionAmount, s.glassSurfaceAlpha, s.glassDispersion, s.glassQuality, s.glassDroplet, s.glassRoundness,
         )
     }
 }
@@ -176,7 +178,7 @@ fun GlassButton(
 ) {
     Box(
         modifier
-            .liquidGlass(backdrop, style, RoundedCornerShape(50), surfaceAlpha = style.surfaceAlpha + 0.06f, small = true)
+            .liquidGlass(backdrop, style, style.round(50, small = true), surfaceAlpha = style.surfaceAlpha + 0.06f, small = true)
             .pressScale(onClick)
             .padding(horizontal = 18.dp, vertical = 11.dp),
         contentAlignment = Alignment.Center,
@@ -214,6 +216,18 @@ fun Modifier.bleed(extend: androidx.compose.ui.unit.Dp = 48.dp, top: Boolean = t
         layout(c.maxWidth, c.maxHeight) { p.place(-e, -t) }
     }
 
-/** Corner radius that grows from [base] (droplet 0) to a full capsule/circle (droplet 1) for a [min]-sized element. */
-fun dropletRadius(base: androidx.compose.ui.unit.Dp, min: androidx.compose.ui.unit.Dp, droplet: Float) =
-    base + (min / 2 - base).coerceAtLeast(0.dp) * droplet
+/**
+ * Corner shape of a glass element. [basePercent] is the original corner (percent of the shorter side, 50 = capsule/circle);
+ * the Roundness setting scales it (0 = nearly square, 0.5 = original, 1 = capsule) and, for [small] elements, the Droplet
+ * setting pushes it further toward a full capsule.
+ */
+fun GlassStyle.round(basePercent: Int, small: Boolean = false): RoundedCornerShape {
+    val r = roundness
+    var p = if (r <= 0.5f) basePercent * (r / 0.5f) else basePercent + (50 - basePercent) * ((r - 0.5f) / 0.5f)
+    if (small) p += (50f - p) * droplet
+    return RoundedCornerShape(percent = p.toInt().coerceIn(0, 50))
+}
+
+/** Same, for big containers sized in dp (cards, sheets, dialogs): 0 -> nearly square, 0.5 -> [base], 1 -> twice [base]. */
+fun GlassStyle.roundDp(base: androidx.compose.ui.unit.Dp): RoundedCornerShape =
+    RoundedCornerShape((base * 2f * roundness).coerceAtLeast(2.dp))

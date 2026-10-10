@@ -114,7 +114,7 @@ fun FolderCell(
     val size = iconSize * settings.iconScale
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
-            Modifier.size(size).liquidGlass(backdrop, style.copy(refractionHeight = 8f, refractionAmount = 12f), RoundedCornerShape(dropletRadius(size * 0.3f, size, style.droplet)), surfaceAlpha = style.surfaceAlpha + 0.08f, small = true)
+            Modifier.size(size).liquidGlass(backdrop, style.copy(refractionHeight = 8f, refractionAmount = 12f), style.round(30, small = true), surfaceAlpha = style.surfaceAlpha + 0.08f, small = true)
                 .padding(size * 0.1f),
         ) {
             val mini = size * 0.24f
@@ -193,8 +193,8 @@ fun WidgetCell(item: WidgetItem, state: LauncherState, backdrop: Backdrop, style
     Box(
         modifier
             .onGloballyPositioned { origin = it.positionInRoot() }
-            .liquidGlass(backdrop, style, RoundedCornerShape(26.dp), surfaceAlpha = style.surfaceAlpha * 0.6f)
-            .clip(RoundedCornerShape(26.dp)),
+            .liquidGlass(backdrop, style, style.roundDp(26.dp), surfaceAlpha = style.surfaceAlpha * 0.6f)
+            .clip(style.roundDp(26.dp)),
     ) {
         if (info == null) return@Box
         BoxWithConstraints(Modifier.fillMaxSize()) {

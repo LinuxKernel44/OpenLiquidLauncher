@@ -26,6 +26,8 @@ data class LauncherSettings(
     val glassRefractionAmount: Float = 24f,
     val glassSurfaceAlpha: Float = 0.18f,
     val glassDispersion: Boolean = false,
+    /** 0..1 corner roundness of every glass element; 0.5 = the original look, 0 = nearly square, 1 = as round as possible. */
+    val glassRoundness: Float = 0.5f,
     /** 0..1: how "water droplet" small glass elements (folders, dock, buttons, handle, menus) look; 0 = original look. */
     val glassDroplet: Float = 0f,
     /** Launch animation style (see ui/Intro.kt: 0 None, 1 Fade, 2 Zoom, 3 Cascade, 4 Slide) and speed (0 fast, 1 normal, 2 slow). */
@@ -74,6 +76,7 @@ class SettingsStore(context: Context) {
             glassRefractionAmount = prefs.getFloat("glassRefractionAmount", d.glassRefractionAmount),
             glassSurfaceAlpha = prefs.getFloat("glassSurfaceAlpha", d.glassSurfaceAlpha),
             glassDispersion = prefs.getBoolean("glassDispersion", d.glassDispersion),
+            glassRoundness = prefs.getFloat("glassRoundness", d.glassRoundness).coerceIn(0f, 1f),
             glassDroplet = prefs.getFloat("glassDroplet", d.glassDroplet).coerceIn(0f, 1f),
             introStyle = prefs.getInt("introStyle", d.introStyle).coerceIn(0, 4),
             introSpeed = prefs.getInt("introSpeed", d.introSpeed).coerceIn(0, 2),
@@ -99,7 +102,7 @@ class SettingsStore(context: Context) {
             .putFloat("glassRefractionHeight", s.glassRefractionHeight)
             .putFloat("glassRefractionAmount", s.glassRefractionAmount)
             .putFloat("glassSurfaceAlpha", s.glassSurfaceAlpha)
-            .putBoolean("glassDispersion", s.glassDispersion).putFloat("glassDroplet", s.glassDroplet)
+            .putBoolean("glassDispersion", s.glassDispersion).putFloat("glassDroplet", s.glassDroplet).putFloat("glassRoundness", s.glassRoundness)
             .putInt("introStyle", s.introStyle).putInt("introSpeed", s.introSpeed)
             .putInt("glassQuality", s.glassQuality).putInt("glassResolution", s.glassResolution).putFloat("refreshRate", s.refreshRate)
             .putBoolean("swipeUpDrawer", s.swipeUpDrawer)

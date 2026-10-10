@@ -95,7 +95,7 @@ fun DropZones(state: LauncherState, backdrop: Backdrop, style: GlassStyle) {
 private fun Zone(label: String, active: Boolean, backdrop: Backdrop, style: GlassStyle, modifier: Modifier) {
     Box(
         modifier.scale(if (active) 1.08f else 1f)
-            .liquidGlass(backdrop, style, RoundedCornerShape(50), surfaceAlpha = style.surfaceAlpha + if (active) 0.25f else 0.08f, tint = if (active) Color(0x66FF3B5C) else Color.Unspecified, small = true)
+            .liquidGlass(backdrop, style, style.round(50, small = true), surfaceAlpha = style.surfaceAlpha + if (active) 0.25f else 0.08f, tint = if (active) Color(0x66FF3B5C) else Color.Unspecified, small = true)
             .padding(horizontal = 22.dp, vertical = 12.dp),
     ) { GText(label, size = 14f, weight = FontWeight.SemiBold) }
 }
@@ -122,7 +122,7 @@ fun ItemMenu(state: LauncherState, menu: MenuState, backdrop: Backdrop, style: G
                 .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
                 .width(232.dp)
                 .onSizeChanged { size = it }
-                .liquidGlass(backdrop, style, RoundedCornerShape(dropletRadius(26.dp, 60.dp, style.droplet)), surfaceAlpha = style.surfaceAlpha + 0.1f, small = true)
+                .liquidGlass(backdrop, style, if (style.droplet > 0f) style.round(30, small = true) else style.roundDp(26.dp), surfaceAlpha = style.surfaceAlpha + 0.1f, small = true)
                 .padding(vertical = 8.dp)
                 .clickable(interactionSource = null, indication = null) { },
         ) {
@@ -174,7 +174,7 @@ fun FolderOverlay(state: LauncherState, folderId: Long, settings: LauncherSettin
     ) {
         Column(
             Modifier.padding(horizontal = 26.dp).fillMaxWidth().scale(0.9f + 0.1f * appear).alpha(fade)
-                .liquidGlass(backdrop, style, RoundedCornerShape(38.dp), surfaceAlpha = style.surfaceAlpha + 0.1f)
+                .liquidGlass(backdrop, style, style.roundDp(38.dp), surfaceAlpha = style.surfaceAlpha + 0.1f)
                 .clickable(interactionSource = null, indication = null) { }
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -254,7 +254,7 @@ private fun androidx.compose.foundation.layout.RowScope.EditButton(
 ) {
     Column(
         Modifier.weight(1f)
-            .liquidGlass(backdrop, style.copy(refractionHeight = minOf(style.refractionHeight, 10f)), RoundedCornerShape(dropletRadius(22.dp, 56.dp, style.droplet)), surfaceAlpha = style.surfaceAlpha + 0.06f, small = true)
+            .liquidGlass(backdrop, style.copy(refractionHeight = minOf(style.refractionHeight, 10f)), style.round(39, small = true), surfaceAlpha = style.surfaceAlpha + 0.06f, small = true)
             .pressScale(onClick)
             .padding(vertical = 7.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -294,7 +294,7 @@ fun WidgetPicker(state: LauncherState, backdrop: Backdrop, style: GlassStyle, on
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f)).clickable(interactionSource = null, indication = null) { state.showWidgetPicker = false }) {
         Column(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.72f).bleed(top = false)
-                .liquidGlass(backdrop, style.copy(refractionHeight = minOf(style.refractionHeight, 5f), blur = style.blur * 4f), RoundedCornerShape(topStart = 38.dp, topEnd = 38.dp), surfaceAlpha = style.surfaceAlpha + 0.12f)
+                .liquidGlass(backdrop, style.copy(refractionHeight = minOf(style.refractionHeight, 5f), blur = style.blur * 4f), (38.dp * 2f * style.roundness).coerceAtLeast(2.dp).let { RoundedCornerShape(topStart = it, topEnd = it) }, surfaceAlpha = style.surfaceAlpha + 0.12f)
                 .clickable(interactionSource = null, indication = null) { },
         ) {
             GText("Widgets", Modifier.padding(start = 68.dp, top = 20.dp, bottom = 20.dp), size = 20f, weight = FontWeight.Bold)
@@ -332,7 +332,7 @@ fun ImportDialogs(state: LauncherState, backdrop: Backdrop, style: GlassStyle) {
     ) {
         Column(
             Modifier.padding(horizontal = 28.dp).fillMaxWidth()
-                .liquidGlass(backdrop, style.copy(refractionHeight = minOf(style.refractionHeight, 8f)), RoundedCornerShape(34.dp), surfaceAlpha = style.surfaceAlpha + 0.10f, tint = Color.Black.copy(alpha = 0.25f))
+                .liquidGlass(backdrop, style.copy(refractionHeight = minOf(style.refractionHeight, 8f)), style.roundDp(34.dp), surfaceAlpha = style.surfaceAlpha + 0.10f, tint = Color.Black.copy(alpha = 0.25f))
                 .padding(22.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp),
