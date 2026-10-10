@@ -79,6 +79,13 @@ fun SettingsScreen(
                 GlassButton("Done", backdrop, style) { state.showSettings = false }
             }
 
+            Section("Launch animation", backdrop, style) {
+                Hint("How the home screen appears when you come back from an app or start the launcher.")
+                StepRow("Style", settings.introStyle, INTRO_STYLE_LABELS, defaultIndex = 2) { store.update { copy(introStyle = it) } }
+                StepRow("Speed", settings.introSpeed, INTRO_SPEED_LABELS, defaultIndex = 1) { store.update { copy(introSpeed = it) } }
+                ButtonRow("Preview") { state.previewRequest++ }
+            }
+
             Section("Performance", backdrop, style) {
                 Hint("Lower these if the launcher feels less smooth; raise them for the richest glass. Applied live.")
                 StepRow("Effects quality", settings.glassQuality, GLASS_QUALITY_LABELS, defaultIndex = 2) { store.update { copy(glassQuality = it) } }
@@ -146,7 +153,7 @@ fun SettingsScreen(
 
             Section("System", backdrop, style) {
                 ButtonRow("Set as default launcher") { state.openDefaultHomeSettings() }
-                Hint("OpenLiquidLauncher 1.5.1 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
+                Hint("OpenLiquidLauncher 1.6.0 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
             }
         }
     }

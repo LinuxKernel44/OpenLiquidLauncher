@@ -162,6 +162,7 @@ fun Workspace(
                                 Modifier
                                     .offset(tx, ty)
                                     .size(cw * p.spanX, ch * p.spanY)
+                                    .introEffect(state, cell = p.y * cols + p.x, row = p.y)
                                     .padding(if (p.item is WidgetItem) 4.dp else 2.dp),
                                 // Never taller than the cell: icon + label must fit, whatever the number of rows.
                                 iconSize = (ch - 4.dp - (if (settings.showLabels) 22.dp else 0.dp)).coerceIn(32.dp, 56.dp),

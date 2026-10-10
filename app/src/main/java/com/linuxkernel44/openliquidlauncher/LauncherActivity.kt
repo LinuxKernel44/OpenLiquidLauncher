@@ -132,7 +132,16 @@ class LauncherActivity : ComponentActivity() {
     }
 
     override fun onStart() { super.onStart(); app.widgetHost.startListening() }
-    override fun onStop() { app.widgetHost.stopListening(); super.onStop() }
+
+    /** Back from another app (not a Home press while already here): replay the launch animation. */
+    override fun onRestart() { super.onRestart(); state.playIntro() }
+
+    override fun onStop() {
+        app.widgetHost.stopListening()
+        // Hide the home elements right away so the next return doesn't flash the full screen before the animation starts.
+        if (app.settings.current.introStyle != 0) state.introT = 0f
+        super.onStop()
+    }
 
     override fun onResume() {
         super.onResume()

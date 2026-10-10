@@ -26,6 +26,9 @@ data class LauncherSettings(
     val glassRefractionAmount: Float = 24f,
     val glassSurfaceAlpha: Float = 0.18f,
     val glassDispersion: Boolean = false,
+    /** Launch animation style (see ui/Intro.kt: 0 None, 1 Fade, 2 Zoom, 3 Cascade, 4 Slide) and speed (0 fast, 1 normal, 2 slow). */
+    val introStyle: Int = 2,
+    val introSpeed: Int = 1,
     /** 0 Minimum · 1 Low · 2 Current (default) · 3 High · 4 Maximum: how rich the glass is. */
     val glassQuality: Int = 2,
     /** Index into [GLASS_RESOLUTIONS]: render scale of the glass (default 100 %). */
@@ -69,6 +72,8 @@ class SettingsStore(context: Context) {
             glassRefractionAmount = prefs.getFloat("glassRefractionAmount", d.glassRefractionAmount),
             glassSurfaceAlpha = prefs.getFloat("glassSurfaceAlpha", d.glassSurfaceAlpha),
             glassDispersion = prefs.getBoolean("glassDispersion", d.glassDispersion),
+            introStyle = prefs.getInt("introStyle", d.introStyle).coerceIn(0, 4),
+            introSpeed = prefs.getInt("introSpeed", d.introSpeed).coerceIn(0, 2),
             glassQuality = prefs.getInt("glassQuality", d.glassQuality).coerceIn(0, 4),
             glassResolution = prefs.getInt("glassResolution", d.glassResolution).coerceIn(0, GLASS_RESOLUTIONS.lastIndex),
             refreshRate = prefs.getFloat("refreshRate", d.refreshRate),
@@ -92,6 +97,7 @@ class SettingsStore(context: Context) {
             .putFloat("glassRefractionAmount", s.glassRefractionAmount)
             .putFloat("glassSurfaceAlpha", s.glassSurfaceAlpha)
             .putBoolean("glassDispersion", s.glassDispersion)
+            .putInt("introStyle", s.introStyle).putInt("introSpeed", s.introSpeed)
             .putInt("glassQuality", s.glassQuality).putInt("glassResolution", s.glassResolution).putFloat("refreshRate", s.refreshRate)
             .putBoolean("swipeUpDrawer", s.swipeUpDrawer)
             .putBoolean("swipeDownNotifications", s.swipeDownNotifications)

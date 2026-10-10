@@ -57,7 +57,29 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
 
     val synced by state.apps.synced.collectAsState()
     val appList by state.apps.apps.collectAsState()
-    LaunchedEffect(loaded) { if (loaded) state.ensureInitialLayout() }
+    LaunchedEffect(loaded) {
+        if (loaded) state.ensureInitialLayout()
+        // First launch of the process (cold start): play the launch animation once the home screen can be shown.
+        if (loaded && !state.introPlayed) { state.introPlayed = true; state.playIntro() }
+    }
+    LaunchedEffect(state.introRequest) {
+        if (state.introRequest == 0) return@LaunchedEffect
+        val st = state.settings.current
+        if (st.introStyle == INTRO_NONE) { state.introT = 1f; return@LaunchedEffect }
+        state.introT = 0f
+        androidx.compose.animation.core.animate(
+            0f, 1f, animationSpec = androidx.compose.animation.core.tween(INTRO_DURATIONS_MS[st.introSpeed], easing = androidx.compose.animation.core.LinearEasing),
+        ) { v, _ -> state.introT = v }
+        state.introT = 1f
+    }
+    LaunchedEffect(state.previewRequest) {
+        if (state.previewRequest == 0) return@LaunchedEffect
+        state.previewing = true
+        kotlinx.coroutines.delay(350)          // let the settings page fade away first
+        state.playIntro()
+        kotlinx.coroutines.delay(INTRO_DURATIONS_MS[state.settings.current.introSpeed] + 700L)
+        state.previewing = false
+    }
     // Let the icons reach the screen first, then switch the liquid glass shaders on.
     LaunchedEffect(Unit) {
         if (!GlassGate.ready) {
@@ -157,11 +179,11 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
                 modifier = Modifier.weight(1f).fillMaxWidth().padding(top = 62.dp, bottom = 6.dp),
             )
             // Fixed height whether it shows the page dots or the edit bar, so the grid never changes size in edit mode.
-            Box(Modifier.fillMaxWidth().height(60.dp), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxWidth().height(60.dp).introEffect(state, dock = true), contentAlignment = Alignment.Center) {
                 if (state.editMode) EditBar(state, backdrop, style, onPickWallpaper)
                 else if (layout.pages > 1) PageDots(layout.pages, pagerState.currentPage)
             }
-            Dock(state, settings, badges, backdrop, style, Modifier.padding(bottom = 6.dp))
+            Dock(state, settings, badges, backdrop, style, Modifier.padding(bottom = 6.dp).introEffect(state, dock = true))
             Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))
         }
             }
@@ -190,7 +212,7 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
 
         state.openFolderId?.let { FolderOverlay(state, it, settings, badges, homeBackdrop, style, overlayFade) }
         if (state.showWidgetPicker) WidgetPicker(state, homeBackdrop, style) { onPickWidget(it) }
-        if (state.showSettings) SettingsScreen(state, settings, backdrop, style, onPickWallpaper) // wallpaper only: home icons would clutter a full-screen page
+        if (state.showSettings) Box(Modifier.graphicsLayer { alpha = if (state.previewing) 0f else 1f }) { SettingsScreen(state, settings, backdrop, style, onPickWallpaper) } // wallpaper only: home icons would clutter a full-screen page
         DropZones(state, backdrop, style)
         ImportDialogs(state, homeBackdrop, style)
         state.menu?.let { ItemMenu(state, it, homeBackdrop, style) }

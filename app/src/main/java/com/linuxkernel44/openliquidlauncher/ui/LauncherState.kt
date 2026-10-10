@@ -80,6 +80,15 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     var showWidgetPicker by mutableStateOf(false)
     var editMode by mutableStateOf(false)
     var menu by mutableStateOf<MenuState?>(null)
+
+    // ---- launch animation (ui/Intro.kt): introT 0 -> 1 drives the appearance of every home element ----
+    var introT by androidx.compose.runtime.mutableFloatStateOf(if (app.settings.current.introStyle != 0) 0f else 1f)
+    var introRequest by mutableIntStateOf(0)
+    var introPlayed = false
+    /** Settings "Preview": the settings page fades out while the animation replays behind it. */
+    var previewRequest by mutableIntStateOf(0)
+    var previewing by mutableStateOf(false)
+    fun playIntro() { introRequest++ }
     /** Refresh rates (Hz) the screen supports at its current resolution; filled by the activity. */
     var refreshRates by mutableStateOf<List<Int>>(emptyList())
     var importConfirm by mutableStateOf<ImportRequest?>(null)
