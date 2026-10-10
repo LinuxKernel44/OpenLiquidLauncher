@@ -236,7 +236,7 @@ fun WidgetPicker(state: LauncherState, backdrop: Backdrop, style: GlassStyle, on
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f)).clickable(interactionSource = null, indication = null) { state.showWidgetPicker = false }) {
         Column(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.72f)
-                .liquidGlass(backdrop, style, RoundedCornerShape(topStart = 38.dp, topEnd = 38.dp), surfaceAlpha = style.surfaceAlpha + 0.12f)
+                .liquidGlass(backdrop, style.copy(refractionHeight = minOf(style.refractionHeight, 5f), blur = style.blur + 12f), RoundedCornerShape(topStart = 38.dp, topEnd = 38.dp), surfaceAlpha = style.surfaceAlpha + 0.12f)
                 .clickable(interactionSource = null, indication = null) { },
         ) {
             GText("Widgets", Modifier.padding(20.dp), size = 20f, weight = FontWeight.Bold)

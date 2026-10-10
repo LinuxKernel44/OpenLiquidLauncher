@@ -75,7 +75,7 @@ fun AppDrawer(
         Modifier
             .fillMaxSize()
             .liquidGlass(
-                backdrop, style.copy(refractionHeight = style.refractionHeight * 0.8f, blur = style.blur + 14f),
+                backdrop, style.copy(refractionHeight = 0f, blur = style.blur + 14f), // no lens: it warps the edges of a full-screen sheet
                 RoundedCornerShape(topStart = 38.dp, topEnd = 38.dp),
                 surfaceAlpha = style.surfaceAlpha * 0.9f + 0.06f,
                 layerBlock = {
