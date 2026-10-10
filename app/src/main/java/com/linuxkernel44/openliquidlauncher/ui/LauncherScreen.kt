@@ -47,6 +47,8 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
     val badges by BadgeListenerService.counts.collectAsState()
     val loaded by state.apps.loaded.collectAsState()
     val backdrop = rememberLayerBackdrop()
+    // Wallpaper + home icons: overlays that sit on top of the home screen (folders, menus...) blur this, not only the wallpaper.
+    val homeBackdrop = rememberLayerBackdrop()
     val scope = rememberCoroutineScope()
     val layout = state.layout
     val pagerState = rememberPagerState { layout.pages }
@@ -92,13 +94,13 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
                 }
             },
     ) {
-        val wp = wallpaper
-        if (wp != null) {
-            // Overscan: blur has nothing to sample past the layer's edge, which leaves sharp strips along the
-            // screen edges of full-width glass. Extending the wallpaper off-screen hides that zone.
-            Image(wp, null, Modifier.fillMaxSize().bleed(24.dp).layerBackdrop(backdrop), contentScale = ContentScale.Crop)
-        } else Box(Modifier.fillMaxSize().bleed(24.dp).layerBackdrop(backdrop).background(Color(0xFF0B1030)))
-
+        // Everything below the overlays is recorded into homeBackdrop. It bleeds 24dp off-screen so blur has content at the edges.
+        Box(Modifier.fillMaxSize().bleed(24.dp).layerBackdrop(homeBackdrop)) {
+            val wp = wallpaper
+            if (wp != null) {
+                Image(wp, null, Modifier.fillMaxSize().layerBackdrop(backdrop), contentScale = ContentScale.Crop)
+            } else Box(Modifier.fillMaxSize().layerBackdrop(backdrop).background(Color(0xFF0B1030)))
+            Box(Modifier.fillMaxSize().padding(24.dp)) {
         // ---- home ----
         // Home items resolve apps through AppRepository (not snapshot state), so wait until it is loaded.
         if (loaded) Column(
@@ -130,7 +132,7 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
                 state, pagerState, settings, badges, backdrop, style,
                 onEmptyLongPress = { state.editMode = true },
                 onDoubleTap = { state.lockScreen() },
-                modifier = Modifier.weight(1f).fillMaxWidth().padding(start = 6.dp, end = 6.dp, top = 62.dp, bottom = 6.dp),
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(top = 62.dp, bottom = 6.dp),
             )
             // Fixed height whether it shows the page dots or the edit bar, so the grid never changes size in edit mode.
             Box(Modifier.fillMaxWidth().height(60.dp), contentAlignment = Alignment.Center) {
@@ -139,6 +141,8 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
             }
             Dock(state, settings, badges, backdrop, style, Modifier.padding(bottom = 6.dp))
             Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))
+        }
+            }
         }
 
         // ---- overlays ----
@@ -162,12 +166,12 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
             AppDrawer(state, settings, badges, backdrop, style, overlayFade)
         }
 
-        state.openFolderId?.let { FolderOverlay(state, it, settings, badges, backdrop, style, overlayFade) }
-        if (state.showWidgetPicker) WidgetPicker(state, backdrop, style) { onPickWidget(it) }
-        if (state.showSettings) SettingsScreen(state, settings, backdrop, style, onPickWallpaper)
+        state.openFolderId?.let { FolderOverlay(state, it, settings, badges, homeBackdrop, style, overlayFade) }
+        if (state.showWidgetPicker) WidgetPicker(state, homeBackdrop, style) { onPickWidget(it) }
+        if (state.showSettings) SettingsScreen(state, settings, homeBackdrop, style, onPickWallpaper)
         DropZones(state, backdrop, style)
-        ImportDialogs(state, backdrop, style)
-        state.menu?.let { ItemMenu(state, it, backdrop, style) }
+        ImportDialogs(state, homeBackdrop, style)
+        state.menu?.let { ItemMenu(state, it, homeBackdrop, style) }
         DragLayer(state, settings, backdrop, style)
 
         if (!loaded) Box(Modifier.fillMaxSize().alpha(0.0f))

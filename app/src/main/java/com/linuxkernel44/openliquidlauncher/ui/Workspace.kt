@@ -117,12 +117,15 @@ fun Workspace(
         }
     }
 
+    val sideMargin = 6.dp
+    val sideMarginPx = with(LocalDensity.current) { sideMargin.toPx() }
     Box(
         modifier
-            .onGloballyPositioned { state.workspaceRect = it.boundsInRoot() },
+            // Grid area = the pager minus the side margin. The pager itself is full width so pages slide to the screen edge.
+            .onGloballyPositioned { c -> c.boundsInRoot().let { state.workspaceRect = androidx.compose.ui.geometry.Rect(it.left + sideMarginPx, it.top, it.right - sideMarginPx, it.bottom) } },
     ) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val cw = maxWidth / cols
+            val cw = (maxWidth - sideMargin * 2) / cols
             val ch = maxHeight / rows
             HorizontalPager(
                 state = pagerState,
@@ -144,7 +147,7 @@ fun Workspace(
                             HomeItemView(
                                 p.item, state, settings, badges, backdrop, style,
                                 Modifier
-                                    .offset(cw * p.x, ch * p.y)
+                                    .offset(sideMargin + cw * p.x, ch * p.y)
                                     .size(cw * p.spanX, ch * p.spanY)
                                     .padding(if (p.item is WidgetItem) 4.dp else 2.dp),
                                 // Never taller than the cell: icon + label must fit, whatever the number of rows.
@@ -157,7 +160,7 @@ fun Workspace(
                     if (t is DropTarget.Cell && t.page == page) {
                         Box(
                             Modifier
-                                .offset(cw * t.x, ch * t.y)
+                                .offset(sideMargin + cw * t.x, ch * t.y)
                                 .size(cw * t.spanX, ch * t.spanY)
                                 .padding(4.dp)
                                 .background(Color.White.copy(alpha = if (t.mergeWith != null) 0.30f else 0.16f), RoundedCornerShape(22.dp)),
