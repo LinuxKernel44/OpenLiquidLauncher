@@ -7,6 +7,23 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:windowAnimationStyle">@style/Animation.OpenLiquidLauncher</item>
         <item name="android:enforceStatusBarContrast">false</item>
+    </style>
+
+    <!-- The home screen must be there instantly when the foreground app closes: no window animation of its own. -->
+    <style name="Animation.OpenLiquidLauncher" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/launcher_none</item>
+        <item name="android:activityOpenExitAnimation">@anim/launcher_none</item>
+        <item name="android:activityCloseEnterAnimation">@anim/launcher_none</item>
+        <item name="android:activityCloseExitAnimation">@anim/launcher_none</item>
+        <item name="android:taskOpenEnterAnimation">@anim/launcher_none</item>
+        <item name="android:taskOpenExitAnimation">@anim/launcher_none</item>
+        <item name="android:taskCloseEnterAnimation">@anim/launcher_none</item>
+        <item name="android:taskCloseExitAnimation">@anim/launcher_none</item>
+        <item name="android:taskToFrontEnterAnimation">@anim/launcher_none</item>
+        <item name="android:taskToFrontExitAnimation">@anim/launcher_none</item>
+        <item name="android:taskToBackEnterAnimation">@anim/launcher_none</item>
+        <item name="android:taskToBackExitAnimation">@anim/launcher_none</item>
     </style>
 </resources>

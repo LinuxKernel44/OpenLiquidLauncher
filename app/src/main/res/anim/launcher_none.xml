@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keeps the window fully visible for the whole transition: no fade or slide of its own. -->
+<alpha xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="1"
+    android:fromAlpha="1.0"
+    android:toAlpha="1.0" />
