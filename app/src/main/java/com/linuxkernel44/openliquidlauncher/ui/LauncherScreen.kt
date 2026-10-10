@@ -189,7 +189,7 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
 
         state.openFolderId?.let { FolderOverlay(state, it, settings, badges, homeBackdrop, style, overlayFade) }
         if (state.showWidgetPicker) WidgetPicker(state, homeBackdrop, style) { onPickWidget(it) }
-        if (state.showSettings) SettingsScreen(state, settings, homeBackdrop, style, onPickWallpaper)
+        if (state.showSettings) SettingsScreen(state, settings, backdrop, style, onPickWallpaper) // wallpaper only: home icons would clutter a full-screen page
         DropZones(state, backdrop, style)
         ImportDialogs(state, homeBackdrop, style)
         state.menu?.let { ItemMenu(state, it, homeBackdrop, style) }

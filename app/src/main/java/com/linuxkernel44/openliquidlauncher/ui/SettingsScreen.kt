@@ -64,7 +64,7 @@ fun SettingsScreen(
     Box(
         Modifier.fillMaxSize()
             .bleed()
-            .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur + 16f), RoundedCornerShape(0.dp), surfaceAlpha = style.surfaceAlpha + 0.14f, edges = false)
+            .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur + 16f), RoundedCornerShape(0.dp), surfaceAlpha = style.surfaceAlpha + 0.10f, tint = Color.Black.copy(alpha = 0.18f), edges = false)
             .clickable(interactionSource = null, indication = null) { },
     ) {
         Column(
@@ -133,7 +133,7 @@ fun SettingsScreen(
 
             Section("System", backdrop, style) {
                 ButtonRow("Set as default launcher") { state.openDefaultHomeSettings() }
-                Hint("OpenLiquidLauncher 1.2.3 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
+                Hint("OpenLiquidLauncher 1.3.0 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
             }
         }
     }

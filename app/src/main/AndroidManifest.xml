@@ -54,6 +54,11 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER_APP" />
             </intent-filter>
+            <!-- A normal app icon, so users can see the app is installed (opens its settings). -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
 
         <!-- Receives the Shizuku binder so the importer can run `dumpsys` with shell rights (optional). -->

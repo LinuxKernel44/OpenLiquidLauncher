@@ -35,7 +35,7 @@ Android 13+ (API 33): the real glass effect uses AGSL runtime shaders.
 ```
 ./gradlew :app:assembleDebug
 ```
-Then set it as your default home app in Android settings.
+Then open the new "OpenLiquidLauncher" app icon (it opens the settings and shows how to set it as your default home app).
 
 ## Permissions
 - Notification access (optional) — badges

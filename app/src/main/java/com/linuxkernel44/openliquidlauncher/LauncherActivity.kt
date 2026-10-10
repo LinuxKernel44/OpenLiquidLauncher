@@ -67,6 +67,19 @@ class LauncherActivity : ComponentActivity() {
         app.apps.onAppsAdded = state::onAppsAdded
         setContent { LauncherScreen(state, ::pickWallpaper, ::startAddWidget) }
         handleDebugIntent(intent)
+        handleAppIconLaunch(intent)
+    }
+
+    private fun isDefaultHome(): Boolean {
+        val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        return packageManager.resolveActivity(home, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName == packageName
+    }
+
+    /** Opened from the app icon (not as the home screen): show the settings, and explain how to make it the default launcher. */
+    private fun handleAppIconLaunch(i: Intent?) {
+        if (i == null || !i.hasCategory(Intent.CATEGORY_LAUNCHER) || i.hasCategory(Intent.CATEGORY_HOME)) return
+        state.showSettings = true
+        if (!isDefaultHome()) toast("Set OpenLiquidLauncher as your default home app (button at the bottom of Settings)")
     }
 
     /** Debug builds only: `--es importDb <path>` triggers the file import without the document picker. */
@@ -104,6 +117,7 @@ class LauncherActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleDebugIntent(intent)
+        handleAppIconLaunch(intent)
         if (intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_HOME)) state.homeSignal++
     }
 

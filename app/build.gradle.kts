@@ -26,8 +26,8 @@ android {
         applicationId = "com.linuxkernel44.openliquidlauncher"
         minSdk = 33
         targetSdk = 36
-        versionCode = 15
-        versionName = "1.2.3"
+        versionCode = 16
+        versionName = "1.3.0"
         androidResources.localeFilters += arrayOf("en")
     }
 
