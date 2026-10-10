@@ -55,6 +55,14 @@ class LauncherActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
+        // Show the wallpaper right away instead of a black window while Compose composes the first frame.
+        runCatching {
+            val f = File(filesDir, "wallpaper.jpg")
+            if (f.exists() && app.settings.current.wallpaperMode == WallpaperMode.Custom) {
+                val bmp = android.graphics.BitmapFactory.decodeFile(f.path, android.graphics.BitmapFactory.Options().apply { inSampleSize = 4 })
+                window.setBackgroundDrawable(android.graphics.drawable.BitmapDrawable(resources, bmp))
+            }
+        }
         state = LauncherState(this, app)
         app.apps.onAppsAdded = state::onAppsAdded
         setContent { LauncherScreen(state, ::pickWallpaper, ::startAddWidget) }

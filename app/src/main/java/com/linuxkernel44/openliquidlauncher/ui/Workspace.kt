@@ -127,7 +127,8 @@ fun Workspace(
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 3,
+                // Neighbours only (cheap resume); while dragging, keep every page so the dragged item's page stays composed.
+                beyondViewportPageCount = if (state.dragPayload != null) layout.pages else 1,
                 key = { it },
             ) { page ->
                 Box(

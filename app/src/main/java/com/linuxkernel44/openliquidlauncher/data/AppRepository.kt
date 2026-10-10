@@ -21,6 +21,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 /** Loads launchable apps through [LauncherApps] (like Launcher3 does) and keeps them up to date. */
@@ -58,12 +61,16 @@ class AppRepository(private val context: Context) {
     fun reload(notifyNew: Boolean = false) {
         scope.launch {
             val old = _apps.value.associateBy { it.id }
-            val list = ArrayList<AppInfo>()
-            for (user in userManager.userProfiles) {
-                for (info in launcherApps.getActivityList(null, user)) {
-                    val id = idOf(info.componentName, info.user)
-                    list += old[id] ?: toAppInfo(info, id)
-                }
+            // Icon decoding dominates cold start with hundreds of apps: spread it over all cores.
+            val infos = userManager.userProfiles.flatMap { user -> launcherApps.getActivityList(null, user) }
+            val list = ArrayList<AppInfo>(infos.size)
+            coroutineScope {
+                infos.map { info ->
+                    async {
+                        val id = idOf(info.componentName, info.user)
+                        old[id] ?: toAppInfo(info, id)
+                    }
+                }.awaitAll().let { list += it }
             }
             list.sortBy { it.label.lowercase() }
             val added = if (notifyNew && _loaded.value) list.filter { it.id !in old } else emptyList()
