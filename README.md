@@ -28,6 +28,9 @@ Notes: apps are matched by component so only installed apps are imported. With S
 - **Folder with several fingers:** hold an app with one finger and tap other apps with your other fingers (they get a green tick), then lift the first finger: all of them become one folder. Hold a folder and tap apps to add them to it.
 - Lift a held app without dragging or tapping others to open its menu.
 
+## Droplet look
+Settings → Liquid glass → **Droplet look** (0–100, default 0 = the original look): makes small glass elements (folders, dock, edit buttons, drop zones, menus, scroll handle) clearer, rounder and more refractive, with a brighter rim and a soft inner shadow.
+
 ## Launch animation
 Settings → **Launch animation**: when you come back from an app or start the launcher, the home screen (icons, folders, widgets, page dots, dock) can appear with one of: **None**, **Soft fade**, **Zoom** (default), **Cascade** (icon by icon), **Slide & spring**. Speed Fast / Normal / Slow, and a **Preview** button replays it. It does not replay when you press Home while already on the home screen, and the screen stays usable while it plays.
 

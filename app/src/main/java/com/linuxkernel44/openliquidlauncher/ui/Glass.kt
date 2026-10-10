@@ -61,10 +61,12 @@ data class GlassStyle(
     val dispersion: Boolean = false,
     /** 0 Minimum · 1 Low · 2 Current · 3 High · 4 Maximum. */
     val quality: Int = 2,
+    /** 0..1 droplet look for small elements (see `small` in [liquidGlass]). */
+    val droplet: Float = 0f,
 ) {
     companion object {
         fun from(s: LauncherSettings) = GlassStyle(
-            s.glassBlur, s.glassRefractionHeight, s.glassRefractionAmount, s.glassSurfaceAlpha, s.glassDispersion, s.glassQuality,
+            s.glassBlur, s.glassRefractionHeight, s.glassRefractionAmount, s.glassSurfaceAlpha, s.glassDispersion, s.glassQuality, s.glassDroplet,
         )
     }
 }
@@ -82,10 +84,14 @@ fun Modifier.liquidGlass(
     layerBlock: (GraphicsLayerScope.() -> Unit)? = null,
     /** Rim light + drop shadow; turn off for full-screen sheets, where they just draw a frame along the screen edges. */
     edges: Boolean = true,
+    /** Small element (folder, dock, button...): the "Droplet" setting makes it a clearer, rounder, more refractive drop. */
+    small: Boolean = false,
 ): Modifier = if (!GlassGate.ready) {
     (if (layerBlock != null) Modifier.graphicsLayer(layerBlock) else Modifier)
         .background(Color.White.copy(alpha = surfaceAlpha + 0.06f), shape)
-} else drawBackdrop(
+} else {
+    val d = if (small) style.droplet else 0f
+    drawBackdrop(
     backdrop = backdrop,
     shape = { shape },
     effects = {
@@ -93,24 +99,27 @@ fun Modifier.liquidGlass(
         // Quality ladder: Minimum = blur only; Low adds colour boost + refraction; Current is the original look;
         // High adds the depth effect (and an inner shadow); Maximum adds chromatic dispersion and a softer blur.
         if (q >= 1) vibrancy()
-        if (style.blur > 0f) blur((style.blur * (if (q >= 4) 1.25f else 1f)).dp.toPx())
+        // Droplet: clearer (less blur), a much stronger and deeper lens, like a real drop of water.
+        val blurK = (if (q >= 4) 1.25f else 1f) * (1f - 0.7f * d)
+        if (style.blur * blurK > 0f) blur((style.blur * blurK).dp.toPx())
         if (q >= 1) lens(
-            style.refractionHeight.dp.toPx(),
-            style.refractionAmount.dp.toPx(),
-            depthEffect = q >= 3,
+            (style.refractionHeight * (1f + 1.2f * d)).dp.toPx(),
+            (style.refractionAmount * (1f + 1.6f * d)).dp.toPx(),
+            depthEffect = q >= 3 || d > 0.5f,
             chromaticAberration = style.dispersion || q >= 4,
         )
     },
-    highlight = if (edges && style.quality >= 1) ({ Highlight.Default }) else null,
-    shadow = if (edges && style.quality >= 2) ({ Shadow.Default }) else null,
-    innerShadow = if (style.quality >= 3) ({ InnerShadow(radius = 10.dp, color = Color.Black.copy(alpha = 0.08f)) }) else null,
+    highlight = if (edges && style.quality >= 1) ({ if (d > 0f) Highlight(width = (0.5f + 1.5f * d).dp, alpha = 1f) else Highlight.Default }) else null,
+    shadow = if (edges && style.quality >= 2) ({ if (d > 0f) Shadow(radius = (24f + 10f * d).dp, color = Color.Black.copy(alpha = 0.1f + 0.1f * d)) else Shadow.Default }) else null,
+    innerShadow = if (style.quality >= 3 || d > 0f) ({ InnerShadow(radius = (10f + 8f * d).dp, color = Color.Black.copy(alpha = 0.08f + 0.10f * d)) }) else null,
     layerBlock = layerBlock,
     onDrawSurface = {
-        drawRect(Color.Black.copy(alpha = 0.10f)) // keeps white text readable on bright wallpapers
+        drawRect(Color.Black.copy(alpha = 0.10f * (1f - 0.5f * d))) // keeps white text readable on bright wallpapers
         if (tint != Color.Unspecified) drawRect(tint)
-        drawRect(Color.White.copy(alpha = surfaceAlpha))
+        drawRect(Color.White.copy(alpha = surfaceAlpha * (1f - 0.55f * d)))
     },
-)
+    )
+}
 
 val GlassText = TextStyle(
     color = Color.White,
@@ -167,7 +176,7 @@ fun GlassButton(
 ) {
     Box(
         modifier
-            .liquidGlass(backdrop, style, RoundedCornerShape(50), surfaceAlpha = style.surfaceAlpha + 0.06f)
+            .liquidGlass(backdrop, style, RoundedCornerShape(50), surfaceAlpha = style.surfaceAlpha + 0.06f, small = true)
             .pressScale(onClick)
             .padding(horizontal = 18.dp, vertical = 11.dp),
         contentAlignment = Alignment.Center,
@@ -183,7 +192,7 @@ fun GlassCircleButton(
     content: @Composable BoxScope.() -> Unit,
 ) {
     Box(
-        modifier.liquidGlass(backdrop, style, CircleShape, surfaceAlpha = style.surfaceAlpha + 0.06f).pressScale(onClick),
+        modifier.liquidGlass(backdrop, style, CircleShape, surfaceAlpha = style.surfaceAlpha + 0.06f, small = true).pressScale(onClick),
         contentAlignment = Alignment.Center,
         content = content,
     )
@@ -204,3 +213,7 @@ fun Modifier.bleed(extend: androidx.compose.ui.unit.Dp = 48.dp, top: Boolean = t
         val p = measurable.measure(androidx.compose.ui.unit.Constraints.fixed(c.maxWidth + 2 * e, c.maxHeight + e + t))
         layout(c.maxWidth, c.maxHeight) { p.place(-e, -t) }
     }
+
+/** Corner radius that grows from [base] (droplet 0) to a full capsule/circle (droplet 1) for a [min]-sized element. */
+fun dropletRadius(base: androidx.compose.ui.unit.Dp, min: androidx.compose.ui.unit.Dp, droplet: Float) =
+    base + (min / 2 - base).coerceAtLeast(0.dp) * droplet

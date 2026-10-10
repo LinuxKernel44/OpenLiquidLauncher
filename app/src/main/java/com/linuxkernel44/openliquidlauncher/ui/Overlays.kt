@@ -95,7 +95,7 @@ fun DropZones(state: LauncherState, backdrop: Backdrop, style: GlassStyle) {
 private fun Zone(label: String, active: Boolean, backdrop: Backdrop, style: GlassStyle, modifier: Modifier) {
     Box(
         modifier.scale(if (active) 1.08f else 1f)
-            .liquidGlass(backdrop, style, RoundedCornerShape(50), surfaceAlpha = style.surfaceAlpha + if (active) 0.25f else 0.08f, tint = if (active) Color(0x66FF3B5C) else Color.Unspecified)
+            .liquidGlass(backdrop, style, RoundedCornerShape(50), surfaceAlpha = style.surfaceAlpha + if (active) 0.25f else 0.08f, tint = if (active) Color(0x66FF3B5C) else Color.Unspecified, small = true)
             .padding(horizontal = 22.dp, vertical = 12.dp),
     ) { GText(label, size = 14f, weight = FontWeight.SemiBold) }
 }
@@ -122,7 +122,7 @@ fun ItemMenu(state: LauncherState, menu: MenuState, backdrop: Backdrop, style: G
                 .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
                 .width(232.dp)
                 .onSizeChanged { size = it }
-                .liquidGlass(backdrop, style, RoundedCornerShape(26.dp), surfaceAlpha = style.surfaceAlpha + 0.1f)
+                .liquidGlass(backdrop, style, RoundedCornerShape(dropletRadius(26.dp, 60.dp, style.droplet)), surfaceAlpha = style.surfaceAlpha + 0.1f, small = true)
                 .padding(vertical = 8.dp)
                 .clickable(interactionSource = null, indication = null) { },
         ) {
@@ -254,7 +254,7 @@ private fun androidx.compose.foundation.layout.RowScope.EditButton(
 ) {
     Column(
         Modifier.weight(1f)
-            .liquidGlass(backdrop, style.copy(refractionHeight = minOf(style.refractionHeight, 10f)), RoundedCornerShape(22.dp), surfaceAlpha = style.surfaceAlpha + 0.06f)
+            .liquidGlass(backdrop, style.copy(refractionHeight = minOf(style.refractionHeight, 10f)), RoundedCornerShape(dropletRadius(22.dp, 56.dp, style.droplet)), surfaceAlpha = style.surfaceAlpha + 0.06f, small = true)
             .pressScale(onClick)
             .padding(vertical = 7.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
