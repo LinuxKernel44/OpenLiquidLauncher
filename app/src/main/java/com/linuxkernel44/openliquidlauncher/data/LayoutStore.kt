@@ -147,26 +147,52 @@ class LayoutStore(private val context: Context, private val settings: SettingsSt
         changed()
     }
 
-    /** Where the icons of [page] would end up if [itemId] were dropped on (x, y): used for the live "make room" animation. */
-    fun previewPush(itemId: Long, page: Int, x: Int, y: Int): Map<Long, Pair<Int, Int>> {
+    fun pageOf(itemId: Long): Int? = placed.firstOrNull { it.item.id == itemId }?.page
+
+    /**
+     * Simulates, on [page], what OxygenOS/One UI do while an icon is carried: the hole left by the lifted icon is
+     * closed (the following icons slide back until the first empty cell) and, if [target] is given, the icons from that
+     * cell on are pushed forward to make room. Returns the new cell of every icon that would move.
+     */
+    fun simulate(liftedId: Long, page: Int, target: Pair<Int, Int>?): Map<Long, Pair<Int, Int>> {
         val cols = columns; val perPage = cols * rows
-        val cells = HashMap<Int, Placed>()                       // pos -> placed (1x1 and widgets)
-        val blocked = HashSet<Int>()
-        for (p in placed) if (p.page == page && p.item.id != itemId) {
+        val cells = HashMap<Int, Long>(); val blocked = HashSet<Int>()
+        val origin = HashMap<Long, Int>(); var liftedPos = -1
+        for (p in placed) if (p.page == page) {
             if (p.spanX > 1 || p.spanY > 1) { for (cx in p.x until p.x + p.spanX) for (cy in p.y until p.y + p.spanY) blocked += cy * cols + cx }
-            else cells[p.y * cols + p.x] = p
+            else if (p.item.id == liftedId) liftedPos = p.y * cols + p.x
+            else { cells[p.y * cols + p.x] = p.item.id; origin[p.item.id] = p.y * cols + p.x }
+        }
+        if (liftedPos >= 0) { // close the hole
+            var q = liftedPos
+            while (true) {
+                val next = q + 1
+                if (next >= perPage || next in blocked) break
+                val id = cells[next] ?: break
+                cells[q] = id; cells.remove(next); q = next
+            }
+        }
+        if (target != null) { // push from the target cell
+            var carry: Long? = liftedId; var pos = target.second * cols + target.first
+            while (carry != null) {
+                if (pos >= perPage) return emptyMap()                // would overflow to another page: no preview
+                if (pos in blocked) { pos++; continue }
+                val occ = cells[pos]; cells[pos] = carry; carry = occ; pos++
+            }
         }
         val result = LinkedHashMap<Long, Pair<Int, Int>>()
-        var carry: Long? = itemId; var pos = y * cols + x
-        while (carry != null) {
-            if (pos >= perPage) return emptyMap()                // would overflow to the next page: no preview
-            if (pos in blocked) { pos++; continue }
-            val occ = cells[pos]
-            if (carry != itemId) result[carry] = (pos % cols) to (pos / cols)
-            carry = occ?.item?.id
-            pos++
-        }
+        for ((pos, id) in cells) if (id != liftedId && origin[id] != pos) result[id] = (pos % cols) to (pos / cols)
         return result
+    }
+
+    /** Applies the "close the hole" step for a lifted workspace icon (call before moving or removing it). */
+    fun closeGapFor(itemId: Long) {
+        val page = pageOf(itemId) ?: return
+        val moves = simulate(itemId, page, null)
+        for ((id, c) in moves) {
+            val i = placed.indexOfFirst { it.item.id == id }
+            if (i >= 0) placed[i] = placed[i].copy(x = c.first, y = c.second)
+        }
     }
 
     /** Removes the home-screen shortcuts (not folder members) of [appId]. */

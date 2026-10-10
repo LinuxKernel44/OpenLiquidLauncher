@@ -24,7 +24,7 @@ Settings → **Import** copies your dock, pages, folders, widgets and grid size 
 Notes: apps are matched by component so only installed apps are imported. With Shizuku, folders with more than 9 apps are opened one by one in the stock launcher to read every app (keep the screen on and hands off during the import). Widgets can't be copied directly: each one asks you to confirm and is then placed at its original cell. The launcher must be alive: the app briefly opens it if needed.
 
 ## Home screen gestures
-- **Move icons:** long-press and drag. Hover a cell for a moment and the other icons glide aside to make room; drop on the *centre* of an icon to make a folder.
+- **Move icons:** long-press and drag. The icons after the lifted one close the hole (like OxygenOS). Hover a cell for a moment and the other icons glide aside to make room; drop on the *centre* of an icon to make a folder.
 - **Folder with several fingers:** hold an app with one finger and tap other apps with your other fingers (they get a green tick), then lift the first finger: all of them become one folder. Hold a folder and tap apps to add them to it.
 - Lift a held app without dragging or tapping others to open its menu.
 

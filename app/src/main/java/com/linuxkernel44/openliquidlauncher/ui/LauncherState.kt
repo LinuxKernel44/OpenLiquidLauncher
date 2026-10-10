@@ -162,6 +162,8 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
             menu = null
             dragFromOverlay = drawerTarget || openFolderId != null
             dragPayload = p
+            previewKey = null
+            preview = layout.pageOf(p.itemId)?.let { layout.simulate(p.itemId, it, null) } ?: emptyMap()
         }
         dragPointer = pointer
         dropTarget = computeTarget(pointer)
@@ -171,12 +173,14 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     private fun schedulePreview(t: DropTarget.Cell?) {
         val key = t?.takeIf { it.push }
         if (key == previewKey) return
-        previewKey = key; previewJob?.cancel(); preview = emptyMap()
+        previewKey = key; previewJob?.cancel()
         val id = dragPayload?.itemId ?: -1L
+        // Without a hovered cell the icons just close the hole left by the lifted one.
+        preview = layout.pageOf(id)?.let { layout.simulate(id, it, null) } ?: emptyMap()
         if (key == null || id < 0) return
         previewJob = activity.lifecycleScope.launch {
             kotlinx.coroutines.delay(260) // dwell, like OxygenOS / One UI: icons move aside only if you linger
-            preview = layout.previewPush(id, key.page, key.x, key.y)
+            preview = layout.simulate(id, key.page, key.x to key.y)
         }
     }
 
@@ -276,6 +280,8 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
 
     private fun drop(payload: DragPayload, target: DropTarget?): Item? {
         val newItem: Item? = payload.item ?: payload.app?.let { AppItem(layout.newId(), it.id) }
+        // Same as the live preview: the lifted icon leaves a hole that the following icons close.
+        if (target != null && payload.item != null) layout.closeGapFor(payload.item.id)
         when (target) {
             null -> return payload.item
             DropTarget.Remove -> {
@@ -287,7 +293,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
                 newItem ?: return null
                 removeFromSourceFolder(payload)
                 if (target.mergeWith != null) (newItem as? AppItem)?.let { layout.mergeInto(it, target.mergeWith) }
-                else if (target.push) layout.insertPushing(newItem, target.page, target.x, target.y)
+                else if (target.push || (newItem !is WidgetItem && !layout.isFree(target.page, target.x, target.y, 1, 1, newItem.id))) layout.insertPushing(newItem, target.page, target.x, target.y)
                 else layout.placeOnWorkspace(newItem, target.page, target.x, target.y)
             }
             is DropTarget.Slot -> {
