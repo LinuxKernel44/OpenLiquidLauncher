@@ -17,8 +17,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import com.linuxkernel44.openliquidlauncher.LauncherActivity
@@ -125,11 +128,31 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     val dragging get() = dragPayload != null
     var dragFromOverlay by mutableStateOf(false)
 
+    // ---- multi-finger folder creation: hold one app, tap others with other fingers, release to group them ----
+    var holdPayload by mutableStateOf<DragPayload?>(null)
+    val stackIds = mutableStateListOf<String>()
+    private var holdAnchor = Rect.Zero
+
+    /** Live "make room" preview: item id -> (x, y) on the current page. Set after hovering a cell for a moment. */
+    var preview by mutableStateOf<Map<Long, Pair<Int, Int>>>(emptyMap())
+    private var previewKey: DropTarget.Cell? = null
+    private var previewJob: kotlinx.coroutines.Job? = null
+
+    fun toggleStack(appId: String) {
+        val base = holdPayload?.let { it.app?.id ?: (it.item as? AppItem)?.appId }
+        if (appId == base && holdPayload?.item !is FolderItem) return
+        activity.window.decorView.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        if (!stackIds.remove(appId)) stackIds += appId
+    }
+
     fun beginPress(payload: DragPayload, anchor: Rect, pointer: Offset, showMenu: Boolean = true) {
         activity.window.decorView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         pendingPayload = payload
         pressStart = pointer
-        if (showMenu) menu = MenuState(payload, anchor)
+        holdPayload = payload
+        holdAnchor = anchor
+        stackIds.clear()
+        // The context menu now opens when the finger is lifted without dragging and without picking other apps.
     }
 
     fun dragMove(pointer: Offset, slopPx: Float) {
@@ -142,20 +165,66 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         }
         dragPointer = pointer
         dropTarget = computeTarget(pointer)
+        schedulePreview(dropTarget as? DropTarget.Cell)
     }
+
+    private fun schedulePreview(t: DropTarget.Cell?) {
+        val key = t?.takeIf { it.push }
+        if (key == previewKey) return
+        previewKey = key; previewJob?.cancel(); preview = emptyMap()
+        val id = dragPayload?.itemId ?: -1L
+        if (key == null || id < 0) return
+        previewJob = activity.lifecycleScope.launch {
+            kotlinx.coroutines.delay(260) // dwell, like OxygenOS / One UI: icons move aside only if you linger
+            preview = layout.previewPush(id, key.page, key.x, key.y)
+        }
+    }
+
+    private fun clearPreview() { previewJob?.cancel(); previewKey = null; preview = emptyMap() }
 
     fun dragEnd() {
         val payload = dragPayload
+        val held = holdPayload
+        val stack = stackIds.toList()
+        clearPreview()
         if (payload != null) {
-            drop(payload, dropTarget)
+            val placedItem = drop(payload, dropTarget)
             dragPayload = null
             dropTarget = null
+            if (stack.isNotEmpty()) groupIntoFolder(payload, placedItem, stack)
+        } else if (held != null) {
+            if (stack.isNotEmpty()) groupIntoFolder(held, null, stack)
+            else menu = MenuState(held, holdAnchor)
         }
-        pendingPayload = null
+        pendingPayload = null; holdPayload = null; stackIds.clear()
     }
 
     fun dragCancel() {
-        dragPayload = null; dropTarget = null; pendingPayload = null
+        clearPreview()
+        dragPayload = null; dropTarget = null; pendingPayload = null; holdPayload = null; stackIds.clear()
+    }
+
+    /** Hold + extra taps: the held app and the tapped ones become one folder (or join the held folder). */
+    private fun groupIntoFolder(payload: DragPayload, placed: Item?, stack: List<String>) {
+        val baseId = payload.app?.id ?: (payload.item as? AppItem)?.appId
+        val heldFolder = payload.item as? FolderItem
+        when {
+            heldFolder != null -> {
+                val cur = layout.findItem(heldFolder.id) as? FolderItem ?: return
+                stack.forEach { layout.removeAppItems(it) }
+                layout.replaceItem(cur.copy(appIds = (cur.appIds + stack).distinct()))
+            }
+            baseId != null -> {
+                val ids = (listOf(baseId) + stack).distinct()
+                stack.forEach { layout.removeAppItems(it) }
+                // The held app's item: where it is now (moved or not), if it still exists on the home screen.
+                val item = (placed ?: payload.item)?.let { layout.findItem(it.id) } as? AppItem
+                if (item != null) layout.swapItem(item.id, FolderItem(layout.newId(), "Folder", ids))
+                else layout.addToFirstFree(FolderItem(layout.newId(), "Folder", ids))
+            }
+        }
+        layout.normalize(apps.apps.value.mapTo(HashSet()) { it.id })
+        activity.toast("Folder created")
     }
 
     private fun computeTarget(p: Offset): DropTarget? {
@@ -205,24 +274,24 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         return null
     }
 
-    private fun drop(payload: DragPayload, target: DropTarget?) {
+    private fun drop(payload: DragPayload, target: DropTarget?): Item? {
         val newItem: Item? = payload.item ?: payload.app?.let { AppItem(layout.newId(), it.id) }
         when (target) {
-            null -> return
+            null -> return payload.item
             DropTarget.Remove -> {
                 payload.item?.let { removeItem(it) }
                 payload.fromFolderId?.let { fid -> payload.app?.let { a -> (layout.findItem(fid) as? FolderItem)?.let { layout.removeFromFolder(it, a.id) } } }
             }
             DropTarget.Uninstall -> (payload.app ?: (payload.item as? AppItem)?.let { apps.byId(it.appId) })?.let(::uninstall)
             is DropTarget.Cell -> {
-                newItem ?: return
+                newItem ?: return null
                 removeFromSourceFolder(payload)
                 if (target.mergeWith != null) (newItem as? AppItem)?.let { layout.mergeInto(it, target.mergeWith) }
                 else if (target.push) layout.insertPushing(newItem, target.page, target.x, target.y)
                 else layout.placeOnWorkspace(newItem, target.page, target.x, target.y)
             }
             is DropTarget.Slot -> {
-                newItem ?: return
+                newItem ?: return null
                 removeFromSourceFolder(payload)
                 if (target.mergeWith != null) (newItem as? AppItem)?.let { layout.mergeInto(it, target.mergeWith) }
                 else if (target.push) layout.insertDockPushing(newItem, target.index)
@@ -231,6 +300,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         }
         if (payload.fromFolderId != null) openFolderId = null
         layout.normalize(apps.apps.value.mapTo(HashSet()) { it.id })
+        return newItem
     }
 
     private fun removeFromSourceFolder(payload: DragPayload) {

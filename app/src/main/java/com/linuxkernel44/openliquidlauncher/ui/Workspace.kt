@@ -26,6 +26,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
@@ -59,11 +60,19 @@ fun HomeItemView(
     when (item) {
         is AppItem -> {
             val app = state.apps.byId(item.appId) ?: return
+            val inStack = app.id in state.stackIds
+            val held = state.holdPayload?.item?.id == item.id
             AppCell(
                 app, settings, badges[app.packageName] ?: 0,
-                m.itemGestures(state, { DragPayload(item = item) }, onTap = { state.launch(app, it) }),
+                m
+                    .graphicsLayer { val sc = if (held) 1.12f else if (inStack) 0.9f else 1f; scaleX = sc; scaleY = sc; alpha = if (inStack) 0.75f else alpha }
+                    .itemGestures(state, { DragPayload(item = item) }, onTap = {
+                        // A finger is holding another app: this tap adds this app to the new folder instead of launching it.
+                        if (state.holdPayload != null) state.toggleStack(app.id) else state.launch(app, it)
+                    }),
                 iconSize = iconSize,
                 showLabel = showLabel,
+                selected = inStack,
             )
         }
         is FolderItem -> FolderCell(
@@ -144,10 +153,14 @@ fun Workspace(
                 ) {
                     layout.placed.filter { it.page == page }.forEach { p ->
                         androidx.compose.runtime.key(p.item.id) {
+                            // Live reorder: icons glide aside while you hover a cell (OxygenOS / One UI style).
+                            val moved = state.preview[p.item.id]
+                            val tx by androidx.compose.animation.core.animateDpAsState(sideMargin + cw * (moved?.first ?: p.x), androidx.compose.animation.core.spring(0.8f, 400f), label = "px")
+                            val ty by androidx.compose.animation.core.animateDpAsState(ch * (moved?.second ?: p.y), androidx.compose.animation.core.spring(0.8f, 400f), label = "py")
                             HomeItemView(
                                 p.item, state, settings, badges, backdrop, style,
                                 Modifier
-                                    .offset(sideMargin + cw * p.x, ch * p.y)
+                                    .offset(tx, ty)
                                     .size(cw * p.spanX, ch * p.spanY)
                                     .padding(if (p.item is WidgetItem) 4.dp else 2.dp),
                                 // Never taller than the cell: icon + label must fit, whatever the number of rows.

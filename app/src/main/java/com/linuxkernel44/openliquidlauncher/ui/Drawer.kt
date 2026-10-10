@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
@@ -133,8 +134,11 @@ fun AppDrawer(
 private fun DrawerCell(app: AppInfo, state: LauncherState, settings: LauncherSettings, badges: Map<String, Int>, modifier: Modifier) {
     AppCell(
         app, settings, badges[app.packageName] ?: 0,
-        modifier.itemGestures(state, { DragPayload(app = app) }, onTap = { r ->
-            state.launch(app, r)
-        }),
+        modifier
+            .graphicsLayer { val sc = if (app.id in state.stackIds) 0.9f else 1f; scaleX = sc; scaleY = sc }
+            .itemGestures(state, { DragPayload(app = app) }, onTap = { r ->
+                if (state.holdPayload != null) state.toggleStack(app.id) else state.launch(app, r)
+            }),
+        selected = app.id in state.stackIds,
     )
 }

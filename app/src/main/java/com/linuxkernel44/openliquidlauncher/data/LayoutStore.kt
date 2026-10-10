@@ -147,6 +147,45 @@ class LayoutStore(private val context: Context, private val settings: SettingsSt
         changed()
     }
 
+    /** Where the icons of [page] would end up if [itemId] were dropped on (x, y): used for the live "make room" animation. */
+    fun previewPush(itemId: Long, page: Int, x: Int, y: Int): Map<Long, Pair<Int, Int>> {
+        val cols = columns; val perPage = cols * rows
+        val cells = HashMap<Int, Placed>()                       // pos -> placed (1x1 and widgets)
+        val blocked = HashSet<Int>()
+        for (p in placed) if (p.page == page && p.item.id != itemId) {
+            if (p.spanX > 1 || p.spanY > 1) { for (cx in p.x until p.x + p.spanX) for (cy in p.y until p.y + p.spanY) blocked += cy * cols + cx }
+            else cells[p.y * cols + p.x] = p
+        }
+        val result = LinkedHashMap<Long, Pair<Int, Int>>()
+        var carry: Long? = itemId; var pos = y * cols + x
+        while (carry != null) {
+            if (pos >= perPage) return emptyMap()                // would overflow to the next page: no preview
+            if (pos in blocked) { pos++; continue }
+            val occ = cells[pos]
+            if (carry != itemId) result[carry] = (pos % cols) to (pos / cols)
+            carry = occ?.item?.id
+            pos++
+        }
+        return result
+    }
+
+    /** Removes the home-screen shortcuts (not folder members) of [appId]. */
+    fun removeAppItems(appId: String) {
+        placed.removeAll { (it.item as? AppItem)?.appId == appId }
+        for (i in dock.indices) if ((dock[i] as? AppItem)?.appId == appId) dock[i] = null
+        changed()
+    }
+
+    /** Replaces item [oldId] with [new] in the same slot. */
+    fun swapItem(oldId: Long, new: Item) {
+        for (i in placed.indices) if (placed[i].item.id == oldId) placed[i] = placed[i].copy(item = new)
+        for (i in dock.indices) if (dock[i]?.id == oldId) dock[i] = new
+        changed()
+    }
+
+    fun folderContaining(appId: String): FolderItem? =
+        (placed.map { it.item } + dock.filterNotNull()).filterIsInstance<FolderItem>().firstOrNull { appId in it.appIds }
+
     /** Same idea in the dock: shift icons to the right; the last one goes to the home screen if the dock is full. */
     fun insertDockPushing(item: Item, slot: Int) {
         detach(item.id)

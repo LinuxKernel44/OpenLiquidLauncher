@@ -87,11 +87,13 @@ fun AppCell(
     modifier: Modifier = Modifier,
     iconSize: Dp = 56.dp,
     showLabel: Boolean = settings.showLabels,
+    selected: Boolean = false,
 ) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Box {
             AppIconImage(app, settings, iconSize * settings.iconScale)
             if (settings.showBadges && badge > 0) BadgeDot(badge, Modifier.align(Alignment.TopEnd))
+            if (selected) Box(Modifier.align(Alignment.TopStart).size(20.dp).clip(CircleShape).background(Color(0xFF34C759)), contentAlignment = Alignment.Center) { GText("✓", size = 12f, weight = androidx.compose.ui.text.font.FontWeight.Bold) }
         }
         if (showLabel) GText(app.label, Modifier.padding(top = 4.dp, start = 2.dp, end = 2.dp), size = 11.5f)
     }
