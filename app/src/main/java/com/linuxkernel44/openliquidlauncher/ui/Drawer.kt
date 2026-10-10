@@ -74,6 +74,7 @@ fun AppDrawer(
     Box(
         Modifier
             .fillMaxSize()
+            .bleed()
             .liquidGlass(
                 backdrop, style.copy(refractionHeight = 0f, blur = style.blur + 20f), // no lens: it warps the edges of a full-screen sheet
                 // Square corners: rounded ones leave sharp wallpaper showing around the sheet.
@@ -87,7 +88,7 @@ fun AppDrawer(
             ),
     ) {
         Column(
-            Modifier.fillMaxSize()
+            Modifier.fillMaxSize().padding(48.dp)
                 .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.navigationBars).union(WindowInsets.ime)),
         ) {
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp)) {

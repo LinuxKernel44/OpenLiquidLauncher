@@ -235,12 +235,12 @@ fun WidgetPicker(state: LauncherState, backdrop: Backdrop, style: GlassStyle, on
     }
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f)).clickable(interactionSource = null, indication = null) { state.showWidgetPicker = false }) {
         Column(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.72f)
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.72f).bleed(top = false)
                 .liquidGlass(backdrop, style.copy(refractionHeight = minOf(style.refractionHeight, 5f), blur = style.blur + 12f), RoundedCornerShape(topStart = 38.dp, topEnd = 38.dp), surfaceAlpha = style.surfaceAlpha + 0.12f)
                 .clickable(interactionSource = null, indication = null) { },
         ) {
-            GText("Widgets", Modifier.padding(20.dp), size = 20f, weight = FontWeight.Bold)
-            LazyColumn(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+            GText("Widgets", Modifier.padding(start = 68.dp, top = 20.dp, bottom = 20.dp), size = 20f, weight = FontWeight.Bold)
+            LazyColumn(Modifier.weight(1f).padding(horizontal = 60.dp)) {
                 items(rows) { r ->
                     Row(
                         Modifier.fillMaxWidth().clickable { state.showWidgetPicker = false; onPick(r.info) }.padding(10.dp),
@@ -256,7 +256,7 @@ fun WidgetPicker(state: LauncherState, backdrop: Backdrop, style: GlassStyle, on
                     }
                 }
             }
-            Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars).height(8.dp))
+            Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars).height(56.dp))
         }
     }
 }

@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Shadow as TextShadow
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -169,3 +170,16 @@ fun GlassCircleButton(
 
 
 val GlassTextFieldStyle = TextStyle(color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+
+/**
+ * Lays the node out larger than its slot (by [extend] on each side, but not the top unless [top]) so it
+ * bleeds off-screen. Backdrop blur has nothing to sample past the wallpaper's edge, which would leave a
+ * sharp strip along full-width sheets; pushing that zone off-screen hides it. Pad the content back by [extend].
+ */
+fun Modifier.bleed(extend: androidx.compose.ui.unit.Dp = 48.dp, top: Boolean = true): Modifier =
+    layout { measurable, c ->
+        val e = extend.roundToPx()
+        val t = if (top) e else 0
+        val p = measurable.measure(androidx.compose.ui.unit.Constraints.fixed(c.maxWidth + 2 * e, c.maxHeight + e + t))
+        layout(c.maxWidth, c.maxHeight) { p.place(-e, -t) }
+    }

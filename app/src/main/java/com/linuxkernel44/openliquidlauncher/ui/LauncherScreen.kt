@@ -94,8 +94,10 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
     ) {
         val wp = wallpaper
         if (wp != null) {
-            Image(wp, null, Modifier.fillMaxSize().layerBackdrop(backdrop), contentScale = ContentScale.Crop)
-        } else Box(Modifier.fillMaxSize().layerBackdrop(backdrop).background(Color(0xFF0B1030)))
+            // Overscan: blur has nothing to sample past the layer's edge, which leaves sharp strips along the
+            // screen edges of full-width glass. Extending the wallpaper off-screen hides that zone.
+            Image(wp, null, Modifier.fillMaxSize().bleed(24.dp).layerBackdrop(backdrop), contentScale = ContentScale.Crop)
+        } else Box(Modifier.fillMaxSize().bleed(24.dp).layerBackdrop(backdrop).background(Color(0xFF0B1030)))
 
         // ---- home ----
         // Home items resolve apps through AppRepository (not snapshot state), so wait until it is loaded.
