@@ -100,6 +100,8 @@ fun SettingsScreen(
             Section("Liquid glass", backdrop, style) {
                 SliderRow("Roundness", settings.glassRoundness * 100f, 0f, 100f, "%.0f", default = LauncherSettings().glassRoundness * 100f) { store.update { copy(glassRoundness = it / 100f) } }
                 Hint("Corner roundness of folders, the dock, menus, cards and sheets. 50 = the original look.")
+                SliderRow("Folder roundness", settings.folderRoundness * 100f, 0f, 100f, "%.0f", default = LauncherSettings().folderRoundness * 100f) { store.update { copy(folderRoundness = it / 100f) } }
+                Hint("Corner roundness of folders only: the icon on the home screen and the opened folder.")
                 SliderRow("Droplet look", settings.glassDroplet * 100f, 0f, 100f, "%.0f", default = LauncherSettings().glassDroplet * 100f) { store.update { copy(glassDroplet = it / 100f) } }
                 Hint("Makes folders, the dock, buttons, the scroll handle and menus clearer, rounder and more refractive, like a drop of water. 0 = the original look.")
                 SliderRow("Blur", settings.glassBlur, 0f, 30f, "%.1f", default = LauncherSettings().glassBlur) { store.update { copy(glassBlur = it) } }
@@ -107,7 +109,7 @@ fun SettingsScreen(
                 SliderRow("Refraction strength", settings.glassRefractionAmount, 0f, 60f, "%.0f", default = LauncherSettings().glassRefractionAmount) { store.update { copy(glassRefractionAmount = it) } }
                 SliderRow("Surface opacity", settings.glassSurfaceAlpha, 0f, 0.6f, "%.2f", default = LauncherSettings().glassSurfaceAlpha) { store.update { copy(glassSurfaceAlpha = it) } }
                 SwitchRow("Chromatic dispersion", settings.glassDispersion) { store.update { copy(glassDispersion = it) } }
-                ButtonRow("Reset glass") { store.update { val d = LauncherSettings(); copy(glassBlur = d.glassBlur, glassRefractionHeight = d.glassRefractionHeight, glassRefractionAmount = d.glassRefractionAmount, glassSurfaceAlpha = d.glassSurfaceAlpha, glassDispersion = d.glassDispersion, glassDroplet = d.glassDroplet, glassRoundness = d.glassRoundness) } }
+                ButtonRow("Reset glass") { store.update { val d = LauncherSettings(); copy(glassBlur = d.glassBlur, glassRefractionHeight = d.glassRefractionHeight, glassRefractionAmount = d.glassRefractionAmount, glassSurfaceAlpha = d.glassSurfaceAlpha, glassDispersion = d.glassDispersion, glassDroplet = d.glassDroplet, glassRoundness = d.glassRoundness, folderRoundness = d.folderRoundness) } }
             }
 
             Section("Wallpaper", backdrop, style) {
@@ -157,7 +159,7 @@ fun SettingsScreen(
 
             Section("System", backdrop, style) {
                 ButtonRow("Set as default launcher") { state.openDefaultHomeSettings() }
-                Hint("OpenLiquidLauncher 1.7.4 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
+                Hint("OpenLiquidLauncher 1.8.0 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
             }
         }
     }

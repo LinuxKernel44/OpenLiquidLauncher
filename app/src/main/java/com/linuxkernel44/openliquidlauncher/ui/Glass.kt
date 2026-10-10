@@ -65,10 +65,12 @@ data class GlassStyle(
     val droplet: Float = 0f,
     /** 0..1 corner roundness (0.5 = original). */
     val roundness: Float = 0.5f,
+    /** 0..1 roundness of folders (icon and opened panel). */
+    val folderRoundness: Float = 0.5f,
 ) {
     companion object {
         fun from(s: LauncherSettings) = GlassStyle(
-            s.glassBlur, s.glassRefractionHeight, s.glassRefractionAmount, s.glassSurfaceAlpha, s.glassDispersion, s.glassQuality, s.glassDroplet, s.glassRoundness,
+            s.glassBlur, s.glassRefractionHeight, s.glassRefractionAmount, s.glassSurfaceAlpha, s.glassDispersion, s.glassQuality, s.glassDroplet, s.glassRoundness, s.folderRoundness,
         )
     }
 }
@@ -222,13 +224,12 @@ fun Modifier.bleed(extend: androidx.compose.ui.unit.Dp = 48.dp, top: Boolean = t
  * the Roundness setting scales it (0 = nearly square, 0.5 = original, 1 = capsule) and, for [small] elements, the Droplet
  * setting pushes it further toward a full capsule.
  */
-fun GlassStyle.round(basePercent: Int, small: Boolean = false): RoundedCornerShape {
-    val r = roundness
+fun GlassStyle.round(basePercent: Int, small: Boolean = false, r: Float = roundness): RoundedCornerShape {
     var p = if (r <= 0.5f) basePercent * (r / 0.5f) else basePercent + (50 - basePercent) * ((r - 0.5f) / 0.5f)
     if (small) p += (50f - p) * droplet
     return RoundedCornerShape(percent = p.toInt().coerceIn(0, 50))
 }
 
 /** Same, for big containers sized in dp (cards, sheets, dialogs): 0 -> nearly square, 0.5 -> [base], 1 -> twice [base]. */
-fun GlassStyle.roundDp(base: androidx.compose.ui.unit.Dp): RoundedCornerShape =
-    RoundedCornerShape((base * 2f * roundness).coerceAtLeast(2.dp))
+fun GlassStyle.roundDp(base: androidx.compose.ui.unit.Dp, r: Float = roundness): RoundedCornerShape =
+    RoundedCornerShape((base * 2f * r).coerceAtLeast(2.dp))

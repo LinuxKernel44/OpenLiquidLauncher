@@ -174,7 +174,7 @@ fun FolderOverlay(state: LauncherState, folderId: Long, settings: LauncherSettin
     ) {
         Column(
             Modifier.padding(horizontal = 26.dp).fillMaxWidth().scale(0.9f + 0.1f * appear).alpha(fade)
-                .liquidGlass(backdrop, style, style.roundDp(38.dp), surfaceAlpha = style.surfaceAlpha + 0.1f)
+                .liquidGlass(backdrop, style, style.roundDp(38.dp, style.folderRoundness), surfaceAlpha = style.surfaceAlpha + 0.1f)
                 .clickable(interactionSource = null, indication = null) { }
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

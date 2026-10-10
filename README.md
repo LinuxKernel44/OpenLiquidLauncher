@@ -33,6 +33,8 @@ Tip: **double-tap any slider in Settings to reset it** to its default value.
 ## Roundness
 Settings → Liquid glass → **Roundness** (0–100, default 50 = the original look): corner roundness of every glass element — folders, dock, buttons, menus, cards, sheets and dialogs — from nearly square to fully round.
 
+Settings → Liquid glass → **Folder roundness** (0–100, default 50): the same for folders only (home icon and opened panel), independent from Roundness.
+
 ## Droplet look
 Settings → Liquid glass → **Droplet look** (0–100, default 0 = the original look): makes small glass elements (folders, dock, edit buttons, drop zones, menus, scroll handle) clearer, rounder and more refractive, with a brighter rim and a soft inner shadow.
 
