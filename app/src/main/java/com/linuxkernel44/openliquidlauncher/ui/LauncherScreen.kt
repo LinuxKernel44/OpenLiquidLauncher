@@ -57,6 +57,15 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
     val synced by state.apps.synced.collectAsState()
     val appList by state.apps.apps.collectAsState()
     LaunchedEffect(loaded) { if (loaded) state.ensureInitialLayout() }
+    // Let the icons reach the screen first, then switch the liquid glass shaders on.
+    LaunchedEffect(Unit) {
+        if (!GlassGate.ready) {
+            androidx.compose.runtime.withFrameNanos { }
+            androidx.compose.runtime.withFrameNanos { }
+            kotlinx.coroutines.delay(150)
+            GlassGate.ready = true
+        }
+    }
     // Apps uninstalled (or hidden) while we were away: drop them from the home screen as soon as the real list is known.
     LaunchedEffect(synced, appList) { if (synced) state.layout.normalize(appList.mapTo(HashSet()) { it.id }) }
     LaunchedEffect(settings.wallpaperMode) { state.app.wallpaper.refresh() }

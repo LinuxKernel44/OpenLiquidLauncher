@@ -81,19 +81,24 @@ class AppRepository(private val context: Context) {
         return "${f.lastModified()}:${f.length()}:${info.label}"
     }
 
-    private fun readCache(): List<AppInfo> = runCatching {
+    private suspend fun readCache(): List<AppInfo> = runCatching {
         if (!indexFile.exists()) return emptyList()
         val arr = JSONArray(indexFile.readText())
-        val list = ArrayList<AppInfo>(arr.length())
-        for (i in 0 until arr.length()) {
-            val o = arr.getJSONObject(i)
-            val user = runCatching { userManager.getUserForSerialNumber(o.getLong("serial")) }.getOrNull() ?: continue
-            val bmp = BitmapFactory.decodeFile(File(cacheDir, o.getString("file")).path) ?: continue
-            val cn = ComponentName.unflattenFromString(o.getString("component")) ?: continue
-            val themed = File(cacheDir, "t_" + o.getString("file")).takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.path) }
-            list += AppInfo(o.getString("id"), o.getString("label"), cn, user, bmp.asImageBitmap(), themed?.asImageBitmap())
+        // Decode the PNGs on all cores: with ~200 apps this is the main cost of a cold start.
+        coroutineScope {
+            (0 until arr.length()).map { i ->
+                async {
+                    runCatching {
+                        val o = arr.getJSONObject(i)
+                        val user = userManager.getUserForSerialNumber(o.getLong("serial")) ?: return@async null
+                        val bmp = BitmapFactory.decodeFile(File(cacheDir, o.getString("file")).path) ?: return@async null
+                        val cn = ComponentName.unflattenFromString(o.getString("component")) ?: return@async null
+                        val themed = File(cacheDir, "t_" + o.getString("file")).takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.path) }
+                        AppInfo(o.getString("id"), o.getString("label"), cn, user, bmp.asImageBitmap(), themed?.asImageBitmap())
+                    }.getOrNull()
+                }
+            }.awaitAll().filterNotNull()
         }
-        list
     }.getOrDefault(emptyList())
 
     private fun cacheKeyOf(id: String): String = id.hashCode().toUInt().toString(16) + ".png"

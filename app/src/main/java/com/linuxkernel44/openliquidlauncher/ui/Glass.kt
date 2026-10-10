@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.padding
@@ -41,6 +42,14 @@ import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.shadow.Shadow
 import com.linuxkernel44.openliquidlauncher.data.LauncherSettings
 
+/**
+ * Cold start: the first draw of the glass shaders (blur, lens, highlight, shadow) is expensive. Until [ready] the launcher
+ * draws a light flat tint instead, so icons appear at once; the real liquid glass switches on right after the first frames.
+ */
+object GlassGate {
+    var ready by androidx.compose.runtime.mutableStateOf(false)
+}
+
 /** User-tunable parameters of the liquid glass material (see Settings). */
 @Immutable
 data class GlassStyle(
@@ -70,7 +79,10 @@ fun Modifier.liquidGlass(
     layerBlock: (GraphicsLayerScope.() -> Unit)? = null,
     /** Rim light + drop shadow; turn off for full-screen sheets, where they just draw a frame along the screen edges. */
     edges: Boolean = true,
-): Modifier = drawBackdrop(
+): Modifier = if (!GlassGate.ready) {
+    (if (layerBlock != null) Modifier.graphicsLayer(layerBlock) else Modifier)
+        .background(Color.White.copy(alpha = surfaceAlpha + 0.06f), shape)
+} else drawBackdrop(
     backdrop = backdrop,
     shape = { shape },
     effects = {
