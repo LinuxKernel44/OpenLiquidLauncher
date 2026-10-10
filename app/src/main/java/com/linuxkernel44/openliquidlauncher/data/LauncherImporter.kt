@@ -52,6 +52,10 @@ class LauncherImporter(private val context: Context, private val apps: AppReposi
             // Well-known authorities as a fallback when the provider list is hidden from us.
             val guesses = listOf("$pkg.settings", "com.android.launcher.settings", "com.android.launcher3.settings", "net.oneplus.launcher.settings")
             LauncherSource(pkg, label, (authorities + guesses).distinct())
+        }.let { list ->
+            // Don't probe the same authority once per launcher: the first source keeps it.
+            val seen = HashSet<String>()
+            list.map { src -> src.copy(authorities = src.authorities.filter { seen.add(it) }) }.filter { it.authorities.isNotEmpty() }
         }
     }
 
@@ -80,14 +84,15 @@ class LauncherImporter(private val context: Context, private val apps: AppReposi
                 errors += "$authority: access denied"
                 if (denied == null) denied = authority
             } catch (e: ImportException) {
-                throw e
+                errors += "$authority: ${e.message}"
             } catch (e: Exception) {
                 errors += "$authority: ${e.javaClass.simpleName} ${e.message?.take(80)}"
             }
         }
         throw ImportException(
-            if (denied != null) "${source.label} doesn't let other apps read its layout (access denied on $denied)."
-            else "No readable layout found in ${source.label} (tried: ${source.authorities.joinToString()}).",
+            if (errors.any { !it.endsWith("no such provider") && !it.endsWith("access denied") }) errors.filterNot { it.endsWith("no such provider") }.joinToString("\n")
+            else if (denied != null) "${source.label} doesn't let other apps read its layout (access denied on $denied)."
+            else "No readable layout found in ${source.label}.",
         )
     }
 
@@ -109,19 +114,26 @@ class LauncherImporter(private val context: Context, private val apps: AppReposi
     }
 
     private fun readRows(c: Cursor): List<Row> {
-        fun col(n: String) = c.getColumnIndex(n)
-        val idI = col("_id"); val titleI = col("title"); val intentI = col("intent"); val contI = col("container")
-        val screenI = col("screen"); val xI = col("cellX"); val yI = col("cellY"); val sxI = col("spanX"); val syI = col("spanY")
-        val typeI = col("itemType"); val provI = col("appWidgetProvider"); val rankI = col("rank")
-        if (idI < 0 || contI < 0 || typeI < 0) throw ImportException("Unexpected table format (missing columns).")
-        fun int(i: Int, d: Int = 0) = if (i >= 0 && !c.isNull(i)) c.getInt(i) else d
-        fun str(i: Int) = if (i >= 0 && !c.isNull(i)) c.getString(i) else null
+        // Column names differ slightly between forks (cellX / cell_x / CELLX...): compare case- and underscore-insensitively.
+        val names = c.columnNames
+        fun norm(n: String) = n.lowercase().replace("_", "")
+        val byNorm = names.withIndex().associate { norm(it.value) to it.index }
+        fun col(vararg alts: String): Int = alts.firstNotNullOfOrNull { byNorm[norm(it)] } ?: -1
+        val idI = col("_id", "id"); val titleI = col("title", "name", "label"); val intentI = col("intent", "intentUri")
+        val contI = col("container"); val screenI = col("screen", "screenId")
+        val xI = col("cellX", "x"); val yI = col("cellY", "y"); val sxI = col("spanX"); val syI = col("spanY")
+        val typeI = col("itemType", "type"); val provI = col("appWidgetProvider", "widgetProvider"); val rankI = col("rank")
+        if (idI < 0 || contI < 0 || typeI < 0) {
+            throw ImportException("Unexpected columns: " + names.joinToString(", ").take(400))
+        }
+        fun int(i: Int, d: Int = 0) = if (i >= 0 && !c.isNull(i)) runCatching { c.getInt(i) }.getOrDefault(d) else d
+        fun str(i: Int) = if (i >= 0 && !c.isNull(i)) runCatching { c.getString(i) }.getOrNull() else null
         val out = ArrayList<Row>()
         while (c.moveToNext()) out += Row(
             c.getLong(idI), str(titleI), str(intentI), int(contI), int(screenI), int(xI), int(yI),
             int(sxI, 1).coerceAtLeast(1), int(syI, 1).coerceAtLeast(1), int(typeI), str(provI), int(rankI),
         )
-        if (out.isEmpty()) throw ImportException("The source launcher has an empty layout.")
+        if (out.isEmpty()) throw ImportException("The layout table is empty (${names.size} columns).")
         return out
     }
 

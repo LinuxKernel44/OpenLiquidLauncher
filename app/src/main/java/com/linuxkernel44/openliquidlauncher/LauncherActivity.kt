@@ -104,7 +104,7 @@ class LauncherActivity : ComponentActivity() {
                             val errors = ArrayList<String>()
                             req.sources.firstNotNullOfOrNull { src ->
                                 try { state.importer.importFromProvider(src) } catch (e: ImportException) { errors += e.message.orEmpty(); null }
-                            } ?: throw ImportException(errors.joinToString("\n") + "\n\nIf you can get a copy of the launcher's launcher.db (root or a backup tool), use \"Import from launcher.db file\".")
+                            } ?: throw ImportException(errors.distinct().joinToString("\n\n") + "\n\nIf you can get a copy of the launcher's launcher.db (root or a backup tool), use \"Import from launcher.db file\".")
                         }
                         is ImportRequest.FromFile -> {
                             val tmp = File(cacheDir, "import.db")
