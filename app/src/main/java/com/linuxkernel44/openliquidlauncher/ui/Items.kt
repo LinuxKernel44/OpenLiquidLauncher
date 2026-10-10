@@ -107,6 +107,7 @@ fun FolderCell(
     style: GlassStyle,
     modifier: Modifier = Modifier,
     iconSize: Dp = 56.dp,
+    showLabel: Boolean = settings.showLabels,
 ) {
     val size = iconSize * settings.iconScale
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -124,7 +125,7 @@ fun FolderCell(
                 )
             }
         }
-        if (settings.showLabels) GText(folder.name, Modifier.padding(top = 4.dp), size = 11.5f)
+        if (showLabel) GText(folder.name, Modifier.padding(top = 4.dp), size = 11.5f)
     }
 }
 
@@ -150,6 +151,7 @@ fun Modifier.itemGestures(
             if (!enabled) return@pointerInput
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = true)
+                down.consume() // keep empty-space gestures (edit mode, double tap) from firing on icons
                 // 0 = tap, 1 = cancelled, null = long press
                 val result = withTimeoutOrNull(vc.longPressTimeoutMillis) {
                     var r = 1
@@ -209,7 +211,7 @@ fun WidgetCell(item: WidgetItem, state: LauncherState, backdrop: Backdrop, style
                         v2.onDragEnd = { state.dragEnd() }
                     }
                 },
-                update = { v -> v.updateAppWidgetSize(android.os.Bundle.EMPTY, w, h, w, h) },
+                update = { v -> runCatching { v.updateAppWidgetSize(android.os.Bundle(), w, h, w, h) } },
             )
         }
     }

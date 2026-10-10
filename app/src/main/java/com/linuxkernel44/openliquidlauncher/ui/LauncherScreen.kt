@@ -98,7 +98,8 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
         } else Box(Modifier.fillMaxSize().layerBackdrop(backdrop).background(Color(0xFF0B1030)))
 
         // ---- home ----
-        Column(
+        // Home items resolve apps through AppRepository (not snapshot state), so wait until it is loaded.
+        if (loaded) Column(
             Modifier.fillMaxSize()
                 .graphicsLayer { alpha = (1f - p * 1.4f).coerceIn(0f, 1f) }
                 .windowInsetsPadding(WindowInsets.statusBars)
@@ -127,7 +128,7 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
                 state, pagerState, settings, badges, backdrop, style,
                 onEmptyLongPress = { state.editMode = true },
                 onDoubleTap = { state.lockScreen() },
-                modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 6.dp, vertical = 6.dp),
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(start = 6.dp, end = 6.dp, top = 62.dp, bottom = 6.dp),
             )
             if (state.editMode) {
                 EditBar(state, backdrop, style, onPickWallpaper, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 10.dp))

@@ -66,6 +66,7 @@ fun HomeItemView(
         is FolderItem -> FolderCell(
             item, state.apps::byId, settings, backdrop, style,
             m.itemGestures(state, { DragPayload(item = item) }, onTap = { state.openFolderId = item.id }),
+            showLabel = showLabel,
         )
         is WidgetItem -> WidgetCell(item, state, backdrop, style, m)
     }
