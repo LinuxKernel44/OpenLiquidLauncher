@@ -266,7 +266,8 @@ fun GlassScrollHandle(
                 .graphicsLayer { this.alpha = alpha }
                 .size(widthAnim, thumbH)
                 .liquidGlass(
-                    backdrop, style.copy(refractionHeight = 9f, refractionAmount = 16f, blur = 1.5f),
+                    // The refraction zone must stay narrower than half the pill: otherwise the two edges meet and leave a seam in the middle.
+                    backdrop, style.copy(refractionHeight = (widthAnim.value / 2f - 2.5f).coerceAtLeast(1f), refractionAmount = 14f, blur = 1.5f),
                     RoundedCornerShape(50), surfaceAlpha = 0.14f,
                 ),
         )
