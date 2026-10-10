@@ -23,7 +23,14 @@ class ImportPlan(
     val folders: Int,
     val skipped: Int,
     val partialFolders: Int = 0,
+    /** Folders whose contents exceed the preview (9); opening them in the source launcher reveals the rest. */
+    val partial: List<PartialFolder> = emptyList(),
+    val stockCurrentPage: Int = 0,
+    val screenW: Int = 0,
 )
+
+/** [itemId] is our FolderItem; [tapX]/[tapY] are screen coordinates of its icon while its [page] is the visible one. */
+data class PartialFolder(val itemId: Long, val page: Int, val total: Int, val tapX: Int, val tapY: Int)
 
 /** A launcher whose home layout we may be able to read through its content provider. */
 data class LauncherSource(val packageName: String, val label: String, val authorities: List<String>)
@@ -198,10 +205,12 @@ class LauncherImporter(private val context: Context, private val apps: AppReposi
         var cellW = cellCfg?.groupValues?.get(3)?.toFloat() ?: 0f
         var cellH = cellCfg?.groupValues?.get(4)?.toFloat() ?: 0f
 
-        class Raw(val page: Int, val x: Int, val y: Int, val sx: Int, val sy: Int, val line: String)
+        class Raw(val page: Int, val x: Int, val y: Int, val sx: Int, val sy: Int, val line: String, val tapX: Int = 0, val tapY: Int = 0)
         val desktop = ArrayList<Raw>()
         val hotseat = ArrayList<Raw>()
         var section: String? = null; var sectionIndent = -1; var page = -1; var pageIndent = -1; var hotseatSlotW = 0
+        var clTop = 0; var sawcL = 0; var sawcT = 0; var screenW = 0
+        val pageLefts = ArrayList<Int>()
 
         // First pass: find cell size if the config line is absent (smallest icon bounds).
         if (cellW <= 0f) {
@@ -217,10 +226,22 @@ class LauncherImporter(private val context: Context, private val apps: AppReposi
             val ind = indentOf(raw); val l = raw.trimStart()
             if (section != null && ind <= sectionIndent) section = null
             when {
-                l.contains("Workspace{") && l.contains("app:id/workspace") -> { section = "workspace"; sectionIndent = ind; page = -1; pageIndent = ind + 2; continue }
+                l.contains("Workspace{") && l.contains("app:id/workspace") -> {
+                    section = "workspace"; sectionIndent = ind; page = -1; pageIndent = ind + 2
+                    boundsRe.find(l)?.let { screenW = it.groupValues[3].toInt() - it.groupValues[1].toInt() }
+                    continue
+                }
                 l.contains("Hotseat{") && l.contains("app:id/hotseat") -> { section = "hotseat"; sectionIndent = ind; continue }
             }
-            if (section == "workspace" && ind == pageIndent && l.contains("CellLayout{")) { page++; continue }
+            if (section == "workspace" && ind == pageIndent && l.contains("CellLayout{")) {
+                page++
+                boundsRe.find(l)?.let { clTop = it.groupValues[2].toInt(); pageLefts += it.groupValues[1].toInt() }
+                continue
+            }
+            if (section == "workspace" && ind == pageIndent + 2 && l.contains("ShortcutAndWidgetContainer{")) {
+                boundsRe.find(l)?.let { sawcL = it.groupValues[1].toInt(); sawcT = it.groupValues[2].toInt() }
+                continue
+            }
             if (section == null) continue
             val isApp = "Tag={WorkspaceItemInfo(" in l && l.contains("BubbleTextView{")
             val isFolder = l.contains("FolderIcon{") && l.contains("preViewItem")
@@ -236,6 +257,7 @@ class LauncherImporter(private val context: Context, private val apps: AppReposi
                 desktop += Raw(
                     page, Math.round(L.toInt() / cellW), Math.round(T.toInt() / cellH),
                     Math.round(w / cellW).coerceAtLeast(1), Math.round(h / cellH).coerceAtLeast(1), l,
+                    tapX = sawcL + (L.toInt() + R.toInt()) / 2, tapY = clTop + sawcT + (T.toInt() + B.toInt()) / 2,
                 )
             }
         }
@@ -247,6 +269,7 @@ class LauncherImporter(private val context: Context, private val apps: AppReposi
         var appCount = 0; var folderCount = 0; var skipped = 0
         val widgets = ArrayList<PendingWidget>()
         var partialFolders = 0
+        val partial = ArrayList<PartialFolder>()
 
         fun appByTitle(t: String): AppInfo? = apps.apps.value.firstOrNull { it.label.equals(t.trim(), ignoreCase = true) }
         fun toItem(r: Raw): Item? {
@@ -267,7 +290,12 @@ class LauncherImporter(private val context: Context, private val apps: AppReposi
                     when {
                         ids.isEmpty() -> { skipped++; null }
                         ids.size == 1 -> { appCount++; AppItem(layout.newId(), ids[0]) }
-                        else -> { folderCount++; appCount += ids.size; FolderItem(layout.newId(), name, ids) }
+                        else -> {
+                            folderCount++; appCount += ids.size
+                            FolderItem(layout.newId(), name, ids).also { f ->
+                                if (total > titles.size && r.tapX > 0) partial += PartialFolder(f.id, r.page, total, r.tapX, r.tapY)
+                            }
+                        }
                     }
                 }
                 else -> null
@@ -288,12 +316,84 @@ class LauncherImporter(private val context: Context, private val apps: AppReposi
         val dock = arrayOfNulls<Item>(dockSize).toMutableList()
         for (r in hotseat.sortedBy { it.x }) { val slot = r.x.coerceIn(0, dockSize - 1); if (dock[slot] == null) dock[slot] = toItem(r) }
 
-        if (appCount == 0 && widgets.isEmpty()) throw ImportException("Found the layout, but none of its apps are installed here.")
+        if (appCount == 0) throw ImportException("Found the layout, but none of its apps are installed here.")
         return ImportPlan(
             placed, dock, widgets,
             (gridCols ?: (desktop.maxOf { it.x + it.sx })).coerceIn(4, 6),
             (gridRows ?: (desktop.maxOf { it.y + it.sy })).coerceIn(4, 7),
             dockSize, appCount, folderCount, skipped + 0, partialFolders,
+            partial = partial,
+            stockCurrentPage = pageLefts.withIndex().minByOrNull { Math.abs(it.value) }?.index ?: 0,
+            screenW = screenW,
+        )
+    }
+
+    /**
+     * The dump only lists the first 9 apps of a folder. For bigger ones, open the folder in the (visible) source launcher
+     * with simulated taps, dump again to read every member, then close it. [sh] runs a shell command (Shizuku).
+     */
+    suspend fun completeFolders(
+        plan: ImportPlan, sh: (Array<String>) -> String, dump: () -> String,
+    ): ImportPlan {
+        if (plan.partial.isEmpty() || plan.screenW <= 0) return plan
+        val updated = HashMap<Long, List<String>>()
+        val memberRe = Regex("""WorkspaceItemInfo\(id=(\d+) type=\w+ container=(\d+) targetComponent=ComponentInfo\{([^}]*)\}""")
+        val w = plan.screenW
+        /**
+         * Workspace page currently on screen. CellLayout bounds don't move while scrolling, but every icon reports its
+         * real on-screen x (`LocationX`): the page whose icons sit closest to where they'd be unscrolled is the visible one.
+         */
+        fun visiblePage(text: String): Int {
+            val offsets = HashMap<Int, Int>()
+            var inWs = false; var page = -1
+            val bounds = Regex("""\s(-?\d+),-?\d+-""")
+            for (l in text.lineSequence()) {
+                if (l.contains("app:id/workspace") && l.contains("Workspace{")) { inWs = true; continue }
+                if (!inWs) continue
+                if (l.contains("Hotseat{")) break
+                val t = l.trimStart()
+                if (t.startsWith("com.android.launcher3.") && t.contains("CellLayout{")) { page++; continue }
+                if (page >= 0 && !offsets.containsKey(page) && "Tag={WorkspaceItemInfo(" in l) {
+                    val left = bounds.find(l)?.groupValues?.get(1)?.toIntOrNull()
+                    val locX = Regex("""LocationX=(-?\d+)""").find(l)?.groupValues?.get(1)?.toIntOrNull()
+                    if (left != null && locX != null) offsets[page] = locX - left
+                }
+            }
+            return offsets.minByOrNull { Math.abs(it.value - 36) }?.key ?: 0
+        }
+        var snapshot = dump()
+        for (pf in plan.partial.sortedBy { it.page }) {
+            var guard = 0
+            var cur = visiblePage(snapshot)
+            while (cur != pf.page && guard++ < 14) {
+                val next = pf.page > cur
+                val x1 = (if (next) w * 0.8f else w * 0.2f).toInt(); val x2 = (if (next) w * 0.2f else w * 0.8f).toInt()
+                sh(arrayOf("input", "swipe", x1.toString(), "1500", x2.toString(), "1500", "180"))
+                kotlinx.coroutines.delay(800)
+                snapshot = dump(); cur = visiblePage(snapshot)
+            }
+            var ids: List<String> = emptyList()
+            for (attempt in 0 until 3) {
+                sh(arrayOf("input", "tap", pf.tapX.toString(), pf.tapY.toString()))
+                kotlinx.coroutines.delay(1100)
+                val text = dump()
+                ids = memberRe.findAll(text).filter { it.groupValues[2].toLongOrNull()?.let { c -> c > 0 } == true }
+                    .mapNotNull { m -> ComponentName.unflattenFromString(m.groupValues[3])?.let { cn -> appFor("#Intent;component=${cn.flattenToString()};end")?.id } }
+                    .distinct().toList()
+                android.util.Log.d("OLLimp", "folder ${pf.itemId} page ${pf.page} (visible $cur) tap ${pf.tapX},${pf.tapY} attempt $attempt -> ${ids.size} apps")
+                sh(arrayOf("input", "keyevent", "KEYCODE_BACK"))
+                kotlinx.coroutines.delay(700)
+                if (ids.size > 1) break
+            }
+            snapshot = dump()
+            if (ids.size > 1) updated[pf.itemId] = ids
+        }
+        if (updated.isEmpty()) return plan
+        fun fix(i: Item?): Item? = if (i is FolderItem && updated.containsKey(i.id)) i.copy(appIds = updated.getValue(i.id)) else i
+        return ImportPlan(
+            plan.placed.map { it.copy(item = fix(it.item)!!) }, plan.dock.map(::fix), plan.widgets, plan.columns, plan.rows, plan.dockSize,
+            plan.apps + updated.entries.sumOf { (id, ids) -> ids.size - ((plan.placed.firstOrNull { it.item.id == id }?.item as? FolderItem)?.appIds?.size ?: 0) },
+            plan.folders, plan.skipped, plan.partialFolders - updated.size,
         )
     }
 
@@ -353,7 +453,7 @@ class LauncherImporter(private val context: Context, private val apps: AppReposi
 
         val cols = ((desktop.maxOfOrNull { it.x + it.spanX } ?: 5)).coerceIn(4, 6)
         val rowsN = ((desktop.maxOfOrNull { it.y + it.spanY } ?: 6)).coerceIn(4, 7)
-        if (appCount == 0 && widgets.isEmpty()) throw ImportException("Found the layout, but none of its apps are installed here.")
+        if (appCount == 0) throw ImportException("Found the layout, but none of its apps are installed here.")
         return ImportPlan(placed, dock, widgets, cols, rowsN, dockSize, appCount, folderCount, skipped)
     }
 }

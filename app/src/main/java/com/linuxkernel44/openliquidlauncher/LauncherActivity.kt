@@ -111,6 +111,8 @@ class LauncherActivity : ComponentActivity() {
         state.importConfirm = null
         state.importBusy = true
         lifecycleScope.launch {
+            // The app list loads asynchronously; matching icons against an empty list would wipe the layout.
+            while (!state.apps.loaded.value || state.apps.apps.value.isEmpty()) kotlinx.coroutines.delay(100)
             val result = withContext(Dispatchers.IO) {
                 runCatching {
                     when (req) {
@@ -148,14 +150,23 @@ class LauncherActivity : ComponentActivity() {
             val comp = state.importer.homeActivityOf(src.packageName) ?: continue
             try {
                 var text = withContext(Dispatchers.IO) { state.importer.dumpLauncher(comp, useShizuku) }
+                var stockShown = false
                 if (!state.importer.hasLayout(text)) {
-                    // The launcher isn't alive: open it briefly so there is a window to dump, then come back.
-                    startActivity(Intent().setComponent(comp).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    // The launcher isn't alive: open it briefly so there is a window to dump.
+                    startActivity(Intent().setComponent(comp).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); stockShown = true
                     kotlinx.coroutines.delay(2500)
                     text = withContext(Dispatchers.IO) { state.importer.dumpLauncher(comp, useShizuku) }
-                    startActivity(Intent(this, LauncherActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
                 }
-                return withContext(Dispatchers.IO) { state.importer.importFromDump(text) }
+                var plan = withContext(Dispatchers.IO) { state.importer.importFromDump(text) }
+                if (useShizuku && plan.partial.isNotEmpty()) {
+                    // Big folders: open each one in the stock launcher (it must be on screen) to read all its apps.
+                    if (!stockShown) { startActivity(Intent().setComponent(comp).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); stockShown = true; kotlinx.coroutines.delay(1500) }
+                    plan = withContext(Dispatchers.IO) {
+                        state.importer.completeFolders(plan, { ShizukuBridge.run(*it) }, { state.importer.dumpLauncher(comp, true) })
+                    }
+                }
+                if (stockShown) startActivity(Intent(this, LauncherActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
+                return plan
             } catch (e: ImportException) { errors += "${src.label}: ${e.message}" }
         }
         throw ImportException(errors.distinct().joinToString("\n\n"))

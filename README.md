@@ -21,7 +21,7 @@ Settings → **Import** copies your dock, pages, folders, widgets and grid size 
 2. **Import from my current launcher** first tries the launcher's content provider (works for open launchers), then `dumpsys`, which needs the DUMP permission granted once: `adb shell pm grant com.linuxkernel44.openliquidlauncher android.permission.DUMP`.
 3. **Import from launcher.db / dump file…** reads a copy of the launcher's `launcher.db`, or the text of `adb shell dumpsys activity <launcher>/.Launcher` (e.g. `com.android.launcher/.Launcher`).
 
-Notes: apps are matched by component so only installed apps are imported. A folder's contents are read from its preview, so folders with more than 9 apps keep their first 9. Widgets can't be copied directly: each one asks you to confirm and is then placed at its original cell. The launcher must be alive: the app briefly opens it if needed.
+Notes: apps are matched by component so only installed apps are imported. With Shizuku, folders with more than 9 apps are opened one by one in the stock launcher to read every app (keep the screen on and hands off during the import). Widgets can't be copied directly: each one asks you to confirm and is then placed at its original cell. The launcher must be alive: the app briefly opens it if needed.
 
 ## Requirements
 Android 13+ (API 33): the real glass effect uses AGSL runtime shaders.

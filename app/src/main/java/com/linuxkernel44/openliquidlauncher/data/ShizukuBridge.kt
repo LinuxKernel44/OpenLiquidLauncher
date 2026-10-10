@@ -49,8 +49,11 @@ object ShizukuBridge {
             "newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java,
         ).also { it.isAccessible = true }
         val proc = method.invoke(null, arrayOf(*cmd), null, null) as Process
+        // Drain stderr on its own thread: reading the two streams one after the other can deadlock when both fill up.
+        var err = ""
+        val errThread = Thread { err = runCatching { proc.errorStream.bufferedReader().readText() }.getOrDefault("") }.apply { start() }
         val out = proc.inputStream.bufferedReader().readText()
-        val err = proc.errorStream.bufferedReader().readText()
+        errThread.join(5000)
         proc.waitFor()
         return out + err
     }
