@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OpenLiquidLauncher</string>
+    <string name="accessibility_label">OpenLiquidLauncher gestures</string>
+    <string name="accessibility_description">Lets OpenLiquidLauncher lock the screen on double tap and open the notification shade on swipe down. It does not read any content.</string>
+</resources>

@@ -1,0 +1,1 @@
+-keep class com.linuxkernel44.openliquidlauncher.service.** { *; }
