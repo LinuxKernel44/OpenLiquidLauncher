@@ -10,3 +10,6 @@
 .cxx/
 *.apk
 !/docs/*.apk
+*.jks
+*.keystore
+keystore.properties
