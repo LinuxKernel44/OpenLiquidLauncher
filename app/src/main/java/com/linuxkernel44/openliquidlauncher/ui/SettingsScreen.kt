@@ -157,7 +157,7 @@ fun SettingsScreen(
 
             Section("System", backdrop, style) {
                 ButtonRow("Set as default launcher") { state.openDefaultHomeSettings() }
-                Hint("OpenLiquidLauncher 1.7.1 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
+                Hint("OpenLiquidLauncher 1.7.2 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
             }
         }
     }
@@ -256,6 +256,8 @@ fun GlassSlider(value: Float, min: Float, max: Float, onChange: (Float) -> Unit)
 @Composable
 private fun StepRow(label: String, index: Int, labels: List<String>, defaultIndex: Int, onChange: (Int) -> Unit) {
     val current by rememberUpdatedState(onChange)
+    // The gesture handlers below live as long as the composable: they must read the *latest* index, not the first one.
+    val latestIndex by rememberUpdatedState(index)
     var widthPx by remember { mutableIntStateOf(1) }
     val thumb = 26.dp
     val thumbPx = with(LocalDensity.current) { thumb.toPx() }
@@ -263,7 +265,7 @@ private fun StepRow(label: String, index: Int, labels: List<String>, defaultInde
     fun at(x: Float) {
         val f = ((x - thumbPx / 2) / (widthPx - thumbPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
         val i = (f * last).roundToInt()
-        if (i != index) current(i)
+        if (i != latestIndex) current(i)
     }
     Column {
         Row(Modifier.fillMaxWidth()) {
