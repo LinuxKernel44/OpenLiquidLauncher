@@ -92,6 +92,20 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     suspend fun openDrawer() { drawerTarget = true; drawerProgress.animateTo(1f, tween(380, easing = FastOutSlowInEasing)) }
     suspend fun closeDrawer() { drawerTarget = false; drawerProgress.animateTo(0f, tween(320, easing = FastOutSlowInEasing)) }
 
+    /** Home press: everything transient goes away at once (not just the top-most layer). */
+    suspend fun dismissAll() {
+        cancelInteractions()
+        menu = null; showSettings = false; showWidgetPicker = false; openFolderId = null; editMode = false
+        importConfirm = null
+        if (drawerTarget || drawerProgress.value > 0f) closeDrawer()
+    }
+
+    /** Drops any half-finished gesture (drag, held app, multi-finger selection) so nothing stays hidden or ghosted. */
+    fun cancelInteractions() {
+        clearPreview()
+        dragPayload = null; dropTarget = null; pendingPayload = null; holdPayload = null; stackIds.clear(); dragFromOverlay = false
+    }
+
     /** Back / home press. Returns true if something was dismissed. */
     suspend fun dismissOverlays(): Boolean {
         when {

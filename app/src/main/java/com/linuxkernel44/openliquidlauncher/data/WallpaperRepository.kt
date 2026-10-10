@@ -31,7 +31,24 @@ class WallpaperRepository(private val context: Context, private val settings: Se
     private val targetW = dm.widthPixels.coerceAtLeast(720)
     private val targetH = dm.heightPixels.coerceAtLeast(1280)
 
-    suspend fun refresh() {
+    private var loadedSignature: String? = null
+
+    /** Cheap fingerprint of what the wallpaper currently is, so returning to the launcher doesn't re-decode it. */
+    private fun signature(): String {
+        val mode = settings.current.wallpaperMode
+        return when (mode) {
+            WallpaperMode.Custom -> "custom:${customFile.lastModified()}:${customFile.length()}"
+            WallpaperMode.System -> "system:" + runCatching {
+                WallpaperManager.getInstance(context).getWallpaperId(WallpaperManager.FLAG_SYSTEM)
+            }.getOrDefault(-1)
+        }
+    }
+
+    /** Reloads the wallpaper unless it is already loaded and unchanged ([force] to always reload). */
+    suspend fun refresh(force: Boolean = false) {
+        val sig = signature()
+        if (!force && sig == loadedSignature && _bitmap.value != null) return
+        loadedSignature = sig
         _bitmap.value = withContext(Dispatchers.IO) {
             val bmp = when (settings.current.wallpaperMode) {
                 WallpaperMode.Custom -> loadCustom()

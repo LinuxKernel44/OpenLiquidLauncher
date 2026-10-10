@@ -91,7 +91,14 @@ class LauncherActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        refreshWallpaper()
+        refreshWallpaper() // no-op unless the wallpaper actually changed
+    }
+
+    override fun onPause() {
+        // Leaving (Home, an app, the shade...): a gesture in progress can't finish, so cancel it cleanly.
+        state.cancelInteractions()
+        currentFocus?.clearFocus()
+        super.onPause()
     }
 
     override fun onNewIntent(intent: Intent) {

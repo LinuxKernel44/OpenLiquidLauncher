@@ -54,11 +54,16 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
     val pagerState = rememberPagerState { layout.pages }
     state.pagerState = pagerState
 
+    val synced by state.apps.synced.collectAsState()
+    val appList by state.apps.apps.collectAsState()
     LaunchedEffect(loaded) { if (loaded) state.ensureInitialLayout() }
+    // Apps uninstalled (or hidden) while we were away: drop them from the home screen as soon as the real list is known.
+    LaunchedEffect(synced, appList) { if (synced) state.layout.normalize(appList.mapTo(HashSet()) { it.id }) }
     LaunchedEffect(settings.wallpaperMode) { state.app.wallpaper.refresh() }
     LaunchedEffect(state.homeSignal) {
         if (state.homeSignal > 0) {
-            state.dismissOverlays(); pagerState.animateScrollToPage(0)
+            state.dismissAll()
+            pagerState.animateScrollToPage(0)
         }
     }
     // After dropping something dragged out of the drawer, close it.
