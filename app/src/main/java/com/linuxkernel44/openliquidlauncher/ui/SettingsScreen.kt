@@ -87,7 +87,7 @@ fun SettingsScreen(
             }
 
             Section("Performance", backdrop, style) {
-                Hint("Lower these if the launcher feels less smooth; raise them for the richest glass. Applied live.")
+                Hint("Lower these if the launcher feels less smooth; raise them for the richest glass. Applied live. Double-tap any slider to reset it.")
                 StepRow("Effects quality", settings.glassQuality, GLASS_QUALITY_LABELS, defaultIndex = 2) { store.update { copy(glassQuality = it) } }
                 StepRow(
                     "Effects resolution", settings.glassResolution,
@@ -98,14 +98,14 @@ fun SettingsScreen(
             }
 
             Section("Liquid glass", backdrop, style) {
-                SliderRow("Roundness", settings.glassRoundness * 100f, 0f, 100f, "%.0f") { store.update { copy(glassRoundness = it / 100f) } }
+                SliderRow("Roundness", settings.glassRoundness * 100f, 0f, 100f, "%.0f", default = LauncherSettings().glassRoundness * 100f) { store.update { copy(glassRoundness = it / 100f) } }
                 Hint("Corner roundness of folders, the dock, menus, cards and sheets. 50 = the original look.")
-                SliderRow("Droplet look", settings.glassDroplet * 100f, 0f, 100f, "%.0f") { store.update { copy(glassDroplet = it / 100f) } }
+                SliderRow("Droplet look", settings.glassDroplet * 100f, 0f, 100f, "%.0f", default = LauncherSettings().glassDroplet * 100f) { store.update { copy(glassDroplet = it / 100f) } }
                 Hint("Makes folders, the dock, buttons, the scroll handle and menus clearer, rounder and more refractive, like a drop of water. 0 = the original look.")
-                SliderRow("Blur", settings.glassBlur, 0f, 30f, "%.1f") { store.update { copy(glassBlur = it) } }
-                SliderRow("Refraction height", settings.glassRefractionHeight, 0f, 40f, "%.0f") { store.update { copy(glassRefractionHeight = it) } }
-                SliderRow("Refraction strength", settings.glassRefractionAmount, 0f, 60f, "%.0f") { store.update { copy(glassRefractionAmount = it) } }
-                SliderRow("Surface opacity", settings.glassSurfaceAlpha, 0f, 0.6f, "%.2f") { store.update { copy(glassSurfaceAlpha = it) } }
+                SliderRow("Blur", settings.glassBlur, 0f, 30f, "%.1f", default = LauncherSettings().glassBlur) { store.update { copy(glassBlur = it) } }
+                SliderRow("Refraction height", settings.glassRefractionHeight, 0f, 40f, "%.0f", default = LauncherSettings().glassRefractionHeight) { store.update { copy(glassRefractionHeight = it) } }
+                SliderRow("Refraction strength", settings.glassRefractionAmount, 0f, 60f, "%.0f", default = LauncherSettings().glassRefractionAmount) { store.update { copy(glassRefractionAmount = it) } }
+                SliderRow("Surface opacity", settings.glassSurfaceAlpha, 0f, 0.6f, "%.2f", default = LauncherSettings().glassSurfaceAlpha) { store.update { copy(glassSurfaceAlpha = it) } }
                 SwitchRow("Chromatic dispersion", settings.glassDispersion) { store.update { copy(glassDispersion = it) } }
                 ButtonRow("Reset glass") { store.update { val d = LauncherSettings(); copy(glassBlur = d.glassBlur, glassRefractionHeight = d.glassRefractionHeight, glassRefractionAmount = d.glassRefractionAmount, glassSurfaceAlpha = d.glassSurfaceAlpha, glassDispersion = d.glassDispersion, glassDroplet = d.glassDroplet, glassRoundness = d.glassRoundness) } }
             }
@@ -127,7 +127,7 @@ fun SettingsScreen(
                 StepperRow("Columns", settings.columns, 4, 6) { store.update { copy(columns = it) }; state.layout.reflow() }
                 StepperRow("Rows", settings.rows, 4, 7) { store.update { copy(rows = it) }; state.layout.reflow() }
                 StepperRow("Dock icons", settings.dockSize, 3, 6) { store.update { copy(dockSize = it) }; state.layout.ensureDockSize() }
-                SliderRow("Icon size", settings.iconScale, 0.7f, 1.3f, "%.2f") { store.update { copy(iconScale = it) } }
+                SliderRow("Icon size", settings.iconScale, 0.7f, 1.3f, "%.2f", default = LauncherSettings().iconScale) { store.update { copy(iconScale = it) } }
                 SwitchRow("Show labels", settings.showLabels) { store.update { copy(showLabels = it) } }
                 SwitchRow("Themed icons (Android 13+)", settings.themedIcons) { store.update { copy(themedIcons = it) } }
                 SwitchRow("Notification badges", settings.showBadges) { store.update { copy(showBadges = it) } }
@@ -157,7 +157,7 @@ fun SettingsScreen(
 
             Section("System", backdrop, style) {
                 ButtonRow("Set as default launcher") { state.openDefaultHomeSettings() }
-                Hint("OpenLiquidLauncher 1.7.2 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
+                Hint("OpenLiquidLauncher 1.7.3 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
             }
         }
     }
@@ -219,18 +219,19 @@ private fun androidx.compose.foundation.layout.RowScope.Segment(label: String, s
 }
 
 @Composable
-private fun SliderRow(label: String, value: Float, min: Float, max: Float, fmt: String, onChange: (Float) -> Unit) {
+private fun SliderRow(label: String, value: Float, min: Float, max: Float, fmt: String, default: Float, onChange: (Float) -> Unit) {
     Column {
         Row(Modifier.fillMaxWidth()) {
             GText(label, Modifier.weight(1f), size = 15f, align = TextAlign.Start)
             GText(fmt.format(value), size = 14f, color = Color.White.copy(alpha = 0.75f))
         }
-        GlassSlider(value, min, max, onChange)
+        GlassSlider(value, min, max, onChange, default)
     }
 }
 
 @Composable
-fun GlassSlider(value: Float, min: Float, max: Float, onChange: (Float) -> Unit) {
+/** Double tap resets to [default] (when given). */
+fun GlassSlider(value: Float, min: Float, max: Float, onChange: (Float) -> Unit, default: Float? = null) {
     val current by rememberUpdatedState(onChange)
     var widthPx by remember { mutableIntStateOf(1) }
     val thumb = 26.dp
@@ -242,7 +243,7 @@ fun GlassSlider(value: Float, min: Float, max: Float, onChange: (Float) -> Unit)
     }
     Box(
         Modifier.fillMaxWidth().height(36.dp).onSizeChanged { widthPx = it.width }
-            .pointerInput(Unit) { detectTapGestures { set(it.x) } }
+            .pointerInput(Unit) { detectTapGestures(onDoubleTap = { default?.let { d -> current(d) } }, onTap = { set(it.x) }) }
             .pointerInput(Unit) { detectHorizontalDragGestures(onDragStart = { set(it.x) }) { change, _ -> set(change.position.x); change.consume() } },
         contentAlignment = Alignment.CenterStart,
     ) {
@@ -274,7 +275,7 @@ private fun StepRow(label: String, index: Int, labels: List<String>, defaultInde
         }
         Box(
             Modifier.fillMaxWidth().height(36.dp).onSizeChanged { widthPx = it.width }
-                .pointerInput(Unit) { detectTapGestures { at(it.x) } }
+                .pointerInput(Unit) { detectTapGestures(onDoubleTap = { current(defaultIndex) }, onTap = { at(it.x) }) }
                 .pointerInput(Unit) { detectHorizontalDragGestures(onDragStart = { at(it.x) }) { change, _ -> at(change.position.x); change.consume() } },
             contentAlignment = Alignment.CenterStart,
         ) {
