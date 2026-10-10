@@ -76,6 +76,31 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     val drawerProgress = Animatable(0f)
     var drawerTarget by mutableStateOf(false)
     var openFolderId by mutableStateOf<Long?>(null)
+    /** Folder open/close animation 0..1 (350 ms) and where the tapped folder icon sits (root coordinates). */
+    val folderProgress = Animatable(0f)
+    /** Scope of the composition (has a frame clock, which animations need); set by LauncherScreen. */
+    var uiScope: kotlinx.coroutines.CoroutineScope? = null
+    var folderOrigin by mutableStateOf(Rect.Zero)
+    /** Maximum effects quality: the folder grows out of its icon (and the home screen recedes); otherwise it fades. */
+    val folderGrows get() = settings.current.glassQuality >= 4
+
+    fun openFolder(id: Long, origin: Rect) {
+        folderOrigin = origin
+        (uiScope ?: return).launch {
+            folderProgress.snapTo(0f)
+            openFolderId = id
+            folderProgress.animateTo(1f, tween(350, easing = FastOutSlowInEasing))
+        }
+    }
+
+    /** Reverse animation, then the folder is really closed. */
+    fun closeFolder() {
+        if (openFolderId == null) return
+        (uiScope ?: run { openFolderId = null; return }).launch {
+            folderProgress.animateTo(0f, tween(300, easing = FastOutSlowInEasing))
+            openFolderId = null
+        }
+    }
     var showSettings by mutableStateOf(false)
     var showWidgetPicker by mutableStateOf(false)
     var editMode by mutableStateOf(false)
@@ -124,7 +149,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
             menu != null -> menu = null
             showSettings -> showSettings = false
             showWidgetPicker -> showWidgetPicker = false
-            openFolderId != null -> openFolderId = null
+            openFolderId != null -> closeFolder()
             drawerTarget -> closeDrawer()
             editMode -> editMode = false
             else -> return false

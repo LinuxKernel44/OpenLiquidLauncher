@@ -121,8 +121,8 @@ fun AppDrawer(
                         columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(cols),
                         state = gridState,
                         // Soft fade instead of a hard cut at the edges; the padding keeps the first/last row fully visible at rest.
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 24.dp),
-                        modifier = Modifier.fillMaxSize().com_kyant_layerBackdrop(gridBackdrop).edgeFade(24.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
+                        modifier = Modifier.fillMaxSize().com_kyant_layerBackdrop(gridBackdrop).edgeFade(14.dp),
                     ) {
                         items(filtered.size, key = { "${it}_${filtered[it].id}" }) { i ->
                             DrawerCell(filtered[i], state, settings, badges, Modifier.fillMaxWidth().height(cellH).padding(2.dp))

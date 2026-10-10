@@ -51,6 +51,7 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
     // Wallpaper + home icons: overlays that sit on top of the home screen (folders, menus...) blur this, not only the wallpaper.
     val homeBackdrop = rememberLayerBackdrop()
     val scope = rememberCoroutineScope()
+    state.uiScope = scope
     val layout = state.layout
     val pagerState = rememberPagerState { layout.pages }
     state.pagerState = pagerState
@@ -149,7 +150,11 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
         // Home items resolve apps through AppRepository (not snapshot state), so wait until it is loaded.
         if (loaded) Column(
             Modifier.fillMaxSize()
-                .graphicsLayer { alpha = (1f - p * 1.4f).coerceIn(0f, 1f) }
+                .graphicsLayer {
+                    alpha = (1f - p * 1.4f).coerceIn(0f, 1f)
+                    // Maximum quality: the home screen steps back a little while a folder grows out of its icon.
+                    if (state.folderGrows && state.openFolderId != null) { val sc = 1f - 0.06f * state.folderProgress.value; scaleX = sc; scaleY = sc }
+                }
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .pointerInput(settings.swipeUpDrawer, settings.swipeDownNotifications) {
                     var dy = 0f

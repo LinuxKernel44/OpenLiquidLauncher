@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.SolidColor
@@ -166,14 +167,34 @@ fun FolderOverlay(state: LauncherState, folderId: Long, settings: LauncherSettin
     val folder = state.layout.findItem(folderId) as? FolderItem
     if (folder == null) { state.openFolderId = null; return }
     var name by remember(folderId) { mutableStateOf(folder.name) }
-    val appear by animateFloatAsState(1f, label = "folder")
+    val e = state.folderProgress.value
+    val grows = state.folderGrows
+    var screen by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+    var panel by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
     Box(
-        Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.28f * fade))
-            .clickable(interactionSource = null, indication = null) { state.renameFolder(folderId, name); state.openFolderId = null },
+        Modifier.fillMaxSize().onSizeChanged { screen = it }.background(Color.Black.copy(alpha = 0.28f * fade * e))
+            .clickable(interactionSource = null, indication = null) { state.renameFolder(folderId, name); state.closeFolder() },
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            Modifier.padding(horizontal = 26.dp).fillMaxWidth().scale(0.9f + 0.1f * appear).alpha(fade)
+            Modifier.padding(horizontal = 26.dp).fillMaxWidth().onSizeChanged { panel = it }
+                .graphicsLayer {
+                    val o = state.folderOrigin
+                    if (grows && panel.width > 0 && o != androidx.compose.ui.geometry.Rect.Zero) {
+                        // Grow out of the folder icon: start the size and centre of the icon, end at the panel.
+                        val s0x = (o.width / panel.width).coerceIn(0.05f, 1f)
+                        val s0y = (o.height / panel.height).coerceIn(0.05f, 1f)
+                        scaleX = s0x + (1f - s0x) * e
+                        scaleY = s0y + (1f - s0y) * e
+                        translationX = (o.center.x - screen.width / 2f) * (1f - e)
+                        translationY = (o.center.y - screen.height / 2f) * (1f - e)
+                        alpha = (e * 2.5f).coerceAtMost(1f) * fade
+                    } else {
+                        alpha = e * fade
+                        val sc = 0.94f + 0.06f * e
+                        scaleX = sc; scaleY = sc
+                    }
+                }
                 .liquidGlass(backdrop, style, style.roundDp(38.dp, style.folderRoundness), surfaceAlpha = style.surfaceAlpha + 0.1f)
                 .clickable(interactionSource = null, indication = null) { }
                 .padding(20.dp),
@@ -194,7 +215,7 @@ fun FolderOverlay(state: LauncherState, folderId: Long, settings: LauncherSettin
                         Box(Modifier.weight(1f).alpha(if (hidden) 0f else 1f), contentAlignment = Alignment.Center) {
                             AppCell(
                                 a, settings, badges[a.packageName] ?: 0,
-                                Modifier.itemGestures(state, { DragPayload(app = a, fromFolderId = folderId) }, onTap = { r -> state.renameFolder(folderId, name); state.openFolderId = null; state.launch(a, r) }),
+                                Modifier.itemGestures(state, { DragPayload(app = a, fromFolderId = folderId) }, onTap = { r -> state.renameFolder(folderId, name); state.closeFolder(); state.launch(a, r) }),
                                 iconSize = 52.dp,
                             )
                         }

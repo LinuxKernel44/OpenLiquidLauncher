@@ -30,6 +30,9 @@ Notes: apps are matched by component so only installed apps are imported. With S
 
 Tip: **double-tap any slider in Settings to reset it** to its default value.
 
+## Folder animation
+Opening a folder is animated (about 0.35 s). With *Effects quality* at **Maximum** the folder grows out of its icon on the home screen while the home screen steps back slightly; at any other quality it fades in. Closing plays the reverse.
+
 ## Roundness
 Settings → Liquid glass → **Roundness** (0–100, default 50 = the original look): corner roundness of every glass element — folders, dock, buttons, menus, cards, sheets and dialogs — from nearly square to fully round.
 
