@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.SolidColor
@@ -119,7 +120,9 @@ fun AppDrawer(
                     androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
                         columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(cols),
                         state = gridState,
-                        modifier = Modifier.fillMaxSize().com_kyant_layerBackdrop(gridBackdrop),
+                        // Soft fade instead of a hard cut at the edges; the padding keeps the first/last row fully visible at rest.
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 24.dp),
+                        modifier = Modifier.fillMaxSize().com_kyant_layerBackdrop(gridBackdrop).edgeFade(24.dp),
                     ) {
                         items(filtered.size, key = { "${it}_${filtered[it].id}" }) { i ->
                             DrawerCell(filtered[i], state, settings, badges, Modifier.fillMaxWidth().height(cellH).padding(2.dp))
@@ -288,3 +291,19 @@ fun GlassScrollHandle(
 private fun Modifier.com_kyant_layerBackdrop(b: com.kyant.backdrop.backdrops.LayerBackdrop) = this.layerBackdrop(b)
 
 private fun Modifier.androidx_onSizeChanged(f: (androidx.compose.ui.unit.IntSize) -> Unit) = this.onSizeChanged(f)
+
+
+/** Fades the top and bottom [height] of the content to transparent, so scrolled rows dissolve instead of being cut. */
+private fun Modifier.edgeFade(height: androidx.compose.ui.unit.Dp): Modifier = this
+    .graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+    .drawWithContent {
+        drawContent()
+        val h = height.toPx().coerceAtMost(size.height / 2)
+        val f = h / size.height
+        drawRect(
+            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                0f to Color.Transparent, f to Color.Black, 1f - f to Color.Black, 1f to Color.Transparent,
+            ),
+            blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
+        )
+    }
