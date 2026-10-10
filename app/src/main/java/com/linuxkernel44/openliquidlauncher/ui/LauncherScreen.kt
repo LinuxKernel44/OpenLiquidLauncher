@@ -166,6 +166,7 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
         if (state.showWidgetPicker) WidgetPicker(state, backdrop, style) { onPickWidget(it) }
         if (state.showSettings) SettingsScreen(state, settings, backdrop, style, onPickWallpaper)
         DropZones(state, backdrop, style)
+        ImportDialogs(state, backdrop, style)
         state.menu?.let { ItemMenu(state, it, backdrop, style) }
         DragLayer(state, settings, backdrop, style)
 

@@ -27,6 +27,9 @@ import com.linuxkernel44.openliquidlauncher.data.AppInfo
 import com.linuxkernel44.openliquidlauncher.data.AppItem
 import com.linuxkernel44.openliquidlauncher.data.FolderItem
 import com.linuxkernel44.openliquidlauncher.data.Item
+import com.linuxkernel44.openliquidlauncher.data.LauncherImporter
+import com.linuxkernel44.openliquidlauncher.data.LauncherSource
+import com.linuxkernel44.openliquidlauncher.data.PendingWidget
 import com.linuxkernel44.openliquidlauncher.data.WidgetItem
 import com.linuxkernel44.openliquidlauncher.service.GestureAccessibilityService
 import kotlin.math.ceil
@@ -52,6 +55,11 @@ sealed interface DropTarget {
 
 class MenuState(val payload: DragPayload, val anchor: Rect)
 
+sealed interface ImportRequest {
+    data class FromLauncher(val sources: List<LauncherSource>) : ImportRequest
+    data class FromFile(val uri: Uri) : ImportRequest
+}
+
 /** Central UI controller: overlays, drag & drop, launching. Persisted data lives in [LauncherApp]. */
 class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     val settings get() = app.settings
@@ -68,6 +76,10 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     var showWidgetPicker by mutableStateOf(false)
     var editMode by mutableStateOf(false)
     var menu by mutableStateOf<MenuState?>(null)
+    var importConfirm by mutableStateOf<ImportRequest?>(null)
+    var importMessage by mutableStateOf<String?>(null)
+    var importBusy by mutableStateOf(false)
+    val importer by lazy { LauncherImporter(activity, apps, layout) }
 
     val anyOverlay get() = drawerTarget || openFolderId != null || showSettings || showWidgetPicker || editMode || menu != null
 
@@ -321,10 +333,14 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         return sx.coerceIn(1, cols) to sy.coerceIn(1, rows)
     }
 
-    fun addWidget(widgetId: Int, info: AppWidgetProviderInfo) {
-        val (sx, sy) = spanFor(info)
+    fun addWidget(widgetId: Int, info: AppWidgetProviderInfo, target: PendingWidget? = null) {
+        val (sx, sy) = if (target != null) target.spanX.coerceIn(1, layout.columns) to target.spanY.coerceIn(1, layout.rows) else spanFor(info)
         val item = WidgetItem(layout.newId(), widgetId, sx, sy)
-        val page = (pagerState?.currentPage ?: 0)
+        // Imported widgets go back to the exact cell they had, if it is free.
+        if (target != null && layout.isFree(target.page, target.x, target.y, sx, sy)) {
+            layout.placeOnWorkspace(item, target.page, target.x, target.y); return
+        }
+        val page = target?.page ?: (pagerState?.currentPage ?: 0)
         var placed = false
         outer@ for (y in 0..layout.rows - sy) for (x in 0..layout.columns - sx) {
             if (layout.isFree(page, x, y, sx, sy)) { layout.placeOnWorkspace(item, page, x, y); placed = true; break@outer }

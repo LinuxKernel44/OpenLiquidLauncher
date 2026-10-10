@@ -124,9 +124,15 @@ fun SettingsScreen(
                 }
             }
 
+            Section("Import", backdrop, style) {
+                Hint("Bring your home screen over from another launcher, like the stock OnePlus (OxygenOS) one.")
+                ButtonRow("Import from my current launcher") { state.activity.beginImportFromLauncher() }
+                ButtonRow("Import from launcher.db file…") { state.activity.pickLauncherDb() }
+            }
+
             Section("System", backdrop, style) {
                 ButtonRow("Set as default launcher") { state.openDefaultHomeSettings() }
-                Hint("OpenLiquidLauncher 0.1.0 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
+                Hint("OpenLiquidLauncher 0.2.0 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
             }
         }
     }
@@ -135,7 +141,7 @@ fun SettingsScreen(
 @Composable
 private fun Section(title: String, backdrop: Backdrop, style: GlassStyle, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
     Column(
-        Modifier.fillMaxWidth().liquidGlass(backdrop, style.copy(refractionHeight = 8f, refractionAmount = 14f, blur = 2f), RoundedCornerShape(28.dp), surfaceAlpha = 0.10f)
+        Modifier.fillMaxWidth().liquidGlass(backdrop, style.copy(refractionHeight = 8f, refractionAmount = 14f, blur = 10f), RoundedCornerShape(28.dp), surfaceAlpha = 0.12f, tint = Color.Black.copy(alpha = 0.20f))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

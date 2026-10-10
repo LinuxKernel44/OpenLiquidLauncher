@@ -260,3 +260,45 @@ fun WidgetPicker(state: LauncherState, backdrop: Backdrop, style: GlassStyle, on
         }
     }
 }
+
+// ---- import dialogs ---------------------------------------------------------------------------
+
+@Composable
+fun ImportDialogs(state: LauncherState, backdrop: Backdrop, style: GlassStyle) {
+    val confirm = state.importConfirm
+    val message = state.importMessage
+    if (confirm == null && message == null && !state.importBusy) return
+    Box(
+        Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)).clickable(interactionSource = null, indication = null) { },
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            Modifier.padding(horizontal = 28.dp).fillMaxWidth()
+                .liquidGlass(backdrop, style.copy(refractionHeight = minOf(style.refractionHeight, 8f)), RoundedCornerShape(34.dp), surfaceAlpha = style.surfaceAlpha + 0.10f, tint = Color.Black.copy(alpha = 0.25f))
+                .padding(22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            when {
+                state.importBusy -> GText("Importing…", size = 18f, weight = FontWeight.SemiBold)
+                confirm != null -> {
+                    GText("Import home layout", size = 20f, weight = FontWeight.Bold)
+                    val what = when (confirm) {
+                        is ImportRequest.FromLauncher -> "from " + confirm.sources.joinToString(", ") { it.label }
+                        is ImportRequest.FromFile -> "from the selected launcher.db"
+                    }
+                    GText("This replaces your current home screen and dock with the layout $what.", size = 14f, maxLines = 6)
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        GlassButton("Cancel", backdrop, style) { state.importConfirm = null }
+                        GlassButton("Import", backdrop, style) { state.activity.runImport(confirm) }
+                    }
+                }
+                message != null -> {
+                    GText("Import", size = 20f, weight = FontWeight.Bold)
+                    GText(message, size = 13f, maxLines = 12, align = androidx.compose.ui.text.style.TextAlign.Start)
+                    GlassButton("OK", backdrop, style) { state.importMessage = null; state.activity.continueWidgetImport() }
+                }
+            }
+        }
+    }
+}

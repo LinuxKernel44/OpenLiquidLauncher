@@ -24,6 +24,9 @@ Kotlin + Jetpack Compose, single `app` module, package `com.linuxkernel44.openli
 - Items that must survive a drag (drawer / folder sources) must stay composed while dragging; they are only faded (`dragFromOverlay`).
 - `ensureInitialLayout` must stay idempotent (activity can be recreated).
 
+## Layout import
+`data/LauncherImporter.kt` reads Launcher3-style `favorites` rows (container -100 desktop / -101 hotseat / >0 folder id; itemType 0 app, 2 folder, 4 widget) from either a provider (`content://<authority>/favorites`) or a launcher.db copy, and turns them into an `ImportPlan` applied by `LauncherActivity.applyImport`. System launchers usually protect their provider with a signature-level permission, so the file route is the reliable one. Debug builds accept `--es importDb <path>` on the launch intent to test without the document picker.
+
 ## Build & run
 ```
 ./gradlew :app:assembleDebug          # APK in app/build/outputs/apk/debug

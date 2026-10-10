@@ -9,7 +9,19 @@
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
 
+    <!-- Optional: let us read the home layout of other launchers when they allow it (Import in Settings). -->
+    <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS" />
+    <uses-permission android:name="com.android.launcher3.permission.READ_SETTINGS" />
+    <uses-permission android:name="net.oneplus.launcher.permission.READ_SETTINGS" />
+    <uses-permission android:name="com.oppo.launcher.permission.READ_SETTINGS" />
+    <uses-permission android:name="com.oplus.launcher.permission.READ_SETTINGS" />
+    <uses-permission android:name="com.google.android.apps.nexuslauncher.permission.READ_SETTINGS" />
+
     <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />

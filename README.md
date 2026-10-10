@@ -15,6 +15,13 @@ An open-source Android launcher where **everything is liquid glass**. Dock, app 
 - Gestures: swipe up (drawer), swipe down (notifications), double tap (lock), pinch (edit mode)
 - Tunable glass: blur, refraction height/strength, surface opacity, chromatic dispersion; grid, dock and icon size
 
+## Importing your layout from another launcher (e.g. OnePlus / OxygenOS)
+Settings → **Import** has two ways to copy your dock, pages, folders, widgets and grid size from another Launcher3-style launcher:
+1. **Import from my current launcher** reads the other launcher's layout provider. This only works if that launcher lets other apps read it; many system launchers (Pixel Launcher, possibly OxygenOS) refuse, and the app then tells you which provider was denied.
+2. **Import from launcher.db file…** reads a copy of the launcher's database (`databases/launcher.db`, table `favorites`). You need root or a backup tool to get it, e.g. `su -c cp /data/data/<launcher package>/databases/launcher.db /sdcard/` (the OnePlus launcher package is typically `com.android.launcher`; check with `pm list packages | grep -i launcher`).
+
+Apps are matched by component, so only installed apps are imported. Widgets can't be copied directly: each one asks you to confirm and is then placed at its original cell.
+
 ## Requirements
 Android 13+ (API 33): the real glass effect uses AGSL runtime shaders.
 

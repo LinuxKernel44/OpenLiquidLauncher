@@ -215,6 +215,21 @@ class LayoutStore(private val context: Context, private val settings: SettingsSt
         return false
     }
 
+    /** Replaces the whole home layout (used by the importer). */
+    fun replaceAll(newPlaced: List<Placed>, newDock: List<Item?>) {
+        placed.clear(); placed += newPlaced
+        dock.clear(); dock += newDock
+        restored = true
+        pages = maxOf(1, (placed.maxOfOrNull { it.page } ?: 0) + 1)
+        // Anything that no longer fits the grid is re-flowed.
+        val out = placed.filter { it.x + it.spanX > columns || it.y + it.spanY > rows }
+        placed.removeAll(out.toSet())
+        out.forEach { addToFirstFree(it.item, it.spanX.coerceAtMost(columns), it.spanY.coerceAtMost(rows)) }
+        changed()
+    }
+
+    fun widgetItems(): List<WidgetItem> = placed.mapNotNull { it.item as? WidgetItem }
+
     fun addPage() { pages += 1 }
 
     /** Remove trailing empty pages (never below one). */

@@ -86,6 +86,7 @@ fun Modifier.liquidGlass(
     shadow = if (edges) ({ Shadow.Default }) else null,
     layerBlock = layerBlock,
     onDrawSurface = {
+        drawRect(Color.Black.copy(alpha = 0.10f)) // keeps white text readable on bright wallpapers
         if (tint != Color.Unspecified) drawRect(tint)
         drawRect(Color.White.copy(alpha = surfaceAlpha))
     },
