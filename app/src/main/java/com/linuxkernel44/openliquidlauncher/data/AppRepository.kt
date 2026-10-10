@@ -48,7 +48,7 @@ class AppRepository(private val context: Context) {
 
     // Disk cache: label + icon per app, so a cold start (the system killed us in the background) is instant.
     private val cacheDir = File(context.filesDir, "icon_cache").apply { mkdirs() }
-    private val indexFile = File(cacheDir, "index2.json") // v2: also stores the raw (unmasked) adaptive icon
+    private val indexFile = File(cacheDir, "index3.json") // v3: opaque icons (v2 added the raw unmasked adaptive icon)
     private class CacheEntry(val id: String, val key: String, val label: String, val component: ComponentName, val serial: Long, val file: String)
 
     /** Called with the ids of apps that were installed after the first load. */
@@ -176,9 +176,9 @@ class AppRepository(private val context: Context) {
             label = info.label.toString(),
             component = info.componentName,
             user = info.user,
-            icon = icon.toBitmap(iconSize).asImageBitmap(),
+            icon = icon.toBitmap(iconSize).makeOpaque().asImageBitmap(),
             themedIcon = themed?.asImageBitmap(),
-            rawIcon = raw?.asImageBitmap(),
+            rawIcon = raw?.makeOpaque()?.asImageBitmap(),
         )
     }
 
@@ -215,4 +215,42 @@ fun Drawable.toBitmap(size: Int): Bitmap {
     setBounds(0, 0, size, size)
     draw(c)
     return bmp
+}
+
+/**
+ * Icons from some apps have semi-transparent layers, so the wallpaper shows through them. Make the body of the icon fully
+ * opaque: every pixel that is mostly solid is composited over the icon's own average colour and set to alpha 255; the
+ * soft anti-aliased edge (alpha < 200) is only gently strengthened so the silhouette stays smooth.
+ */
+fun Bitmap.makeOpaque(): Bitmap {
+    val w = width; val h = height
+    val px = IntArray(w * h)
+    getPixels(px, 0, w, 0, 0, w, h)
+    // Base colour: average of the solid pixels (or of the mostly solid ones when none is fully solid).
+    var r = 0L; var g = 0L; var b = 0L; var n = 0L
+    for (limit in intArrayOf(250, 128)) {
+        for (p in px) if ((p ushr 24) >= limit) { r += (p shr 16) and 255; g += (p shr 8) and 255; b += p and 255; n++ }
+        if (n > 0) break
+    }
+    if (n == 0L) return this
+    val br = (r / n).toInt(); val bg = (g / n).toInt(); val bb = (b / n).toInt()
+    var changed = false
+    for (i in px.indices) {
+        val p = px[i]
+        val a = p ushr 24
+        if (a == 255 || a == 0) continue
+        changed = true
+        if (a >= 200) {
+            val cr = (((p shr 16) and 255) * a + br * (255 - a)) / 255
+            val cg = (((p shr 8) and 255) * a + bg * (255 - a)) / 255
+            val cb = ((p and 255) * a + bb * (255 - a)) / 255
+            px[i] = (255 shl 24) or (cr shl 16) or (cg shl 8) or cb
+        } else {
+            px[i] = ((a * 255 / 200) shl 24) or (p and 0xFFFFFF)
+        }
+    }
+    if (!changed) return this
+    val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+    out.setPixels(px, 0, w, 0, 0, w, h)
+    return out
 }
