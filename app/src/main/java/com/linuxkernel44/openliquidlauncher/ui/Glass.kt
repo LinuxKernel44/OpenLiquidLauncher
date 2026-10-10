@@ -39,6 +39,7 @@ import com.kyant.backdrop.effects.blur
 import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.effects.vibrancy
 import com.kyant.backdrop.highlight.Highlight
+import com.kyant.backdrop.shadow.InnerShadow
 import com.kyant.backdrop.shadow.Shadow
 import com.linuxkernel44.openliquidlauncher.data.LauncherSettings
 
@@ -58,10 +59,12 @@ data class GlassStyle(
     val refractionAmount: Float = 24f,
     val surfaceAlpha: Float = 0.18f,
     val dispersion: Boolean = false,
+    /** 0 Minimum · 1 Low · 2 Current · 3 High · 4 Maximum. */
+    val quality: Int = 2,
 ) {
     companion object {
         fun from(s: LauncherSettings) = GlassStyle(
-            s.glassBlur, s.glassRefractionHeight, s.glassRefractionAmount, s.glassSurfaceAlpha, s.glassDispersion,
+            s.glassBlur, s.glassRefractionHeight, s.glassRefractionAmount, s.glassSurfaceAlpha, s.glassDispersion, s.glassQuality,
         )
     }
 }
@@ -86,16 +89,21 @@ fun Modifier.liquidGlass(
     backdrop = backdrop,
     shape = { shape },
     effects = {
-        vibrancy()
-        if (style.blur > 0f) blur(style.blur.dp.toPx())
-        lens(
+        val q = style.quality
+        // Quality ladder: Minimum = blur only; Low adds colour boost + refraction; Current is the original look;
+        // High adds the depth effect (and an inner shadow); Maximum adds chromatic dispersion and a softer blur.
+        if (q >= 1) vibrancy()
+        if (style.blur > 0f) blur((style.blur * (if (q >= 4) 1.25f else 1f)).dp.toPx())
+        if (q >= 1) lens(
             style.refractionHeight.dp.toPx(),
             style.refractionAmount.dp.toPx(),
-            chromaticAberration = style.dispersion,
+            depthEffect = q >= 3,
+            chromaticAberration = style.dispersion || q >= 4,
         )
     },
-    highlight = if (edges) ({ Highlight.Default }) else null,
-    shadow = if (edges) ({ Shadow.Default }) else null,
+    highlight = if (edges && style.quality >= 1) ({ Highlight.Default }) else null,
+    shadow = if (edges && style.quality >= 2) ({ Shadow.Default }) else null,
+    innerShadow = if (style.quality >= 3) ({ InnerShadow(radius = 10.dp, color = Color.Black.copy(alpha = 0.08f)) }) else null,
     layerBlock = layerBlock,
     onDrawSurface = {
         drawRect(Color.Black.copy(alpha = 0.10f)) // keeps white text readable on bright wallpapers

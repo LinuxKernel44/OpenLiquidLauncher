@@ -26,8 +26,8 @@ android {
         applicationId = "com.linuxkernel44.openliquidlauncher"
         minSdk = 33
         targetSdk = 36
-        versionCode = 23
-        versionName = "1.4.4"
+        versionCode = 24
+        versionName = "1.5.0"
         androidResources.localeFilters += arrayOf("en")
     }
 
@@ -68,7 +68,8 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.material.ripple)
-    implementation(libs.kyant.backdrop)
+    // The liquid glass 'backdrop' library is vendored in src/main/java/com/kyant/backdrop (adds a render-resolution scale).
+    implementation("org.jetbrains:annotations:26.1.0")
     implementation(libs.kyant.shapes)
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)

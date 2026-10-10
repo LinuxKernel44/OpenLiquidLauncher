@@ -37,6 +37,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.kyant.backdrop.Backdrop
+import com.linuxkernel44.openliquidlauncher.data.GLASS_QUALITY_LABELS
+import com.linuxkernel44.openliquidlauncher.data.GLASS_RESOLUTIONS
 import com.linuxkernel44.openliquidlauncher.data.LauncherSettings
 import com.linuxkernel44.openliquidlauncher.data.WallpaperMode
 import com.linuxkernel44.openliquidlauncher.service.BadgeListenerService
@@ -75,6 +77,17 @@ fun SettingsScreen(
             Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                 GText("Settings", size = 28f, weight = FontWeight.Bold, align = TextAlign.Start, modifier = Modifier.weight(1f))
                 GlassButton("Done", backdrop, style) { state.showSettings = false }
+            }
+
+            Section("Performance", backdrop, style) {
+                Hint("Lower these if the launcher feels less smooth; raise them for the richest glass. Applied live.")
+                StepRow("Effects quality", settings.glassQuality, GLASS_QUALITY_LABELS, defaultIndex = 2) { store.update { copy(glassQuality = it) } }
+                StepRow(
+                    "Effects resolution", settings.glassResolution,
+                    GLASS_RESOLUTIONS.map { "${(it * 100).toInt()}%" }, defaultIndex = 3,
+                ) { store.update { copy(glassResolution = it) } }
+                RefreshRateRow(settings.refreshRate, state.refreshRates) { store.update { copy(refreshRate = it) } }
+                ButtonRow("Reset performance") { store.update { copy(glassQuality = 2, glassResolution = 3, refreshRate = 0f) } }
             }
 
             Section("Liquid glass", backdrop, style) {
@@ -133,7 +146,7 @@ fun SettingsScreen(
 
             Section("System", backdrop, style) {
                 ButtonRow("Set as default launcher") { state.openDefaultHomeSettings() }
-                Hint("OpenLiquidLauncher 1.4.4 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
+                Hint("OpenLiquidLauncher 1.5.0 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
             }
         }
     }
@@ -224,5 +237,53 @@ fun GlassSlider(value: Float, min: Float, max: Float, onChange: (Float) -> Unit)
     ) {
         Box(Modifier.fillMaxWidth().height(6.dp).background(Color.White.copy(alpha = 0.25f), CircleShape))
         Box(Modifier.offset { IntOffset(((widthPx - thumbPx) * frac).roundToInt(), 0) }.size(thumb).background(Color.White, CircleShape))
+    }
+}
+
+
+/** A slider that snaps to labelled steps; the default step is marked with a small tick under the track. */
+@Composable
+private fun StepRow(label: String, index: Int, labels: List<String>, defaultIndex: Int, onChange: (Int) -> Unit) {
+    val current by rememberUpdatedState(onChange)
+    var widthPx by remember { mutableIntStateOf(1) }
+    val thumb = 26.dp
+    val thumbPx = with(LocalDensity.current) { thumb.toPx() }
+    val last = (labels.size - 1).coerceAtLeast(1)
+    fun at(x: Float) {
+        val f = ((x - thumbPx / 2) / (widthPx - thumbPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
+        val i = (f * last).roundToInt()
+        if (i != index) current(i)
+    }
+    Column {
+        Row(Modifier.fillMaxWidth()) {
+            GText(label, Modifier.weight(1f), size = 15f, align = TextAlign.Start)
+            GText(labels[index.coerceIn(0, last)] + if (index == defaultIndex) "  (default)" else "", size = 14f, color = Color.White.copy(alpha = 0.8f))
+        }
+        Box(
+            Modifier.fillMaxWidth().height(36.dp).onSizeChanged { widthPx = it.width }
+                .pointerInput(Unit) { detectTapGestures { at(it.x) } }
+                .pointerInput(Unit) { detectHorizontalDragGestures(onDragStart = { at(it.x) }) { change, _ -> at(change.position.x); change.consume() } },
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Box(Modifier.fillMaxWidth().height(6.dp).background(Color.White.copy(alpha = 0.25f), CircleShape))
+            for (i in 0..last) {
+                val x = ((widthPx - thumbPx) * i / last + thumbPx / 2).roundToInt()
+                Box(Modifier.offset { IntOffset(x - 2, 0) }.size(4.dp, if (i == defaultIndex) 14.dp else 8.dp).background(Color.White.copy(alpha = if (i == defaultIndex) 0.9f else 0.45f), CircleShape))
+            }
+            Box(Modifier.offset { IntOffset(((widthPx - thumbPx) * index / last).roundToInt(), 0) }.size(thumb).background(Color.White, CircleShape))
+        }
+    }
+}
+
+@Composable
+private fun RefreshRateRow(value: Float, rates: List<Int>, onChange: (Float) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        GText("Refresh rate", size = 15f, align = TextAlign.Start, modifier = Modifier.fillMaxWidth())
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Segment("Auto", value == 0f) { onChange(0f) }
+            if (rates.size > 1) Segment("Max", value == -1f) { onChange(-1f) }
+            rates.forEach { hz -> Segment("$hz", value == hz.toFloat()) { onChange(hz.toFloat()) } }
+        }
+        Hint("Auto lets the system decide. A fixed value asks for it; some phones (OxygenOS) may still override it.")
     }
 }

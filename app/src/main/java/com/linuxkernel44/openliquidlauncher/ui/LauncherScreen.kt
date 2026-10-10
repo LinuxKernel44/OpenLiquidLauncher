@@ -43,6 +43,7 @@ import kotlinx.coroutines.launch
 fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidget: (android.appwidget.AppWidgetProviderInfo) -> Unit) {
     val settings by state.settings.state.collectAsState()
     val style = remember(settings) { GlassStyle.from(settings) }
+    androidx.compose.runtime.SideEffect { com.kyant.backdrop.BackdropRendering.scale = com.linuxkernel44.openliquidlauncher.data.GLASS_RESOLUTIONS[settings.glassResolution] }
     val wallpaper by state.app.wallpaper.bitmap.collectAsState()
     val badges by BadgeListenerService.counts.collectAsState()
     val loaded by state.apps.loaded.collectAsState()

@@ -80,6 +80,8 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     var showWidgetPicker by mutableStateOf(false)
     var editMode by mutableStateOf(false)
     var menu by mutableStateOf<MenuState?>(null)
+    /** Refresh rates (Hz) the screen supports at its current resolution; filled by the activity. */
+    var refreshRates by mutableStateOf<List<Int>>(emptyList())
     var importConfirm by mutableStateOf<ImportRequest?>(null)
     var importMessage by mutableStateOf<String?>(null)
     var importBusy by mutableStateOf(false)

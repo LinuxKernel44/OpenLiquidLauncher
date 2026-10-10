@@ -28,6 +28,12 @@ Notes: apps are matched by component so only installed apps are imported. With S
 - **Folder with several fingers:** hold an app with one finger and tap other apps with your other fingers (they get a green tick), then lift the first finger: all of them become one folder. Hold a folder and tap apps to add them to it.
 - Lift a held app without dragging or tapping others to open its menu.
 
+## Performance settings
+Settings → **Performance** (applied live, "Reset performance" restores the defaults):
+- **Effects quality** (Minimum · Low · *Current* · High · Maximum): how rich the glass is. Minimum is blur only; Low adds refraction; Current is the original look; High adds depth effect and an inner shadow; Maximum adds chromatic dispersion and a softer blur.
+- **Effects resolution** (25 · 50 · 75 · *100%* · 125 · 150): render scale of the glass. Lower is cheaper and slightly softer, higher is a smoother supersampled edge.
+- **Refresh rate**: Auto (system decides), Max, or a fixed rate read from your screen's modes. The system (OxygenOS) may still override it.
+
 ## Requirements
 Android 13+ (API 33): the real glass effect uses AGSL runtime shaders.
 
@@ -46,4 +52,4 @@ Then open the new "OpenLiquidLauncher" app icon (it opens the settings and shows
 This project is inspired by AOSP Launcher3's architecture but is a fresh Compose codebase; see `CLAUDE.md` for why.
 
 ## License
-Apache-2.0. Liquid glass effect by [Kyant0](https://github.com/Kyant0/AndroidLiquidGlass) (Apache-2.0).
+Apache-2.0. Liquid glass effect by [Kyant0](https://github.com/Kyant0/AndroidLiquidGlass) (Apache-2.0), vendored in `app/src/main/java/com/kyant/backdrop` with a render-scale addition.

@@ -5,6 +5,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+val GLASS_RESOLUTIONS = floatArrayOf(0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f)
+val GLASS_QUALITY_LABELS = listOf("Minimum", "Low", "Current", "High", "Maximum")
+
 enum class WallpaperMode { System, Custom }
 
 data class LauncherSettings(
@@ -23,6 +26,12 @@ data class LauncherSettings(
     val glassRefractionAmount: Float = 24f,
     val glassSurfaceAlpha: Float = 0.18f,
     val glassDispersion: Boolean = false,
+    /** 0 Minimum · 1 Low · 2 Current (default) · 3 High · 4 Maximum: how rich the glass is. */
+    val glassQuality: Int = 2,
+    /** Index into [GLASS_RESOLUTIONS]: render scale of the glass (default 100 %). */
+    val glassResolution: Int = 3,
+    /** 0 = automatic (system decides), -1 = maximum, otherwise a fixed rate in Hz. */
+    val refreshRate: Float = 0f,
     // Gestures
     val swipeUpDrawer: Boolean = true,
     val swipeDownNotifications: Boolean = true,
@@ -60,6 +69,9 @@ class SettingsStore(context: Context) {
             glassRefractionAmount = prefs.getFloat("glassRefractionAmount", d.glassRefractionAmount),
             glassSurfaceAlpha = prefs.getFloat("glassSurfaceAlpha", d.glassSurfaceAlpha),
             glassDispersion = prefs.getBoolean("glassDispersion", d.glassDispersion),
+            glassQuality = prefs.getInt("glassQuality", d.glassQuality).coerceIn(0, 4),
+            glassResolution = prefs.getInt("glassResolution", d.glassResolution).coerceIn(0, GLASS_RESOLUTIONS.lastIndex),
+            refreshRate = prefs.getFloat("refreshRate", d.refreshRate),
             swipeUpDrawer = prefs.getBoolean("swipeUpDrawer", d.swipeUpDrawer),
             swipeDownNotifications = prefs.getBoolean("swipeDownNotifications", d.swipeDownNotifications),
             doubleTapLock = prefs.getBoolean("doubleTapLock", d.doubleTapLock),
@@ -80,6 +92,7 @@ class SettingsStore(context: Context) {
             .putFloat("glassRefractionAmount", s.glassRefractionAmount)
             .putFloat("glassSurfaceAlpha", s.glassSurfaceAlpha)
             .putBoolean("glassDispersion", s.glassDispersion)
+            .putInt("glassQuality", s.glassQuality).putInt("glassResolution", s.glassResolution).putFloat("refreshRate", s.refreshRate)
             .putBoolean("swipeUpDrawer", s.swipeUpDrawer)
             .putBoolean("swipeDownNotifications", s.swipeDownNotifications)
             .putBoolean("doubleTapLock", s.doubleTapLock)

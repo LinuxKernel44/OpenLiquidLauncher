@@ -27,6 +27,9 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import com.linuxkernel44.openliquidlauncher.ui.LauncherScreen
 import com.linuxkernel44.openliquidlauncher.ui.LauncherState
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class LauncherActivity : ComponentActivity() {
@@ -70,6 +73,30 @@ class LauncherActivity : ComponentActivity() {
         setContent { LauncherScreen(state, ::pickWallpaper, ::startAddWidget) }
         handleDebugIntent(intent)
         handleAppIconLaunch(intent)
+        initRefreshRates()
+        lifecycleScope.launch { app.settings.state.map { it.refreshRate }.distinctUntilChanged().collect(::applyRefreshRate) }
+    }
+
+    /** Display modes of the screen's current resolution: their distinct refresh rates (Hz). */
+    private fun displayModes(): List<android.view.Display.Mode> {
+        val d = getSystemService(android.hardware.display.DisplayManager::class.java).getDisplay(android.view.Display.DEFAULT_DISPLAY) ?: return emptyList()
+        val cur = d.mode
+        return d.supportedModes.filter { it.physicalWidth == cur.physicalWidth && it.physicalHeight == cur.physicalHeight }
+    }
+
+    private fun initRefreshRates() {
+        state.refreshRates = displayModes().map { Math.round(it.refreshRate) }.distinct().sorted()
+    }
+
+    /** 0 = automatic (the system picks), -1 = highest available, otherwise the closest mode to that rate. */
+    private fun applyRefreshRate(rate: Float) {
+        val modes = displayModes()
+        val id = when {
+            rate == 0f || modes.isEmpty() -> 0
+            rate < 0f -> modes.maxByOrNull { it.refreshRate }?.modeId ?: 0
+            else -> modes.minByOrNull { kotlin.math.abs(it.refreshRate - rate) }?.modeId ?: 0
+        }
+        window.attributes = window.attributes.also { it.preferredDisplayModeId = id }
     }
 
     private fun isDefaultHome(): Boolean {

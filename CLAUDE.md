@@ -13,6 +13,9 @@ Kotlin + Jetpack Compose, single `app` module, package `com.linuxkernel44.openli
 - `widget/` — `LauncherWidgetHost`, `DragAwareHostView` (long-press + drag for widgets).
 - `ui/` — `LauncherScreen` (root), `LauncherState` (overlays + drag & drop + launching), `Workspace`/`Dock`, `Drawer`, `Overlays` (menu, folder, widget picker, drop zones), `SettingsScreen`, `Glass.kt` (the `liquidGlass` modifier).
 
+## Vendored glass library
+`app/src/main/java/com/kyant/backdrop/` is a copy of Kyant0's `io.github.kyant0:backdrop` 2.0.1 (Apache-2.0, KMP `commonMain` + `androidMain` merged, `actual` keywords removed) with one addition: `BackdropRendering.scale` (render-resolution scale of the glass). `DrawBackdropNode` records the glass layer at `size * scale` (effect scope density/size are scaled so dp -> px follow), then draws it back at `1/scale`; the node's own `layerBlock` is inverse-transformed in real pixels (`renderScale` passed to `InverseLayerScope`). Keep the diff against upstream small. Settings -> Performance drives it (`glassResolution`), plus `glassQuality` (see `liquidGlass`) and `refreshRate` (`preferredDisplayModeId`, modes read from `Display.supportedModes`).
+
 ## Glass rules (important)
 - One `LayerBackdrop` holds the wallpaper (`Modifier.layerBackdrop`); all glass surfaces call `Modifier.liquidGlass(backdrop, style, shape, ...)`.
 - `lens()` needs a `CornerBasedShape` (e.g. `RoundedCornerShape`) — other shapes throw.
