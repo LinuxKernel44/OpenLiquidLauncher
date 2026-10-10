@@ -87,7 +87,7 @@ fun AppDrawer(
             .fillMaxSize()
             .bleed()
             .liquidGlass(
-                backdrop, style.copy(refractionHeight = 0f, blur = style.blur + 20f), // no lens: it warps the edges of a full-screen sheet
+                backdrop, style.copy(refractionHeight = 0f, blur = style.blur * 6f), // proportional to the Blur setting; no lens: it warps the edges of a full-screen sheet
                 // Square corners: rounded ones leave sharp wallpaper showing around the sheet.
                 RoundedCornerShape(0.dp),
                 surfaceAlpha = style.surfaceAlpha * 0.9f + 0.06f,
@@ -267,7 +267,7 @@ fun GlassScrollHandle(
                 .size(widthAnim, thumbH)
                 .liquidGlass(
                     // The refraction zone must stay narrower than half the pill: otherwise the two edges meet and leave a seam in the middle.
-                    backdrop, style.copy(refractionHeight = (widthAnim.value / 2f - 2.5f).coerceAtLeast(1f), refractionAmount = 14f, blur = 1.5f),
+                    backdrop, style.copy(refractionHeight = (widthAnim.value / 2f - 2.5f).coerceAtLeast(1f), refractionAmount = 14f, blur = style.blur * 0.375f),
                     RoundedCornerShape(50), surfaceAlpha = 0.14f,
                 ),
         )
@@ -277,7 +277,7 @@ fun GlassScrollHandle(
                     .align(Alignment.TopEnd)
                     .offset { androidx.compose.ui.unit.IntOffset(-with(density) { 52.dp.roundToPx() }, y + with(density) { ((thumbH - 72.dp) / 2).roundToPx() }) }
                     .size(72.dp)
-                    .liquidGlass(backdrop, style.copy(refractionHeight = 14f, refractionAmount = 26f, blur = 2f), CircleShape, surfaceAlpha = 0.14f),
+                    .liquidGlass(backdrop, style.copy(refractionHeight = 14f, refractionAmount = 26f, blur = style.blur * 0.5f), CircleShape, surfaceAlpha = 0.14f),
                 contentAlignment = Alignment.Center,
             ) { GText(letter, size = 28f, weight = androidx.compose.ui.text.font.FontWeight.Bold) }
         }

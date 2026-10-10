@@ -66,7 +66,7 @@ fun SettingsScreen(
     Box(
         Modifier.fillMaxSize()
             .bleed()
-            .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur + 16f), RoundedCornerShape(0.dp), surfaceAlpha = style.surfaceAlpha + 0.10f, tint = Color.Black.copy(alpha = 0.18f), edges = false)
+            .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur * 5f), RoundedCornerShape(0.dp), surfaceAlpha = style.surfaceAlpha + 0.10f, tint = Color.Black.copy(alpha = 0.18f), edges = false)
             .clickable(interactionSource = null, indication = null) { },
     ) {
         Column(
@@ -91,7 +91,7 @@ fun SettingsScreen(
             }
 
             Section("Liquid glass", backdrop, style) {
-                SliderRow("Blur", settings.glassBlur, 0f, 30f, "%.0f") { store.update { copy(glassBlur = it) } }
+                SliderRow("Blur", settings.glassBlur, 0f, 30f, "%.1f") { store.update { copy(glassBlur = it) } }
                 SliderRow("Refraction height", settings.glassRefractionHeight, 0f, 40f, "%.0f") { store.update { copy(glassRefractionHeight = it) } }
                 SliderRow("Refraction strength", settings.glassRefractionAmount, 0f, 60f, "%.0f") { store.update { copy(glassRefractionAmount = it) } }
                 SliderRow("Surface opacity", settings.glassSurfaceAlpha, 0f, 0.6f, "%.2f") { store.update { copy(glassSurfaceAlpha = it) } }
@@ -146,7 +146,7 @@ fun SettingsScreen(
 
             Section("System", backdrop, style) {
                 ButtonRow("Set as default launcher") { state.openDefaultHomeSettings() }
-                Hint("OpenLiquidLauncher 1.5.0 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
+                Hint("OpenLiquidLauncher 1.5.1 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
             }
         }
     }
@@ -155,7 +155,7 @@ fun SettingsScreen(
 @Composable
 private fun Section(title: String, backdrop: Backdrop, style: GlassStyle, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
     Column(
-        Modifier.fillMaxWidth().liquidGlass(backdrop, style.copy(refractionHeight = 8f, refractionAmount = 14f, blur = 10f), RoundedCornerShape(28.dp), surfaceAlpha = 0.12f, tint = Color.Black.copy(alpha = 0.20f))
+        Modifier.fillMaxWidth().liquidGlass(backdrop, style.copy(refractionHeight = 8f, refractionAmount = 14f, blur = style.blur * 2.5f), RoundedCornerShape(28.dp), surfaceAlpha = 0.12f, tint = Color.Black.copy(alpha = 0.20f))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
