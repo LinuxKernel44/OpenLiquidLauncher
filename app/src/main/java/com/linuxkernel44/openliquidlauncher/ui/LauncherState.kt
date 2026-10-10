@@ -65,6 +65,7 @@ sealed interface ImportRequest {
 
 /** Central UI controller: overlays, drag & drop, launching. Persisted data lives in [LauncherApp]. */
 class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
+    private companion object { const val NEW_ITEM = -2L }
     val settings get() = app.settings
     val layout get() = app.layout
     val apps get() = app.apps
@@ -188,10 +189,11 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         val key = t?.takeIf { it.push }
         if (key == previewKey) return
         previewKey = key; previewJob?.cancel()
-        val id = dragPayload?.itemId ?: -1L
+        // An app dragged out of a folder or the drawer isn't on the home screen yet: it still pushes the others aside.
+        val id = dragPayload?.itemId?.takeIf { it >= 0 } ?: NEW_ITEM
         // Without a hovered cell the icons just close the hole left by the lifted one.
         preview = layout.pageOf(id)?.let { layout.simulate(id, it, null) } ?: emptyMap()
-        if (key == null || id < 0) return
+        if (key == null || dragPayload == null) return
         previewJob = activity.lifecycleScope.launch {
             kotlinx.coroutines.delay(260) // dwell, like OxygenOS / One UI: icons move aside only if you linger
             preview = layout.simulate(id, key.page, key.x to key.y)
