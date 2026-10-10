@@ -107,13 +107,14 @@ fun Modifier.liquidGlass(
         if (q >= 1) lens(
             (style.refractionHeight * (1f + 1.2f * d)).dp.toPx(),
             (style.refractionAmount * (1f + 1.6f * d)).dp.toPx(),
-            depthEffect = q >= 3 || d > 0.5f,
+            depthEffect = small && (q >= 3 || d > 0.5f),
             chromaticAberration = style.dispersion || q >= 4,
         )
     },
     highlight = if (edges && style.quality >= 1) ({ if (d > 0f) Highlight(width = (0.5f + 1.5f * d).dp, alpha = 1f) else Highlight.Default }) else null,
     shadow = if (edges && style.quality >= 2) ({ if (d > 0f) Shadow(radius = (24f + 10f * d).dp, color = Color.Black.copy(alpha = 0.1f + 0.1f * d)) else Shadow.Default }) else null,
-    innerShadow = if (style.quality >= 3 || d > 0f) ({ InnerShadow(radius = (10f + 8f * d).dp, color = Color.Black.copy(alpha = 0.08f + 0.10f * d)) }) else null,
+    // The inner shadow reads as a second contour on big cards and sheets, so only small elements get it.
+    innerShadow = if (small && (style.quality >= 3 || d > 0f)) ({ InnerShadow(radius = (10f + 8f * d).dp, color = Color.Black.copy(alpha = 0.08f + 0.10f * d)) }) else null,
     layerBlock = layerBlock,
     onDrawSurface = {
         drawRect(Color.Black.copy(alpha = 0.10f * (1f - 0.5f * d))) // keeps white text readable on bright wallpapers
