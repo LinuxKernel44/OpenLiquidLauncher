@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.kyant.backdrop.Backdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
 import com.linuxkernel44.openliquidlauncher.data.AppInfo
 import com.linuxkernel44.openliquidlauncher.data.LauncherSettings
 
@@ -105,6 +106,9 @@ fun AppDrawer(
             // the normal cell size and let the grid scroll.
             val imeOpen = WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
             var baseCellH by remember { mutableStateOf(0.dp) }
+            // The grid (icons + labels) is recorded here so the scroll handle's glass can bend what is under it.
+            val gridBackdrop = com.kyant.backdrop.backdrops.rememberLayerBackdrop()
+            val handleBackdrop = com.kyant.backdrop.backdrops.rememberCombinedBackdrop(backdrop, gridBackdrop)
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp)) {
                 val cw = maxWidth / cols
                 val ch = maxHeight / rows
@@ -115,13 +119,13 @@ fun AppDrawer(
                     androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
                         columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(cols),
                         state = gridState,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().com_kyant_layerBackdrop(gridBackdrop),
                     ) {
                         items(filtered.size, key = { "${it}_${filtered[it].id}" }) { i ->
                             DrawerCell(filtered[i], state, settings, badges, Modifier.fillMaxWidth().height(cellH).padding(2.dp))
                         }
                     }
-                    GlassScrollHandle(gridState, cols, filtered.map { it.label }, backdrop, style, Modifier.align(Alignment.CenterEnd).fillMaxHeight())
+                    GlassScrollHandle(gridState, cols, filtered.map { it.label }, handleBackdrop, style, Modifier.align(Alignment.CenterEnd).fillMaxHeight())
                 } else {
                     HorizontalPager(pager, Modifier.fillMaxSize()) { page ->
                         Box(Modifier.fillMaxSize()) {
@@ -219,11 +223,11 @@ fun GlassScrollHandle(
     var dragProgress by remember { mutableStateOf(0f) }
     val progress = if (dragging) dragProgress else gridProgress
 
-    val thumbH = 56.dp
+    val thumbH = 84.dp
     var trackPx by remember { mutableStateOf(1f) }
     val thumbPx = with(density) { thumbH.toPx() }
     val letter = labels.getOrNull((gridState.firstVisibleItemIndex).coerceIn(0, (labels.size - 1).coerceAtLeast(0)))?.firstOrNull()?.uppercaseChar()?.toString().orEmpty()
-    val widthAnim by androidx.compose.animation.core.animateDpAsState(if (dragging) 14.dp else 8.dp, label = "handleW")
+    val widthAnim by androidx.compose.animation.core.animateDpAsState(if (dragging) 22.dp else 14.dp, label = "handleW")
 
     fun dragTo(y: Float) {
         val f = ((y - thumbPx / 2) / (trackPx - thumbPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
@@ -237,7 +241,7 @@ fun GlassScrollHandle(
 
     Box(
         modifier
-            .width(44.dp)
+            .width(52.dp)
             .padding(vertical = 6.dp)
             .androidx_onSizeChanged { trackPx = it.height.toFloat() }
             .pointerInput(Unit) {
@@ -262,21 +266,23 @@ fun GlassScrollHandle(
                 .graphicsLayer { this.alpha = alpha }
                 .size(widthAnim, thumbH)
                 .liquidGlass(
-                    backdrop, style.copy(refractionHeight = 5f, refractionAmount = 8f, blur = 2f),
-                    RoundedCornerShape(50), surfaceAlpha = 0.30f,
+                    backdrop, style.copy(refractionHeight = 9f, refractionAmount = 16f, blur = 1.5f),
+                    RoundedCornerShape(50), surfaceAlpha = 0.14f,
                 ),
         )
         if (dragging && letter.isNotEmpty()) {
             Box(
                 Modifier
                     .align(Alignment.TopEnd)
-                    .offset { androidx.compose.ui.unit.IntOffset(-with(density) { 44.dp.roundToPx() }, y) }
-                    .size(60.dp)
-                    .liquidGlass(backdrop, style.copy(refractionHeight = 10f, refractionAmount = 16f), CircleShape, surfaceAlpha = 0.30f),
+                    .offset { androidx.compose.ui.unit.IntOffset(-with(density) { 52.dp.roundToPx() }, y + with(density) { ((thumbH - 72.dp) / 2).roundToPx() }) }
+                    .size(72.dp)
+                    .liquidGlass(backdrop, style.copy(refractionHeight = 14f, refractionAmount = 26f, blur = 2f), CircleShape, surfaceAlpha = 0.14f),
                 contentAlignment = Alignment.Center,
-            ) { GText(letter, size = 24f, weight = androidx.compose.ui.text.font.FontWeight.Bold) }
+            ) { GText(letter, size = 28f, weight = androidx.compose.ui.text.font.FontWeight.Bold) }
         }
     }
 }
+
+private fun Modifier.com_kyant_layerBackdrop(b: com.kyant.backdrop.backdrops.LayerBackdrop) = this.layerBackdrop(b)
 
 private fun Modifier.androidx_onSizeChanged(f: (androidx.compose.ui.unit.IntSize) -> Unit) = this.onSizeChanged(f)
