@@ -92,19 +92,36 @@ fun AppDrawer(
             Modifier.fillMaxSize().padding(48.dp)
                 .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.navigationBars).union(WindowInsets.ime)),
         ) {
+            // With the keyboard open the grid area shrinks. Instead of squeezing the cells (which hides the names), keep
+            // the normal cell size and let the grid scroll.
+            val imeOpen = WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
+            var baseCellH by remember { mutableStateOf(0.dp) }
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp)) {
                 val cw = maxWidth / cols
                 val ch = maxHeight / rows
-                HorizontalPager(pager, Modifier.fillMaxSize()) { page ->
-                    Box(Modifier.fillMaxSize()) {
-                        filtered.drop(page * perPage).take(perPage).forEachIndexed { i, app ->
-                            DrawerCell(app, state, settings, badges, Modifier.offset(cw * (i % cols), ch * (i / cols)).size(cw, ch).padding(2.dp))
+                LaunchedEffect(ch, imeOpen) { if (!imeOpen) baseCellH = ch }
+                if (imeOpen) {
+                    val cellH = if (baseCellH > 0.dp) baseCellH else 96.dp
+                    androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                        columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(cols),
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        items(filtered.size, key = { filtered[it].id }) { i ->
+                            DrawerCell(filtered[i], state, settings, badges, Modifier.fillMaxWidth().height(cellH).padding(2.dp))
+                        }
+                    }
+                } else {
+                    HorizontalPager(pager, Modifier.fillMaxSize()) { page ->
+                        Box(Modifier.fillMaxSize()) {
+                            filtered.drop(page * perPage).take(perPage).forEachIndexed { i, app ->
+                                DrawerCell(app, state, settings, badges, Modifier.offset(cw * (i % cols), ch * (i / cols)).size(cw, ch).padding(2.dp))
+                            }
                         }
                     }
                 }
                 if (filtered.isEmpty()) GText("No apps found", Modifier.align(Alignment.Center), size = 16f)
             }
-            if (pageCount > 1) PageDots(pageCount, pager.currentPage, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp))
+            if (pageCount > 1 && !imeOpen) PageDots(pageCount, pager.currentPage, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp))
             val requester = remember { FocusRequester() }
             Box(
                 Modifier.fillMaxWidth().padding(horizontal = 18.dp).padding(bottom = 14.dp, top = 4.dp).height(52.dp)
