@@ -126,6 +126,11 @@ fun SettingsScreen(
             }
 
             Section("Home screen", backdrop, style) {
+                SliderRow(
+                    "App icon roundness", settings.appIconRoundness * 100f, 0f, 100f, "%.0f", default = 0f,
+                    display = { if (it < 1f) "System" else "%.0f".format(it) },
+                ) { store.update { copy(appIconRoundness = it / 100f) } }
+                Hint("0 = the system's icon shape. Above 0 uses our own mask, from a rounded square to a circle (adaptive icons).")
                 StepperRow("Columns", settings.columns, 4, 6) { store.update { copy(columns = it) }; state.layout.reflow() }
                 StepperRow("Rows", settings.rows, 4, 7) { store.update { copy(rows = it) }; state.layout.reflow() }
                 StepperRow("Dock icons", settings.dockSize, 3, 6) { store.update { copy(dockSize = it) }; state.layout.ensureDockSize() }
@@ -159,7 +164,7 @@ fun SettingsScreen(
 
             Section("System", backdrop, style) {
                 ButtonRow("Set as default launcher") { state.openDefaultHomeSettings() }
-                Hint("OpenLiquidLauncher 1.8.0 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
+                Hint("OpenLiquidLauncher 1.8.1 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
             }
         }
     }
@@ -221,11 +226,11 @@ private fun androidx.compose.foundation.layout.RowScope.Segment(label: String, s
 }
 
 @Composable
-private fun SliderRow(label: String, value: Float, min: Float, max: Float, fmt: String, default: Float, onChange: (Float) -> Unit) {
+private fun SliderRow(label: String, value: Float, min: Float, max: Float, fmt: String, default: Float, display: ((Float) -> String)? = null, onChange: (Float) -> Unit) {
     Column {
         Row(Modifier.fillMaxWidth()) {
             GText(label, Modifier.weight(1f), size = 15f, align = TextAlign.Start)
-            GText(fmt.format(value), size = 14f, color = Color.White.copy(alpha = 0.75f))
+            GText(display?.invoke(value) ?: fmt.format(value), size = 14f, color = Color.White.copy(alpha = 0.75f))
         }
         GlassSlider(value, min, max, onChange, default)
     }

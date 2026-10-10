@@ -48,7 +48,7 @@ class AppRepository(private val context: Context) {
 
     // Disk cache: label + icon per app, so a cold start (the system killed us in the background) is instant.
     private val cacheDir = File(context.filesDir, "icon_cache").apply { mkdirs() }
-    private val indexFile = File(cacheDir, "index.json")
+    private val indexFile = File(cacheDir, "index2.json") // v2: also stores the raw (unmasked) adaptive icon
     private class CacheEntry(val id: String, val key: String, val label: String, val component: ComponentName, val serial: Long, val file: String)
 
     /** Called with the ids of apps that were installed after the first load. */
@@ -94,7 +94,8 @@ class AppRepository(private val context: Context) {
                         val bmp = BitmapFactory.decodeFile(File(cacheDir, o.getString("file")).path) ?: return@async null
                         val cn = ComponentName.unflattenFromString(o.getString("component")) ?: return@async null
                         val themed = File(cacheDir, "t_" + o.getString("file")).takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.path) }
-                        AppInfo(o.getString("id"), o.getString("label"), cn, user, bmp.asImageBitmap(), themed?.asImageBitmap())
+                        val raw = File(cacheDir, "r_" + o.getString("file")).takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.path) }
+                        AppInfo(o.getString("id"), o.getString("label"), cn, user, bmp.asImageBitmap(), themed?.asImageBitmap(), raw?.asImageBitmap())
                     }.getOrNull()
                 }
             }.awaitAll().filterNotNull()
@@ -117,6 +118,7 @@ class AppRepository(private val context: Context) {
 
     private fun saveIcon(a: AppInfo) {
         runCatching { File(cacheDir, cacheKeyOf(a.id)).outputStream().use { a.icon.asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it) } }
+        a.rawIcon?.let { r -> runCatching { File(cacheDir, "r_" + cacheKeyOf(a.id)).outputStream().use { r.asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it) } } }
         a.themedIcon?.let { t -> runCatching { File(cacheDir, "t_" + cacheKeyOf(a.id)).outputStream().use { t.asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it) } } }
     }
 
@@ -168,6 +170,7 @@ class AppRepository(private val context: Context) {
     private fun toAppInfo(info: LauncherActivityInfo, id: String): AppInfo {
         val icon = info.getBadgedIcon(0)
         val themed = runCatching { renderThemed(info) }.getOrNull()
+        val raw = runCatching { renderRaw(info) }.getOrNull()
         return AppInfo(
             id = id,
             label = info.label.toString(),
@@ -175,7 +178,21 @@ class AppRepository(private val context: Context) {
             user = info.user,
             icon = icon.toBitmap(iconSize).asImageBitmap(),
             themedIcon = themed?.asImageBitmap(),
+            rawIcon = raw?.asImageBitmap(),
         )
+    }
+
+    /** The adaptive icon's background + foreground drawn without the system mask, cropped to the visible 72/108 window. */
+    private fun renderRaw(info: LauncherActivityInfo): Bitmap? {
+        if (info.user != Process.myUserHandle()) return null // keep the work-profile badge of the system icon
+        val d = info.getIcon(0) as? AdaptiveIconDrawable ?: return null
+        val big = (iconSize * 1.5f).toInt()
+        val bmp = createBitmap(big, big)
+        val c = Canvas(bmp)
+        d.background?.let { it.setBounds(0, 0, big, big); it.draw(c) }
+        d.foreground?.let { it.setBounds(0, 0, big, big); it.draw(c) }
+        val off = (big - iconSize) / 2
+        return Bitmap.createBitmap(bmp, off, off, iconSize, iconSize)
     }
 
     /** Renders the monochrome layer of an adaptive icon as an alpha mask (tinted at draw time). */

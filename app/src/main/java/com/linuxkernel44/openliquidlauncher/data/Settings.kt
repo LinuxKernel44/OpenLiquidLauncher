@@ -30,6 +30,8 @@ data class LauncherSettings(
     val glassRoundness: Float = 0.5f,
     /** 0..1 roundness of folders only (icon and opened panel); 0.5 = original. Independent from [glassRoundness]. */
     val folderRoundness: Float = 0.5f,
+    /** 0 = the system's icon shape (default); 0.01..1 = our own mask from a slightly rounded square to a circle. */
+    val appIconRoundness: Float = 0f,
     /** 0..1: how "water droplet" small glass elements (folders, dock, buttons, handle, menus) look; 0 = original look. */
     val glassDroplet: Float = 0f,
     /** Launch animation style (see ui/Intro.kt: 0 None, 1 Fade, 2 Zoom, 3 Cascade, 4 Slide) and speed (0 fast, 1 normal, 2 slow). */
@@ -80,6 +82,7 @@ class SettingsStore(context: Context) {
             glassDispersion = prefs.getBoolean("glassDispersion", d.glassDispersion),
             glassRoundness = prefs.getFloat("glassRoundness", d.glassRoundness).coerceIn(0f, 1f),
             folderRoundness = prefs.getFloat("folderRoundness", d.folderRoundness).coerceIn(0f, 1f),
+            appIconRoundness = prefs.getFloat("appIconRoundness", d.appIconRoundness).coerceIn(0f, 1f),
             glassDroplet = prefs.getFloat("glassDroplet", d.glassDroplet).coerceIn(0f, 1f),
             introStyle = prefs.getInt("introStyle", d.introStyle).coerceIn(0, 4),
             introSpeed = prefs.getInt("introSpeed", d.introSpeed).coerceIn(0, 2),
@@ -105,7 +108,7 @@ class SettingsStore(context: Context) {
             .putFloat("glassRefractionHeight", s.glassRefractionHeight)
             .putFloat("glassRefractionAmount", s.glassRefractionAmount)
             .putFloat("glassSurfaceAlpha", s.glassSurfaceAlpha)
-            .putBoolean("glassDispersion", s.glassDispersion).putFloat("glassDroplet", s.glassDroplet).putFloat("glassRoundness", s.glassRoundness).putFloat("folderRoundness", s.folderRoundness)
+            .putBoolean("glassDispersion", s.glassDispersion).putFloat("glassDroplet", s.glassDroplet).putFloat("glassRoundness", s.glassRoundness).putFloat("folderRoundness", s.folderRoundness).putFloat("appIconRoundness", s.appIconRoundness)
             .putInt("introStyle", s.introStyle).putInt("introSpeed", s.introSpeed)
             .putInt("glassQuality", s.glassQuality).putInt("glassResolution", s.glassResolution).putFloat("refreshRate", s.refreshRate)
             .putBoolean("swipeUpDrawer", s.swipeUpDrawer)

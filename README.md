@@ -35,6 +35,8 @@ Settings → Liquid glass → **Roundness** (0–100, default 50 = the original 
 
 Settings → Liquid glass → **Folder roundness** (0–100, default 50): the same for folders only (home icon and opened panel), independent from Roundness.
 
+Settings → Home screen → **App icon roundness** (0 = the system's icon shape, default; 1–100 = our own mask from a rounded square to a circle, for adaptive icons and the themed look; also used in folder previews).
+
 ## Droplet look
 Settings → Liquid glass → **Droplet look** (0–100, default 0 = the original look): makes small glass elements (folders, dock, edit buttons, drop zones, menus, scroll handle) clearer, rounder and more refractive, with a brighter rim and a soft inner shadow.
 

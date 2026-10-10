@@ -224,9 +224,9 @@ fun Modifier.bleed(extend: androidx.compose.ui.unit.Dp = 48.dp, top: Boolean = t
  * the Roundness setting scales it (0 = nearly square, 0.5 = original, 1 = capsule) and, for [small] elements, the Droplet
  * setting pushes it further toward a full capsule.
  */
-fun GlassStyle.round(basePercent: Int, small: Boolean = false, r: Float = roundness): RoundedCornerShape {
+fun GlassStyle.round(basePercent: Int, small: Boolean = false, r: Float = roundness, dropletShape: Boolean = true): RoundedCornerShape {
     var p = if (r <= 0.5f) basePercent * (r / 0.5f) else basePercent + (50 - basePercent) * ((r - 0.5f) / 0.5f)
-    if (small) p += (50f - p) * droplet
+    if (small && dropletShape) p += (50f - p) * droplet
     return RoundedCornerShape(percent = p.toInt().coerceIn(0, 50))
 }
 

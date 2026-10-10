@@ -55,19 +55,27 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** Renders an app icon, honoring the "themed icons" option. */
+/** Shape of app icons for the "App icon roundness" setting: from a slightly rounded square (0.01) to a circle (1). */
+fun appIconShape(roundness: Float) = RoundedCornerShape(percent = (10 + 40 * roundness).toInt().coerceIn(10, 50))
+
+/**
+ * Renders an app icon: the system's own masked icon by default, our own mask when "App icon roundness" is on (adaptive
+ * icons only), or the monochrome "themed" look when enabled.
+ */
 @Composable
-fun AppIconImage(app: AppInfo, settings: LauncherSettings, size: Dp, modifier: Modifier = Modifier) {
+fun AppIconImage(app: AppInfo, settings: LauncherSettings, size: Dp, modifier: Modifier = Modifier, quality: FilterQuality = FilterQuality.High) {
     val themed = app.themedIcon
+    val raw = app.rawIcon
+    val custom = settings.appIconRoundness > 0f
     if (settings.themedIcons && themed != null) {
-        Box(
-            modifier.size(size).clip(RoundedCornerShape(size * 0.3f)).background(Color(0xFF2E3340)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Image(BitmapPainter(themed, filterQuality = FilterQuality.High), null, Modifier.size(size * 0.86f), colorFilter = ColorFilter.tint(Color(0xFFDDE3FF)))
+        val shape = if (custom) appIconShape(settings.appIconRoundness) else RoundedCornerShape(size * 0.3f)
+        Box(modifier.size(size).clip(shape).background(Color(0xFF2E3340)), contentAlignment = Alignment.Center) {
+            Image(BitmapPainter(themed, filterQuality = quality), null, Modifier.size(size * 0.86f), colorFilter = ColorFilter.tint(Color(0xFFDDE3FF)))
         }
+    } else if (custom && raw != null) {
+        Image(BitmapPainter(raw, filterQuality = quality), app.label, modifier.size(size).clip(appIconShape(settings.appIconRoundness)))
     } else {
-        Image(BitmapPainter(app.icon, filterQuality = FilterQuality.High), app.label, modifier.size(size))
+        Image(BitmapPainter(app.icon, filterQuality = quality), app.label, modifier.size(size))
     }
 }
 
@@ -114,17 +122,14 @@ fun FolderCell(
     val size = iconSize * settings.iconScale
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
-            Modifier.size(size).liquidGlass(backdrop, style.copy(refractionHeight = 8f, refractionAmount = 12f), style.round(30, small = true, r = style.folderRoundness), surfaceAlpha = style.surfaceAlpha + 0.08f, small = true)
+            Modifier.size(size).liquidGlass(backdrop, style.copy(refractionHeight = 8f, refractionAmount = 12f), style.round(30, small = true, r = style.folderRoundness, dropletShape = false), surfaceAlpha = style.surfaceAlpha + 0.08f, small = true)
                 .padding(size * 0.1f),
         ) {
             val mini = size * 0.24f
             val gap = size * 0.04f
             folder.appIds.take(9).forEachIndexed { i, id ->
                 val a = apps(id) ?: return@forEachIndexed
-                Image(
-                    BitmapPainter(a.icon, filterQuality = FilterQuality.Medium), null,
-                    Modifier.size(mini).offset((mini + gap) * (i % 3), (mini + gap) * (i / 3)),
-                )
+                AppIconImage(a, settings, mini, Modifier.offset((mini + gap) * (i % 3), (mini + gap) * (i / 3)), FilterQuality.Medium)
             }
         }
         if (showLabel) GText(folder.name, Modifier.padding(top = 4.dp), size = 11.5f)

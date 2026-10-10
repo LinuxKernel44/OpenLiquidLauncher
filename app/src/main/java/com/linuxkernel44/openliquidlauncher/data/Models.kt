@@ -14,6 +14,8 @@ class AppInfo(
     val icon: ImageBitmap,
     /** Pre-rendered "themed" variant (Android 13+ monochrome layer), if the app provides one. */
     val themedIcon: ImageBitmap?,
+    /** Adaptive icon layers without the system mask (the visible 72dp window), so we can apply our own shape. Null for legacy icons. */
+    val rawIcon: ImageBitmap? = null,
 ) {
     val packageName: String get() = component.packageName
 }
