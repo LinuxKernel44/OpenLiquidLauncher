@@ -107,9 +107,20 @@ fun Modifier.liquidGlass(
         val blurK = (if (q >= 4) 1.25f else 1f) * (1f - 0.7f * d)
         if (style.blur * blurK > 0f) blur((style.blur * blurK).dp.toPx())
         if (q >= 1) lens(
-            (style.refractionHeight * (1f + 1.2f * d)).dp.toPx(),
-            (style.refractionAmount * (1f + 1.6f * d)).dp.toPx(),
-            depthEffect = small && (q >= 3 || d > 0.5f),
+            // Droplet strengthens the lens, but never beyond what the element can bend: the ring is capped to a third of its
+            // shorter side and the displacement stays proportional to it, or the ends of wide capsules (the dock) smear.
+            run {
+                val maxH = minOf(size.width, size.height) * 0.30f
+                val h = minOf((style.refractionHeight * (1f + 0.8f * d)).dp.toPx(), maxH)
+                h
+            },
+            run {
+                val maxH = minOf(size.width, size.height) * 0.30f
+                val h = minOf((style.refractionHeight * (1f + 0.8f * d)).dp.toPx(), maxH)
+                minOf((style.refractionAmount * (1f + 0.5f * d)).dp.toPx(), h * 1.9f)
+            },
+            // The depth effect domes the whole element: fine on a roughly square tile, but it smears the ends of wide capsules.
+            depthEffect = small && (q >= 3 || d > 0.5f) && size.width <= size.height * 1.6f,
             chromaticAberration = style.dispersion || q >= 4,
         )
     },
