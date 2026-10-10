@@ -198,22 +198,33 @@ fun GlassScrollHandle(
     val totalRows = (labels.size + columns - 1) / columns
     val visibleRows = (gridState.layoutInfo.visibleItemsInfo.size / columns).coerceAtLeast(1)
     if (totalRows <= visibleRows || alpha <= 0.01f && !dragging) return
-    val progress by remember(gridState, totalRows, visibleRows) {
-        androidx.compose.runtime.derivedStateOf {
-            val first = gridState.firstVisibleItemIndex / columns
-            (first.toFloat() / (totalRows - visibleRows).coerceAtLeast(1)).coerceIn(0f, 1f)
-        }
+
+    // Pixel-accurate scroll position (row index + offset inside the row), so the handle glides instead of stepping per row.
+    fun rowPx() = gridState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.height?.toFloat()?.coerceAtLeast(1f) ?: 1f
+    fun maxScroll(): Float {
+        val info = gridState.layoutInfo
+        val viewport = (info.viewportSize.height - info.beforeContentPadding - info.afterContentPadding).toFloat()
+        return (totalRows * rowPx() - viewport).coerceAtLeast(1f)
     }
+    fun scrollPos() = (gridState.firstVisibleItemIndex / columns) * rowPx() + gridState.firstVisibleItemScrollOffset
+    val gridProgress by remember(gridState, totalRows) {
+        androidx.compose.runtime.derivedStateOf { (scrollPos() / maxScroll()).coerceIn(0f, 1f) }
+    }
+    // While dragging, the handle follows the finger exactly; the grid is driven from it.
+    var dragProgress by remember { mutableStateOf(0f) }
+    val progress = if (dragging) dragProgress else gridProgress
+
     val thumbH = 56.dp
     var trackPx by remember { mutableStateOf(1f) }
     val thumbPx = with(density) { thumbH.toPx() }
     val letter = labels.getOrNull((gridState.firstVisibleItemIndex).coerceIn(0, (labels.size - 1).coerceAtLeast(0)))?.firstOrNull()?.uppercaseChar()?.toString().orEmpty()
     val widthAnim by androidx.compose.animation.core.animateDpAsState(if (dragging) 14.dp else 8.dp, label = "handleW")
 
-    fun jumpTo(y: Float) {
+    fun dragTo(y: Float) {
         val f = ((y - thumbPx / 2) / (trackPx - thumbPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
-        val row = (f * (totalRows - visibleRows).coerceAtLeast(0)).toInt()
-        scope.launch { gridState.scrollToItem((row * columns).coerceIn(0, (labels.size - 1).coerceAtLeast(0))) }
+        dragProgress = f
+        // Scroll by the exact pixel difference (no per-row snapping); dispatchRawDelta is immediate and non-suspending.
+        gridState.dispatchRawDelta(f * maxScroll() - scrollPos())
     }
 
     Box(
@@ -223,17 +234,17 @@ fun GlassScrollHandle(
             .androidx_onSizeChanged { trackPx = it.height.toFloat() }
             .pointerInput(totalRows, visibleRows) {
                 detectVerticalDragGestures(
-                    onDragStart = { dragging = true; jumpTo(it.y) },
+                    onDragStart = { dragProgress = gridProgress; dragging = true; dragTo(it.y) },
                     onDragEnd = { dragging = false },
                     onDragCancel = { dragging = false },
-                ) { change, _ -> change.consume(); jumpTo(change.position.y) }
+                ) { change, _ -> change.consume(); dragTo(change.position.y) }
             },
     ) {
         val y = with(density) { ((trackPx - thumbPx).coerceAtLeast(0f) * progress).toInt() }
         Box(
             Modifier
                 .align(Alignment.TopEnd)
-                .offset { androidx.compose.ui.unit.IntOffset(0, y) }
+                .offset { androidx.compose.ui.unit.IntOffset(0, ((trackPx - thumbPx).coerceAtLeast(0f) * (if (dragging) dragProgress else gridProgress)).toInt()) }
                 .padding(end = 4.dp)
                 .graphicsLayer { this.alpha = alpha }
                 .size(widthAnim, thumbH)
