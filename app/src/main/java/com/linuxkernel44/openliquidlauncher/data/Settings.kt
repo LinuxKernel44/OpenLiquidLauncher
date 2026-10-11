@@ -12,7 +12,7 @@ enum class WallpaperMode { System, Custom }
 
 data class LauncherSettings(
     val columns: Int = 5,
-    val rows: Int = 6,
+    val rows: Int = 7,
     val dockSize: Int = 5,
     val iconScale: Float = 1f,
     val showLabels: Boolean = true,
@@ -20,28 +20,28 @@ data class LauncherSettings(
     val showBadges: Boolean = true,
     val autoAddNewApps: Boolean = true,
     val wallpaperMode: WallpaperMode = WallpaperMode.Custom,
-    val setSystemWallpaperToo: Boolean = false,
+    val setSystemWallpaperToo: Boolean = true,
     // Liquid glass tuning
-    val glassBlur: Float = 4f,
+    val glassBlur: Float = 0.46288183f,
     val glassRefractionHeight: Float = 14f,
-    val glassRefractionAmount: Float = 24f,
-    val glassSurfaceAlpha: Float = 0.18f,
+    val glassRefractionAmount: Float = 40.217976f,
+    val glassSurfaceAlpha: Float = 0.10425015f,
     val glassDispersion: Boolean = false,
     /** 0..1 corner roundness of every glass element; 0.5 = the original look, 0 = nearly square, 1 = as round as possible. */
-    val glassRoundness: Float = 0.5f,
+    val glassRoundness: Float = 0.6990384f,
     /** 0..1 roundness of folders only (icon and opened panel); 0.5 = original. Independent from [glassRoundness]. */
-    val folderRoundness: Float = 0.5f,
+    val folderRoundness: Float = 0.40042168f,
     /** 0 = the system's icon shape (default); 0.01..1 = our own mask from a slightly rounded square to a circle. */
     val appIconRoundness: Float = 0f,
     /** 0..1: how "water droplet" small glass elements (folders, dock, buttons, handle, menus) look; 0 = original look. */
-    val glassDroplet: Float = 0f,
+    val glassDroplet: Float = 0.79980314f,
     /** Launch animation style (see ui/Intro.kt: 0 None, 1 Fade, 2 Zoom, 3 Cascade, 4 Slide) and speed (0 fast, 1 normal, 2 slow). */
-    val introStyle: Int = 2,
-    val introSpeed: Int = 1,
+    val introStyle: Int = 3,
+    val introSpeed: Int = 2,
     /** 0 Minimum · 1 Low · 2 Current (default) · 3 High · 4 Maximum: how rich the glass is. */
-    val glassQuality: Int = 2,
+    val glassQuality: Int = 4,
     /** Index into [GLASS_RESOLUTIONS]: render scale of the glass (default 100 %). */
-    val glassResolution: Int = 3,
+    val glassResolution: Int = 5,
     /** 0 = automatic (system decides), -1 = maximum, otherwise a fixed rate in Hz. */
     val refreshRate: Float = 0f,
     // Gestures
