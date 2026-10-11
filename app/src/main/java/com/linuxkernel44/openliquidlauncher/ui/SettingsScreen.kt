@@ -137,6 +137,8 @@ fun SettingsScreen(
                 SliderRow("Icon size", settings.iconScale, 0.7f, 1.3f, "%.2f", default = LauncherSettings().iconScale) { store.update { copy(iconScale = it) } }
                 SwitchRow("Show labels", settings.showLabels) { store.update { copy(showLabels = it) } }
                 SwitchRow("Themed icons (Android 13+)", settings.themedIcons) { store.update { copy(themedIcons = it) } }
+                SwitchRow("Add new apps to the home screen", settings.autoAddNewApps) { store.update { copy(autoAddNewApps = it) } }
+                Hint("Apps installed from a store, sideloaded or via adb are placed on the first free spot after the main page.")
                 SwitchRow("Notification badges", settings.showBadges) { store.update { copy(showBadges = it) } }
                 if (settings.showBadges && !notifOn) {
                     Hint("Badges need notification access.")

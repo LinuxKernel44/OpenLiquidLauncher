@@ -18,6 +18,7 @@ data class LauncherSettings(
     val showLabels: Boolean = true,
     val themedIcons: Boolean = false,
     val showBadges: Boolean = true,
+    val autoAddNewApps: Boolean = true,
     val wallpaperMode: WallpaperMode = WallpaperMode.Custom,
     val setSystemWallpaperToo: Boolean = false,
     // Liquid glass tuning
@@ -73,6 +74,7 @@ class SettingsStore(context: Context) {
             showLabels = prefs.getBoolean("showLabels", d.showLabels),
             themedIcons = prefs.getBoolean("themedIcons", d.themedIcons),
             showBadges = prefs.getBoolean("showBadges", d.showBadges),
+            autoAddNewApps = prefs.getBoolean("autoAddNewApps", d.autoAddNewApps),
             wallpaperMode = WallpaperMode.entries.getOrElse(prefs.getInt("wallpaperMode", d.wallpaperMode.ordinal)) { d.wallpaperMode },
             setSystemWallpaperToo = prefs.getBoolean("setSystemWallpaperToo", d.setSystemWallpaperToo),
             glassBlur = prefs.getFloat("glassBlur", d.glassBlur),
@@ -101,7 +103,7 @@ class SettingsStore(context: Context) {
             .putInt("columns", s.columns).putInt("rows", s.rows).putInt("dockSize", s.dockSize)
             .putFloat("iconScale", s.iconScale)
             .putBoolean("showLabels", s.showLabels).putBoolean("themedIcons", s.themedIcons)
-            .putBoolean("showBadges", s.showBadges)
+            .putBoolean("showBadges", s.showBadges).putBoolean("autoAddNewApps", s.autoAddNewApps)
             .putInt("wallpaperMode", s.wallpaperMode.ordinal)
             .putBoolean("setSystemWallpaperToo", s.setSystemWallpaperToo)
             .putFloat("glassBlur", s.glassBlur)

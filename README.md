@@ -12,6 +12,7 @@ An open-source Android launcher where **everything is liquid glass**. Dock, app 
 - Long-press menu with app shortcuts, app info, remove, uninstall
 - Wallpaper: pick an image in-app (optionally also set as system wallpaper) or use the system wallpaper — the glass refracts it
 - Notification badges, themed (monochrome) icons, each app's own icon as installed
+- Newly installed apps (store, sideload, adb) are added automatically, placed after the main page — on by default, toggle in Settings → Home screen
 - Gestures: swipe up (drawer), swipe down (notifications), double tap (lock), pinch (edit mode)
 - Tunable glass: blur, refraction height/strength, surface opacity, chromatic dispersion; grid, dock and icon size
 

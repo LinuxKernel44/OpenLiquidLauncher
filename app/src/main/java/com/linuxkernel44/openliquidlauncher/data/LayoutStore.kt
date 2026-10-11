@@ -302,8 +302,8 @@ class LayoutStore(private val context: Context, private val settings: SettingsSt
         changed()
     }
 
-    fun addToFirstFree(item: Item, sx: Int = 1, sy: Int = 1): Boolean {
-        var page = 0
+    fun addToFirstFree(item: Item, sx: Int = 1, sy: Int = 1, fromPage: Int = 0): Boolean {
+        var page = fromPage
         while (page < 20) {
             for (y in 0 until rows) for (x in 0 until columns)
                 if (isFree(page, x, y, sx, sy)) { placeOnWorkspace(item, page, x, y); return true }

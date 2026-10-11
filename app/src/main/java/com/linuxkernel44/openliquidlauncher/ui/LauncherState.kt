@@ -522,7 +522,9 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     }
 
     fun onAppsAdded(added: List<AppInfo>) {
+        if (!settings.current.autoAddNewApps) return
         val known = layout.allAppIdsOnHome()
-        added.filter { it.id !in known }.forEach { layout.addToFirstFree(AppItem(layout.newId(), it.id)) }
+        // Never on the main page: the user's first page stays as they arranged it.
+        added.filter { it.id !in known }.forEach { layout.addToFirstFree(AppItem(layout.newId(), it.id), fromPage = 1) }
     }
 }
