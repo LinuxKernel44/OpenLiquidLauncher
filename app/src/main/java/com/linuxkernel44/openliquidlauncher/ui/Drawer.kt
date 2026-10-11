@@ -114,23 +114,25 @@ fun AppDrawer(
                     },
                 ),
         ) {
-            // Stronger, more "droplet" glass right at the top - clearer, more refractive, with a brighter rim -
-            // fading into the rest of the sheet's flatter material below. Sharing this Box's clip (the animated
-            // rounded corners above) means the rounded edge while opening/closing is this same richer material,
-            // not a plain clipped rectangle of the flatter one.
+            // Stronger, more "droplet" glass right at the top - clearer, more refractive, with a brighter rim.
+            // Sharing this Box's clip (the animated rounded corners above) means the rounded edge while
+            // opening/closing is this same richer material, not a plain clipped rectangle of the flatter one.
+            // No fade modifier here (Offscreen compositing wrapped around a shader-based liquidGlass call was
+            // never exercised elsewhere in the app and is suspected of breaking rendering on some GPUs - it
+            // turned the whole drawer blank/unblurred on a real device even though it looked fine on the
+            // emulator's software renderer); the boosted blur/refraction below already blend it in visually.
             Box(
-                Modifier.fillMaxWidth().height(220.dp).align(Alignment.TopCenter).fadeBottom(70.dp).bleed()
+                Modifier.fillMaxWidth().height(150.dp).align(Alignment.TopCenter).bleed()
                     .liquidGlass(
                         backdrop,
                         style.copy(
                             droplet = style.droplet.coerceAtLeast(1f),
-                            refractionHeight = style.refractionHeight * 2.2f,
-                            refractionAmount = style.refractionAmount * 2.2f,
-                            blur = style.blur * 0.4f,
-                            dispersion = true,
+                            refractionHeight = style.refractionHeight * 1.8f,
+                            refractionAmount = style.refractionAmount * 1.8f,
+                            blur = style.blur * 0.6f,
                         ),
                         RoundedCornerShape(0.dp),
-                        surfaceAlpha = style.surfaceAlpha + 0.22f,
+                        surfaceAlpha = style.surfaceAlpha + 0.16f,
                         small = true,
                     ),
             )
@@ -340,19 +342,6 @@ private fun Modifier.edgeFade(height: androidx.compose.ui.unit.Dp): Modifier = t
             brush = androidx.compose.ui.graphics.Brush.verticalGradient(
                 0f to Color.Transparent, f to Color.Black, 1f - f to Color.Black, 1f to Color.Transparent,
             ),
-            blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
-        )
-    }
-
-/** Fades only the bottom [height] of the content to transparent, so it dissolves into whatever sits behind it. */
-private fun Modifier.fadeBottom(height: androidx.compose.ui.unit.Dp): Modifier = this
-    .graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
-    .drawWithContent {
-        drawContent()
-        val h = height.toPx().coerceAtMost(size.height)
-        val f = h / size.height
-        drawRect(
-            brush = androidx.compose.ui.graphics.Brush.verticalGradient(1f - f to Color.Black, 1f to Color.Transparent),
             blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
         )
     }
