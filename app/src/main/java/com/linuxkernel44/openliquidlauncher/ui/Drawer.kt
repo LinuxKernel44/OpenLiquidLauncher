@@ -91,10 +91,13 @@ fun AppDrawer(
             // which leaves an unblurred strip right at the edge (noticeable: the sheet is full-width/full-height).
             .bleed()
             .liquidGlass(
-                backdrop, style.copy(refractionHeight = 0f, blur = style.blur * 6f), // proportional to the Blur setting; no lens: it warps the edges of a full-screen sheet
+                // Same material as the dock: the actual blur/refraction/dispersion values, not a flattened copy.
+                // small = false though - the dock's depth dome is gated off for it only by its wide aspect ratio
+                // (width > height * 1.6); a portrait full-screen sheet would fail that check and get a dome.
+                backdrop, style,
                 // Square corners: rounded ones leave sharp wallpaper showing around the sheet.
                 RoundedCornerShape(0.dp),
-                surfaceAlpha = style.surfaceAlpha * 0.9f + 0.06f,
+                surfaceAlpha = style.surfaceAlpha + 0.04f,
                 edges = false,
                 layerBlock = {
                     translationY = (1f - progress) * size.height * 0.92f
