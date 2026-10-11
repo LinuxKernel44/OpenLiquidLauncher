@@ -108,22 +108,32 @@ fun AppDrawer(
                 },
             ),
     ) {
-        // Stronger, more "droplet" glass right at the top - clearer, more refractive, with a brighter rim.
-        Box(
-            Modifier.fillMaxWidth().height(90.dp).align(Alignment.TopCenter).bleed()
-                .liquidGlass(
-                    backdrop,
-                    style.copy(
-                        droplet = style.droplet.coerceAtLeast(1f),
-                        refractionHeight = style.refractionHeight * 1.8f,
-                        refractionAmount = style.refractionAmount * 1.8f,
-                        blur = style.blur * 0.6f,
-                    ),
-                    RoundedCornerShape(0.dp),
-                    surfaceAlpha = style.surfaceAlpha + 0.16f,
-                    small = true,
-                ),
+        // Stronger, more "droplet" glass right at the top - clearer, more refractive, with a brighter rim -
+        // fading into the sheet's own material via plain alpha (layerBlock, the same safe, already-proven
+        // mechanism the main sheet below uses for its own fade/slide), not an Offscreen-compositing mask: that
+        // combined with this shader-based glass effect is suspected of breaking rendering outright on some real
+        // GPUs (see the v1.14.2 fix). Several identical bands at decreasing alpha approximate a smooth fade -
+        // each one reveals more of the sheet's own material underneath as it gets more transparent, so there is
+        // no hard parameter mismatch to show as a seam, unlike a single hard-edged band.
+        val dropletBand = style.copy(
+            droplet = style.droplet + (1f - style.droplet) * 0.9f,
+            refractionHeight = style.refractionHeight * 1.8f,
+            refractionAmount = style.refractionAmount * 1.8f,
+            blur = style.blur * 0.6f,
         )
+        val bandH = 35.dp
+        for (i in 0 until 5) {
+            val a = 1f - i / 5f
+            Box(
+                Modifier.fillMaxWidth().height(bandH).offset(y = bandH * i).align(Alignment.TopCenter).bleed()
+                    .liquidGlass(
+                        backdrop, dropletBand, RoundedCornerShape(0.dp),
+                        surfaceAlpha = style.surfaceAlpha + 0.16f,
+                        small = true,
+                        layerBlock = { alpha = a },
+                    ),
+            )
+        }
         Column(
             Modifier.fillMaxSize().padding(48.dp)
                 .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.navigationBars).union(WindowInsets.ime)),
