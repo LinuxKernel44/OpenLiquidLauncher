@@ -214,7 +214,9 @@ fun Dock(
             .liquidGlass(backdrop, style, style.round(37, small = true), surfaceAlpha = style.surfaceAlpha + 0.04f, small = true)
             .onGloballyPositioned { state.dockRect = it.boundsInRoot() },
     ) {
-        Row(Modifier.fillMaxSize()) {
+        // Inset from the capsule's own rounded ends, so the first/last icon never sits near the curve -
+        // independent of how many icons there are.
+        Row(Modifier.fillMaxSize().padding(horizontal = 10.dp)) {
             for (i in 0 until n) {
                 val item = state.layout.dock.getOrNull(i)
                 Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {

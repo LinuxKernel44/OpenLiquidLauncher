@@ -113,7 +113,8 @@ fun ItemMenu(state: LauncherState, menu: MenuState, backdrop: Backdrop, style: G
     val screenW = state.workspaceRect.right.let { if (it <= 0f) 1080f else it }
     val screenH = with(density) { 2400.dp.toPx() }
 
-    Box(Modifier.fillMaxSize().clickable(interactionSource = null, indication = null) { state.menu = null }) {
+    val e = state.menuProgress.value
+    Box(Modifier.fillMaxSize().clickable(interactionSource = null, indication = null) { state.closeMenu() }) {
         val widthPx = with(density) { 232.dp.toPx() }
         val x = (menu.anchor.center.x - widthPx / 2).coerceIn(with(density) { 12.dp.toPx() }, (screenW - widthPx - with(density) { 12.dp.toPx() }).coerceAtLeast(0f))
         val below = menu.anchor.bottom + size.height + with(density) { 80.dp.toPx() } < state.dockRect.top.let { if (it <= 0f) screenH else it + with(density) { 40.dp.toPx() } }
@@ -123,6 +124,18 @@ fun ItemMenu(state: LauncherState, menu: MenuState, backdrop: Backdrop, style: G
                 .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
                 .width(232.dp)
                 .onSizeChanged { size = it }
+                // Same grow-from-the-icon pop as a folder: scale up from the long-pressed icon's position, not the
+                // panel's own centre, with the icon itself as the pivot (clamped so it stays inside the panel).
+                .graphicsLayer {
+                    if (size.width > 0 && size.height > 0) {
+                        val originX = ((menu.anchor.center.x - x) / size.width).coerceIn(0f, 1f)
+                        val originY = ((menu.anchor.center.y - y) / size.height).coerceIn(0f, 1f)
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(originX, originY)
+                    }
+                    val s = 0.4f + 0.6f * e
+                    scaleX = s; scaleY = s
+                    alpha = (e * 1.8f).coerceIn(0f, 1f)
+                }
                 // A card of rows, not a small button: roundDp (like Settings sections) instead of the percent-based,
                 // droplet-driven shape, which turns a tall narrow menu into a circle/blob. small = false for the same reason.
                 .liquidGlass(backdrop, style, style.roundDp(18.dp), surfaceAlpha = style.surfaceAlpha + 0.1f)
@@ -133,13 +146,13 @@ fun ItemMenu(state: LauncherState, menu: MenuState, backdrop: Backdrop, style: G
                 val icon = remember(s) { state.shortcutIcon(s)?.toBitmapSafe()?.asImageBitmap() }
                 MenuRow((s.shortLabel ?: s.longLabel ?: "").toString(), icon) { state.startShortcut(s) }
             }
-            if (app != null) MenuRow("App info", null) { state.menu = null; state.appInfo(app, menu.anchor) }
+            if (app != null) MenuRow("App info", null) { state.closeMenu(); state.appInfo(app, menu.anchor) }
             when {
                 payload.item != null -> MenuRow(
                     when (payload.item) { is WidgetItem -> "Remove widget"; is FolderItem -> "Remove folder"; else -> "Remove from Home" }, null,
                 ) { state.removeFromHome(payload.item) }
                 app != null && payload.fromFolderId == null -> MenuRow("Add to Home", null) {
-                    state.menu = null
+                    state.closeMenu()
                     state.layout.addToFirstFree(AppItem(state.layout.newId(), app.id))
                     state.activity.toast("Added to Home")
                 }

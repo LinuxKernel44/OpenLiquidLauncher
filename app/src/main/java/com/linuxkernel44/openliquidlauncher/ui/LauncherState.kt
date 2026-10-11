@@ -105,6 +105,25 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     var showWidgetPicker by mutableStateOf(false)
     var editMode by mutableStateOf(false)
     var menu by mutableStateOf<MenuState?>(null)
+    /** Context menu open/close animation 0..1: it grows out of the long-pressed icon, like a folder. */
+    val menuProgress = Animatable(0f)
+
+    fun openMenu(payload: DragPayload, anchor: Rect) {
+        (uiScope ?: run { menu = MenuState(payload, anchor); return }).launch {
+            menuProgress.snapTo(0f)
+            menu = MenuState(payload, anchor)
+            menuProgress.animateTo(1f, tween(220, easing = FastOutSlowInEasing))
+        }
+    }
+
+    /** Reverse animation, then the menu is really closed. */
+    fun closeMenu() {
+        if (menu == null) return
+        (uiScope ?: run { menu = null; return }).launch {
+            menuProgress.animateTo(0f, tween(180, easing = FastOutSlowInEasing))
+            menu = null
+        }
+    }
 
     // ---- launch animation (ui/Intro.kt): introT 0 -> 1 drives the appearance of every home element ----
     var introT by androidx.compose.runtime.mutableFloatStateOf(if (app.settings.current.introStyle != 0) 0f else 1f)
@@ -132,7 +151,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     /** Home press: everything transient goes away at once (not just the top-most layer). */
     suspend fun dismissAll() {
         cancelInteractions()
-        menu = null; showSettings = false; showWidgetPicker = false; openFolderId = null; editMode = false
+        closeMenu(); showSettings = false; showWidgetPicker = false; openFolderId = null; editMode = false
         importConfirm = null
         if (drawerTarget || drawerProgress.value > 0f) closeDrawer()
     }
@@ -148,7 +167,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         when {
             importConfirm != null -> importConfirm = null
             importMessage != null -> { importMessage = null; activity.continueWidgetImport() }
-            menu != null -> menu = null
+            menu != null -> closeMenu()
             showSettings -> showSettings = false
             showWidgetPicker -> showWidgetPicker = false
             openFolderId != null -> closeFolder()
@@ -252,7 +271,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
             if (stack.isNotEmpty()) groupIntoFolder(payload, placedItem, stack)
         } else if (held != null) {
             if (stack.isNotEmpty()) groupIntoFolder(held, null, stack)
-            else menu = MenuState(held, holdAnchor)
+            else openMenu(held, holdAnchor)
         }
         pendingPayload = null; holdPayload = null; stackIds.clear()
     }

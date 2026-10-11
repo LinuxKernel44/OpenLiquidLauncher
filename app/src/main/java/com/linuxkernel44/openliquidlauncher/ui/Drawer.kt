@@ -86,16 +86,15 @@ fun AppDrawer(
     Box(
         Modifier
             .fillMaxSize()
-            // Bleed left/right/bottom off-canvas (nothing for blur to sample past the wallpaper's edge there), but
-            // keep the top on-canvas: its highlight rim (edges = true below) then reads as a bright line where the
-            // sheet "starts", like a pane of glass laid over the home screen.
-            .bleed(top = false)
+            // Bled off-canvas on every side: nothing for blur to sample past the wallpaper's edge otherwise,
+            // which leaves an unblurred strip right at the edge (noticeable: the sheet is full-width/full-height).
+            .bleed()
             .liquidGlass(
                 backdrop, style.copy(refractionHeight = 0f, blur = style.blur * 6f), // proportional to the Blur setting; no lens: it warps the edges of a full-screen sheet
-                // Square corners: with sides/bottom bled off-canvas only the top edge of this shape is ever visible.
+                // Square corners: rounded ones leave sharp wallpaper showing around the sheet.
                 RoundedCornerShape(0.dp),
                 surfaceAlpha = style.surfaceAlpha * 0.9f + 0.06f,
-                edges = true,
+                edges = false,
                 layerBlock = {
                     translationY = (1f - progress) * size.height * 0.92f
                     alpha = (progress * 1.6f).coerceIn(0f, 1f) * fade
@@ -106,6 +105,15 @@ fun AppDrawer(
             Modifier.fillMaxSize().padding(48.dp)
                 .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.navigationBars).union(WindowInsets.ime)),
         ) {
+            // A genuine liquid-glass rim at the top, inset from the sheet's own (bled, off-canvas) edge so it has
+            // real backdrop around it to blur and refract live, instead of relying on the sheet's own edge (which
+            // would need to stay on-canvas and then shows an unblurred band: nothing for blur to sample beyond it).
+            // Forced opacity/highlight (not the user's own Surface opacity, which is too subtle for a 4dp accent
+            // sampling the exact same pixels right behind it) so it actually reads as a bright line, not a blur.
+            Box(
+                Modifier.fillMaxWidth(0.32f).align(Alignment.CenterHorizontally).padding(bottom = 18.dp).height(4.dp)
+                    .liquidGlass(backdrop, style.copy(droplet = style.droplet.coerceAtLeast(0.6f)), style.round(50, small = true), surfaceAlpha = 0.5f, small = true),
+            )
             // With the keyboard open the grid area shrinks. Instead of squeezing the cells (which hides the names), keep
             // the normal cell size and let the grid scroll.
             val imeOpen = WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
