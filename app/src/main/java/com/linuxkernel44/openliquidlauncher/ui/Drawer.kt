@@ -110,7 +110,7 @@ fun AppDrawer(
     ) {
         // Stronger, more "droplet" glass right at the top - clearer, more refractive, with a brighter rim.
         Box(
-            Modifier.fillMaxWidth().height(150.dp).align(Alignment.TopCenter).bleed()
+            Modifier.fillMaxWidth().height(90.dp).align(Alignment.TopCenter).bleed()
                 .liquidGlass(
                     backdrop,
                     style.copy(
