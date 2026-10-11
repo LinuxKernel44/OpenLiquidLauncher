@@ -83,123 +83,110 @@ fun AppDrawer(
     val pager = rememberPagerState { pageCount }
     LaunchedEffect(query) { pager.scrollToPage(0) }
 
-    // The top corners round off while the sheet is still sliding up, and straighten back out to square by the
-    // time it's fully open (and symmetrically while closing). This clip is a separate, static outer layer at the
-    // real (unbled, untranslated) screen bounds - the translation/alpha stay inside liquidGlass's own layerBlock
-    // (an outer graphicsLayer there would desync the backdrop sampling from the moved content), and the glass
-    // itself stays fully bled on every side (unbleeding top/sides to expose the shape's own corners reintroduced
-    // the edge-sampling artifact, worse here since it also clipped away a sliver of real content at rest).
-    val topRadius = 40.dp * (1f - progress).coerceIn(0f, 1f)
+    // No outer wrapping graphicsLayer around the glass node below, even a non-animated one for a corner clip:
+    // CLAUDE.md's own gotcha ("animate a glass node via drawBackdrop(layerBlock=...), not an outer graphicsLayer,
+    // so the backdrop offset stays correct") turned out to bite even for a static clip+shape - v1.13.0's rounded-
+    // corner feature wrapped this Box in exactly that, and on real hardware (not just the emulator's software
+    // renderer that happened to tolerate it) it desynced the backdrop sampling badly enough that the ENTIRE sheet
+    // rendered with no blur at all, corners included. Dropped for now; corner rounding needs a different approach
+    // that doesn't add a graphicsLayer around this node.
     Box(
-        Modifier.fillMaxSize().graphicsLayer {
-            shape = RoundedCornerShape(topStart = topRadius, topEnd = topRadius, bottomStart = 0.dp, bottomEnd = 0.dp)
-            clip = true
-        },
+        Modifier
+            .fillMaxSize()
+            .bleed()
+            .liquidGlass(
+                // Same material as the dock: the actual blur/refraction/dispersion values, not a flattened
+                // copy. small = false though - the dock's depth dome is gated off for it only by its wide
+                // aspect ratio (width > height * 1.6); a portrait full-screen sheet would fail that check.
+                backdrop, style,
+                RoundedCornerShape(0.dp),
+                surfaceAlpha = style.surfaceAlpha + 0.04f,
+                edges = false,
+                layerBlock = {
+                    translationY = (1f - progress) * size.height * 0.92f
+                    alpha = (progress * 1.6f).coerceIn(0f, 1f) * fade
+                },
+            ),
     ) {
+        // Stronger, more "droplet" glass right at the top - clearer, more refractive, with a brighter rim.
         Box(
-            Modifier
-                .fillMaxSize()
-                .bleed()
+            Modifier.fillMaxWidth().height(150.dp).align(Alignment.TopCenter).bleed()
                 .liquidGlass(
-                    // Same material as the dock: the actual blur/refraction/dispersion values, not a flattened
-                    // copy. small = false though - the dock's depth dome is gated off for it only by its wide
-                    // aspect ratio (width > height * 1.6); a portrait full-screen sheet would fail that check.
-                    backdrop, style,
-                    RoundedCornerShape(0.dp),
-                    surfaceAlpha = style.surfaceAlpha + 0.04f,
-                    edges = false,
-                    layerBlock = {
-                        translationY = (1f - progress) * size.height * 0.92f
-                        alpha = (progress * 1.6f).coerceIn(0f, 1f) * fade
-                    },
-                ),
-        ) {
-            // Stronger, more "droplet" glass right at the top - clearer, more refractive, with a brighter rim.
-            // Sharing this Box's clip (the animated rounded corners above) means the rounded edge while
-            // opening/closing is this same richer material, not a plain clipped rectangle of the flatter one.
-            // No fade modifier here (Offscreen compositing wrapped around a shader-based liquidGlass call was
-            // never exercised elsewhere in the app and is suspected of breaking rendering on some GPUs - it
-            // turned the whole drawer blank/unblurred on a real device even though it looked fine on the
-            // emulator's software renderer); the boosted blur/refraction below already blend it in visually.
-            Box(
-                Modifier.fillMaxWidth().height(150.dp).align(Alignment.TopCenter).bleed()
-                    .liquidGlass(
-                        backdrop,
-                        style.copy(
-                            droplet = style.droplet.coerceAtLeast(1f),
-                            refractionHeight = style.refractionHeight * 1.8f,
-                            refractionAmount = style.refractionAmount * 1.8f,
-                            blur = style.blur * 0.6f,
-                        ),
-                        RoundedCornerShape(0.dp),
-                        surfaceAlpha = style.surfaceAlpha + 0.16f,
-                        small = true,
+                    backdrop,
+                    style.copy(
+                        droplet = style.droplet.coerceAtLeast(1f),
+                        refractionHeight = style.refractionHeight * 1.8f,
+                        refractionAmount = style.refractionAmount * 1.8f,
+                        blur = style.blur * 0.6f,
                     ),
-            )
-            Column(
-                Modifier.fillMaxSize().padding(48.dp)
-                    .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.navigationBars).union(WindowInsets.ime)),
-            ) {
-                // With the keyboard open the grid area shrinks. Instead of squeezing the cells (which hides the names), keep
-                // the normal cell size and let the grid scroll.
-                val imeOpen = WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
-                var baseCellH by remember { mutableStateOf(0.dp) }
-                // The grid (icons + labels) is recorded here so the scroll handle's glass can bend what is under it.
-                val gridBackdrop = com.kyant.backdrop.backdrops.rememberLayerBackdrop()
-                val handleBackdrop = com.kyant.backdrop.backdrops.rememberCombinedBackdrop(backdrop, gridBackdrop)
-                BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp)) {
-                    val cw = maxWidth / cols
-                    val ch = maxHeight / rows
-                    LaunchedEffect(ch, imeOpen) { if (!imeOpen) baseCellH = ch }
-                    if (imeOpen) {
-                        val cellH = if (baseCellH > 0.dp) baseCellH else 96.dp
-                        val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
-                        androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
-                            columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(cols),
-                            state = gridState,
-                            // Soft fade instead of a hard cut at the edges; the padding keeps the first/last row fully visible at rest.
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
-                            modifier = Modifier.fillMaxSize().com_kyant_layerBackdrop(gridBackdrop).edgeFade(14.dp),
-                        ) {
-                            items(filtered.size, key = { "${it}_${filtered[it].id}" }) { i ->
-                                DrawerCell(filtered[i], state, settings, badges, Modifier.fillMaxWidth().height(cellH).padding(2.dp))
-                            }
+                    RoundedCornerShape(0.dp),
+                    surfaceAlpha = style.surfaceAlpha + 0.16f,
+                    small = true,
+                ),
+        )
+        Column(
+            Modifier.fillMaxSize().padding(48.dp)
+                .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.navigationBars).union(WindowInsets.ime)),
+        ) {
+            // With the keyboard open the grid area shrinks. Instead of squeezing the cells (which hides the names), keep
+            // the normal cell size and let the grid scroll.
+            val imeOpen = WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
+            var baseCellH by remember { mutableStateOf(0.dp) }
+            // The grid (icons + labels) is recorded here so the scroll handle's glass can bend what is under it.
+            val gridBackdrop = com.kyant.backdrop.backdrops.rememberLayerBackdrop()
+            val handleBackdrop = com.kyant.backdrop.backdrops.rememberCombinedBackdrop(backdrop, gridBackdrop)
+            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp)) {
+                val cw = maxWidth / cols
+                val ch = maxHeight / rows
+                LaunchedEffect(ch, imeOpen) { if (!imeOpen) baseCellH = ch }
+                if (imeOpen) {
+                    val cellH = if (baseCellH > 0.dp) baseCellH else 96.dp
+                    val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
+                    androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                        columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(cols),
+                        state = gridState,
+                        // Soft fade instead of a hard cut at the edges; the padding keeps the first/last row fully visible at rest.
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
+                        modifier = Modifier.fillMaxSize().com_kyant_layerBackdrop(gridBackdrop).edgeFade(14.dp),
+                    ) {
+                        items(filtered.size, key = { "${it}_${filtered[it].id}" }) { i ->
+                            DrawerCell(filtered[i], state, settings, badges, Modifier.fillMaxWidth().height(cellH).padding(2.dp))
                         }
-                        GlassScrollHandle(gridState, cols, filtered.map { it.label }, handleBackdrop, style, Modifier.align(Alignment.CenterEnd).fillMaxHeight())
-                    } else {
-                        HorizontalPager(pager, Modifier.fillMaxSize()) { page ->
-                            Box(Modifier.fillMaxSize()) {
-                                filtered.drop(page * perPage).take(perPage).forEachIndexed { i, app ->
-                                    DrawerCell(app, state, settings, badges, Modifier.offset(cw * (i % cols), ch * (i / cols)).size(cw, ch).padding(2.dp))
-                                }
+                    }
+                    GlassScrollHandle(gridState, cols, filtered.map { it.label }, handleBackdrop, style, Modifier.align(Alignment.CenterEnd).fillMaxHeight())
+                } else {
+                    HorizontalPager(pager, Modifier.fillMaxSize()) { page ->
+                        Box(Modifier.fillMaxSize()) {
+                            filtered.drop(page * perPage).take(perPage).forEachIndexed { i, app ->
+                                DrawerCell(app, state, settings, badges, Modifier.offset(cw * (i % cols), ch * (i / cols)).size(cw, ch).padding(2.dp))
                             }
                         }
                     }
-                    if (filtered.isEmpty()) GText("No apps found", Modifier.align(Alignment.Center), size = 16f)
                 }
-                if (pageCount > 1 && !imeOpen) PageDots(pageCount, pager.currentPage, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp))
-                val requester = remember { FocusRequester() }
-                Box(
-                    Modifier.fillMaxWidth().padding(horizontal = 18.dp).padding(bottom = 14.dp, top = 4.dp).height(52.dp)
-                        // No lens (on a thin bar it smears the backdrop around the edge); same blur as the drawer sheet so the bar blends in.
-                        .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur * 6f), style.round(50), surfaceAlpha = style.surfaceAlpha + 0.10f)
-                        .padding(horizontal = 20.dp),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    BasicTextField(
-                        value = query, onValueChange = { query = it },
-                        singleLine = true,
-                        textStyle = GlassTextFieldStyle,
-                        cursorBrush = SolidColor(Color.White),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = { filtered.firstOrNull()?.let { state.launch(it, null) } }),
-                        modifier = Modifier.fillMaxWidth().focusRequester(requester),
-                        decorationBox = { inner ->
-                            if (query.isEmpty()) GText("Search apps", color = Color.White.copy(alpha = 0.65f), size = 16f, align = androidx.compose.ui.text.style.TextAlign.Start)
-                            inner()
-                        },
-                    )
-                }
+                if (filtered.isEmpty()) GText("No apps found", Modifier.align(Alignment.Center), size = 16f)
+            }
+            if (pageCount > 1 && !imeOpen) PageDots(pageCount, pager.currentPage, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp))
+            val requester = remember { FocusRequester() }
+            Box(
+                Modifier.fillMaxWidth().padding(horizontal = 18.dp).padding(bottom = 14.dp, top = 4.dp).height(52.dp)
+                    // No lens (on a thin bar it smears the backdrop around the edge); same blur as the drawer sheet so the bar blends in.
+                    .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur * 6f), style.round(50), surfaceAlpha = style.surfaceAlpha + 0.10f)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                BasicTextField(
+                    value = query, onValueChange = { query = it },
+                    singleLine = true,
+                    textStyle = GlassTextFieldStyle,
+                    cursorBrush = SolidColor(Color.White),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { filtered.firstOrNull()?.let { state.launch(it, null) } }),
+                    modifier = Modifier.fillMaxWidth().focusRequester(requester),
+                    decorationBox = { inner ->
+                        if (query.isEmpty()) GText("Search apps", color = Color.White.copy(alpha = 0.65f), size = 16f, align = androidx.compose.ui.text.style.TextAlign.Start)
+                        inner()
+                    },
+                )
             }
         }
     }
