@@ -112,12 +112,21 @@ fun AppDrawer(
             Modifier.fillMaxSize().padding(48.dp)
                 .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.navigationBars).union(WindowInsets.ime)),
         ) {
-            // Back to the v1.11.0 look: a small centered glass pill, inset from the sheet's own (bled,
-            // off-canvas) edge so it has real backdrop around it to blur and refract live.
+            // The v1.11.0 small glass pill, now acting like a real handle: tap to close (press-scale feedback,
+            // like every other glass button), with a taller invisible touch target than its 4dp visual height.
+            val drawerScope = androidx.compose.runtime.rememberCoroutineScope()
             Box(
-                Modifier.fillMaxWidth(0.32f).align(Alignment.CenterHorizontally).padding(bottom = 18.dp).height(4.dp)
-                    .liquidGlass(backdrop, style.copy(droplet = style.droplet.coerceAtLeast(0.6f)), style.round(50, small = true), surfaceAlpha = 0.5f, small = true),
-            )
+                Modifier.fillMaxWidth(0.32f).align(Alignment.CenterHorizontally).padding(bottom = 14.dp).height(28.dp)
+                    .pressScale { drawerScope.launch { state.closeDrawer() } },
+                contentAlignment = Alignment.Center,
+            ) {
+                // Inset from the sheet's own (bled, off-canvas) edge so it has real backdrop around it to blur
+                // and refract live.
+                Box(
+                    Modifier.fillMaxWidth().height(4.dp)
+                        .liquidGlass(backdrop, style.copy(droplet = style.droplet.coerceAtLeast(0.6f)), style.round(50, small = true), surfaceAlpha = 0.5f, small = true),
+                )
+            }
             // With the keyboard open the grid area shrinks. Instead of squeezing the cells (which hides the names), keep
             // the normal cell size and let the grid scroll.
             val imeOpen = WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
