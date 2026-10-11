@@ -23,6 +23,8 @@ Kotlin + Jetpack Compose, single `app` module, package `com.linuxkernel44.openli
 - Real shaders need API 33+ (`minSdk = 33`). Glass parameters are user-tunable (`LauncherSettings.glass*`).
 
 ## Gotchas learned the hard way
+- Back must never reach the default handler on the home activity (it would finish it and the system recreates the launcher: flicker + replayed intro). `LauncherScreen` keeps a permanent `BackHandler`: dismiss what is open, else go to page 1, else do nothing.
+- Compose animations (`Animatable.animateTo`) need a scope with a frame clock: use `LauncherState.uiScope` (from `rememberCoroutineScope`), not `lifecycleScope`.
 - A full-screen sibling with a `pointerInput` modifier swallows touches for the layers below it, even if its block returns early. Add such modifiers conditionally.
 - Items that must survive a drag (drawer / folder sources) must stay composed while dragging; they are only faded (`dragFromOverlay`).
 - `ensureInitialLayout` must stay idempotent (activity can be recreated).

@@ -146,6 +146,8 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     /** Back / home press. Returns true if something was dismissed. */
     suspend fun dismissOverlays(): Boolean {
         when {
+            importConfirm != null -> importConfirm = null
+            importMessage != null -> { importMessage = null; activity.continueWidgetImport() }
             menu != null -> menu = null
             showSettings -> showSettings = false
             showWidgetPicker -> showWidgetPicker = false

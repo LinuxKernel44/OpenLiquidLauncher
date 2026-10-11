@@ -113,7 +113,13 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
             state.drawerProgress.animateTo(0f, androidx.compose.animation.core.tween(220))
         }
     }
-    BackHandler(enabled = state.anyOverlay) { scope.launch { state.dismissOverlays() } }
+    // Back never closes the launcher (the system would then recreate it: flicker + replayed animation).
+    // Close what is open; else go back to the first page; else do nothing.
+    BackHandler(enabled = true) {
+        scope.launch {
+            if (!state.dismissOverlays() && pagerState.currentPage != 0) pagerState.animateScrollToPage(0)
+        }
+    }
 
     val overlayFade by animateFloatAsState(if (state.dragFromOverlay && state.dragPayload != null) 0f else 1f, label = "overlayFade")
     val p = state.drawerProgress.value
