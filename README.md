@@ -1,5 +1,14 @@
 # OpenLiquidLauncher
 
+[![Build](https://github.com/LinuxKernel44/OpenLiquidLauncher/actions/workflows/build.yml/badge.svg)](https://github.com/LinuxKernel44/OpenLiquidLauncher/actions/workflows/build.yml)
+[![Latest release](https://img.shields.io/github/v/release/LinuxKernel44/OpenLiquidLauncher?label=release)](https://github.com/LinuxKernel44/OpenLiquidLauncher/releases/latest)
+[![License](https://img.shields.io/github/license/LinuxKernel44/OpenLiquidLauncher)](LICENSE)
+[![Kotlin](https://img.shields.io/badge/Kotlin-100%25-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
+[![API](https://img.shields.io/badge/API-33%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com/tools/releases/platforms#13)
+[![Downloads](https://img.shields.io/github/downloads/LinuxKernel44/OpenLiquidLauncher/total)](https://github.com/LinuxKernel44/OpenLiquidLauncher/releases)
+[![Stars](https://img.shields.io/github/stars/LinuxKernel44/OpenLiquidLauncher?style=flat)](https://github.com/LinuxKernel44/OpenLiquidLauncher/stargazers)
+
 An open-source Android launcher where **everything is liquid glass**. Dock, app drawer, folders, context menus, widget cards and settings are refracting, blurring glass layers over your wallpaper, powered by [Kyant0/AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass).
 
 | Home | Drawer | Settings |
