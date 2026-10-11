@@ -123,7 +123,9 @@ fun ItemMenu(state: LauncherState, menu: MenuState, backdrop: Backdrop, style: G
                 .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
                 .width(232.dp)
                 .onSizeChanged { size = it }
-                .liquidGlass(backdrop, style, if (style.droplet > 0f) style.round(30, small = true) else style.roundDp(26.dp), surfaceAlpha = style.surfaceAlpha + 0.1f, small = true)
+                // A card of rows, not a small button: roundDp (like Settings sections) instead of the percent-based,
+                // droplet-driven shape, which turns a tall narrow menu into a circle/blob. small = false for the same reason.
+                .liquidGlass(backdrop, style, style.roundDp(18.dp), surfaceAlpha = style.surfaceAlpha + 0.1f)
                 .padding(vertical = 8.dp)
                 .clickable(interactionSource = null, indication = null) { },
         ) {

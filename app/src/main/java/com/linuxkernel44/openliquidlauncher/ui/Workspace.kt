@@ -210,7 +210,7 @@ fun Dock(
         modifier
             .fillMaxWidth()
             .height(92.dp)
-            .padding(horizontal = 10.dp)
+            .padding(horizontal = 5.dp)
             .liquidGlass(backdrop, style, style.round(37, small = true), surfaceAlpha = style.surfaceAlpha + 0.04f, small = true)
             .onGloballyPositioned { state.dockRect = it.boundsInRoot() },
     ) {

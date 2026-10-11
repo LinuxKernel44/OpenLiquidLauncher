@@ -86,13 +86,16 @@ fun AppDrawer(
     Box(
         Modifier
             .fillMaxSize()
-            .bleed()
+            // Bleed left/right/bottom off-canvas (nothing for blur to sample past the wallpaper's edge there), but
+            // keep the top on-canvas: its highlight rim (edges = true below) then reads as a bright line where the
+            // sheet "starts", like a pane of glass laid over the home screen.
+            .bleed(top = false)
             .liquidGlass(
                 backdrop, style.copy(refractionHeight = 0f, blur = style.blur * 6f), // proportional to the Blur setting; no lens: it warps the edges of a full-screen sheet
-                // Square corners: rounded ones leave sharp wallpaper showing around the sheet.
+                // Square corners: with sides/bottom bled off-canvas only the top edge of this shape is ever visible.
                 RoundedCornerShape(0.dp),
                 surfaceAlpha = style.surfaceAlpha * 0.9f + 0.06f,
-                edges = false,
+                edges = true,
                 layerBlock = {
                     translationY = (1f - progress) * size.height * 0.92f
                     alpha = (progress * 1.6f).coerceIn(0f, 1f) * fade
