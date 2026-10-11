@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.pager.HorizontalPager
@@ -101,19 +102,19 @@ fun AppDrawer(
                 },
             ),
     ) {
+        // The whole top edge in liquid glass, like iOS: a bar spanning (almost) the full width, just below the
+        // status bar. Inset a few dp from the true screen edges so it has real backdrop around it to blur and
+        // refract live - touching the physical edge itself would leave it with nothing to sample past, and that
+        // shows as an unblurred band (the bug in v1.10.1: the sheet's own edge was used for this instead).
+        Box(
+            Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 10.dp, vertical = 6.dp).height(6.dp)
+                .align(Alignment.TopCenter)
+                .liquidGlass(backdrop, style.copy(droplet = style.droplet.coerceAtLeast(0.6f)), style.round(50, small = true), surfaceAlpha = 0.5f, small = true),
+        )
         Column(
             Modifier.fillMaxSize().padding(48.dp)
                 .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.navigationBars).union(WindowInsets.ime)),
         ) {
-            // A genuine liquid-glass rim at the top, inset from the sheet's own (bled, off-canvas) edge so it has
-            // real backdrop around it to blur and refract live, instead of relying on the sheet's own edge (which
-            // would need to stay on-canvas and then shows an unblurred band: nothing for blur to sample beyond it).
-            // Forced opacity/highlight (not the user's own Surface opacity, which is too subtle for a 4dp accent
-            // sampling the exact same pixels right behind it) so it actually reads as a bright line, not a blur.
-            Box(
-                Modifier.fillMaxWidth(0.32f).align(Alignment.CenterHorizontally).padding(bottom = 18.dp).height(4.dp)
-                    .liquidGlass(backdrop, style.copy(droplet = style.droplet.coerceAtLeast(0.6f)), style.round(50, small = true), surfaceAlpha = 0.5f, small = true),
-            )
             // With the keyboard open the grid area shrinks. Instead of squeezing the cells (which hides the names), keep
             // the normal cell size and let the grid scroll.
             val imeOpen = WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
