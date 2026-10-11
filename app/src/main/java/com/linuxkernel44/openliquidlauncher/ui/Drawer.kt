@@ -109,31 +109,30 @@ fun AppDrawer(
             ),
     ) {
         // Stronger, more "droplet" glass right at the top - clearer, more refractive, with a brighter rim -
-        // fading into the sheet's own material via plain alpha (layerBlock, the same safe, already-proven
-        // mechanism the main sheet below uses for its own fade/slide), not an Offscreen-compositing mask: that
-        // combined with this shader-based glass effect is suspected of breaking rendering outright on some real
-        // GPUs (see the v1.14.2 fix). Several identical bands at decreasing alpha approximate a smooth fade -
-        // each one reveals more of the sheet's own material underneath as it gets more transparent, so there is
-        // no hard parameter mismatch to show as a seam, unlike a single hard-edged band.
-        val dropletBand = style.copy(
-            droplet = style.droplet + (1f - style.droplet) * 0.9f,
-            refractionHeight = style.refractionHeight * 1.8f,
-            refractionAmount = style.refractionAmount * 1.8f,
-            blur = style.blur * 0.6f,
-        )
-        val bandH = 35.dp
-        for (i in 0 until 5) {
-            val a = 1f - i / 5f
-            Box(
-                Modifier.fillMaxWidth().height(bandH).offset(y = bandH * i).align(Alignment.TopCenter).bleed()
-                    .liquidGlass(
-                        backdrop, dropletBand, RoundedCornerShape(0.dp),
-                        surfaceAlpha = style.surfaceAlpha + 0.16f,
-                        small = true,
-                        layerBlock = { alpha = a },
+        // fading smoothly into the sheet's own material. Tried stacking several bands at decreasing alpha
+        // first (v1.14.4): each one is its own independent blur sample, and blur has nothing to blend across a
+        // slice's own top/bottom edge (bleeding each slice to fix that just overlaps it into its neighbours
+        // instead) - both ways showed as visible banding. A true per-pixel alpha gradient (Offscreen compositing
+        // + DstIn, like the drawer grid's own edgeFade already uses safely elsewhere in this file) is the only
+        // thing that actually blends one blurred layer into another. v1.14.1 dropped this on suspicion it broke
+        // the drawer outright on real hardware, but v1.14.2 found and fixed the actual cause (an outer
+        // graphicsLayer wrapping the whole sheet, for the now-removed corner rounding) - this was never
+        // confirmed guilty, just a precaution at the time.
+        Box(
+            Modifier.fillMaxWidth().height(170.dp).align(Alignment.TopCenter).fadeBottom(90.dp).bleed()
+                .liquidGlass(
+                    backdrop,
+                    style.copy(
+                        droplet = style.droplet + (1f - style.droplet) * 0.9f,
+                        refractionHeight = style.refractionHeight * 1.8f,
+                        refractionAmount = style.refractionAmount * 1.8f,
+                        blur = style.blur * 0.6f,
                     ),
-            )
-        }
+                    RoundedCornerShape(0.dp),
+                    surfaceAlpha = style.surfaceAlpha + 0.16f,
+                    small = true,
+                ),
+        )
         Column(
             Modifier.fillMaxSize().padding(48.dp)
                 .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.navigationBars).union(WindowInsets.ime)),
@@ -339,6 +338,19 @@ private fun Modifier.edgeFade(height: androidx.compose.ui.unit.Dp): Modifier = t
             brush = androidx.compose.ui.graphics.Brush.verticalGradient(
                 0f to Color.Transparent, f to Color.Black, 1f - f to Color.Black, 1f to Color.Transparent,
             ),
+            blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
+        )
+    }
+
+/** Fades only the bottom [height] of the content to transparent, so it dissolves into whatever sits behind it. */
+private fun Modifier.fadeBottom(height: androidx.compose.ui.unit.Dp): Modifier = this
+    .graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+    .drawWithContent {
+        drawContent()
+        val h = height.toPx().coerceAtMost(size.height)
+        val f = h / size.height
+        drawRect(
+            brush = androidx.compose.ui.graphics.Brush.verticalGradient(1f - f to Color.Black, 1f to Color.Transparent),
             blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
         )
     }
