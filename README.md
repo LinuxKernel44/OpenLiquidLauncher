@@ -2,9 +2,9 @@
 
 An open-source Android launcher where **everything is liquid glass**. Dock, app drawer, folders, context menus, widget cards and settings are refracting, blurring glass layers over your wallpaper, powered by [Kyant0/AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass).
 
-| Home | Drawer | Menu | Settings |
-|---|---|---|---|
-| ![home](docs/home.png) | ![drawer](docs/drawer.png) | ![menu](docs/menu.png) | ![settings](docs/settings.png) |
+| Home | Drawer | Settings |
+|---|---|---|
+| ![home](docs/home.png) | ![drawer](docs/drawer.png) | ![settings](docs/settings.png) |
 
 ## Features
 - Paged home grid (default 5×6) with a glass dock; drag & drop, folders (drop an app on another), widgets
