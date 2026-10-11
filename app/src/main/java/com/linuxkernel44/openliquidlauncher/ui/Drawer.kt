@@ -114,6 +114,26 @@ fun AppDrawer(
                     },
                 ),
         ) {
+            // Stronger, more "droplet" glass right at the top - clearer, more refractive, with a brighter rim -
+            // fading into the rest of the sheet's flatter material below. Sharing this Box's clip (the animated
+            // rounded corners above) means the rounded edge while opening/closing is this same richer material,
+            // not a plain clipped rectangle of the flatter one.
+            Box(
+                Modifier.fillMaxWidth().height(220.dp).align(Alignment.TopCenter).fadeBottom(70.dp).bleed()
+                    .liquidGlass(
+                        backdrop,
+                        style.copy(
+                            droplet = style.droplet.coerceAtLeast(1f),
+                            refractionHeight = style.refractionHeight * 2.2f,
+                            refractionAmount = style.refractionAmount * 2.2f,
+                            blur = style.blur * 0.4f,
+                            dispersion = true,
+                        ),
+                        RoundedCornerShape(0.dp),
+                        surfaceAlpha = style.surfaceAlpha + 0.22f,
+                        small = true,
+                    ),
+            )
             Column(
                 Modifier.fillMaxSize().padding(48.dp)
                     .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.navigationBars).union(WindowInsets.ime)),
@@ -320,6 +340,19 @@ private fun Modifier.edgeFade(height: androidx.compose.ui.unit.Dp): Modifier = t
             brush = androidx.compose.ui.graphics.Brush.verticalGradient(
                 0f to Color.Transparent, f to Color.Black, 1f - f to Color.Black, 1f to Color.Transparent,
             ),
+            blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
+        )
+    }
+
+/** Fades only the bottom [height] of the content to transparent, so it dissolves into whatever sits behind it. */
+private fun Modifier.fadeBottom(height: androidx.compose.ui.unit.Dp): Modifier = this
+    .graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+    .drawWithContent {
+        drawContent()
+        val h = height.toPx().coerceAtMost(size.height)
+        val f = h / size.height
+        drawRect(
+            brush = androidx.compose.ui.graphics.Brush.verticalGradient(1f - f to Color.Black, 1f to Color.Transparent),
             blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
         )
     }
