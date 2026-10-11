@@ -31,6 +31,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kyant.backdrop.Backdrop
@@ -90,6 +91,9 @@ fun Modifier.liquidGlass(
     edges: Boolean = true,
     /** Small element (folder, dock, button...): the "Droplet" setting makes it a clearer, rounder, more refractive drop. */
     small: Boolean = false,
+    /** The inner shadow normally offsets downward (shadow reads at the top, like light from above). On a small
+     *  tile where that top band would cover real content (folder previews), center it so it spreads evenly. */
+    innerShadowCentered: Boolean = false,
 ): Modifier = if (!GlassGate.ready) {
     (if (layerBlock != null) Modifier.graphicsLayer(layerBlock) else Modifier)
         .background(Color.White.copy(alpha = surfaceAlpha + 0.06f), shape)
@@ -127,7 +131,10 @@ fun Modifier.liquidGlass(
     highlight = if (edges && style.quality >= 1) ({ if (d > 0f) Highlight(width = (0.5f + 1.5f * d).dp, alpha = 1f) else Highlight.Default }) else null,
     shadow = if (edges && style.quality >= 2) ({ if (d > 0f) Shadow(radius = (24f + 10f * d).dp, color = Color.Black.copy(alpha = 0.1f + 0.1f * d)) else Shadow.Default }) else null,
     // The inner shadow reads as a second contour on big cards and sheets, so only small elements get it.
-    innerShadow = if (small && (style.quality >= 3 || d > 0f)) ({ InnerShadow(radius = (10f + 8f * d).dp, color = Color.Black.copy(alpha = 0.08f + 0.10f * d)) }) else null,
+    innerShadow = if (small && (style.quality >= 3 || d > 0f)) ({
+        val radius = (10f + 8f * d).dp
+        InnerShadow(radius = radius, offset = if (innerShadowCentered) DpOffset.Zero else DpOffset(0f.dp, radius), color = Color.Black.copy(alpha = 0.08f + 0.10f * d))
+    }) else null,
     layerBlock = layerBlock,
     onDrawSurface = {
         drawRect(Color.Black.copy(alpha = 0.10f * (1f - 0.5f * d))) // keeps white text readable on bright wallpapers

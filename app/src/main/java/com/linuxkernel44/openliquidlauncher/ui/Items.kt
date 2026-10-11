@@ -122,7 +122,7 @@ fun FolderCell(
     val size = iconSize * settings.iconScale
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
-            Modifier.size(size).liquidGlass(backdrop, style.copy(refractionHeight = 8f, refractionAmount = 12f), style.round(30, small = true, r = style.folderRoundness, dropletShape = false), surfaceAlpha = style.surfaceAlpha + 0.08f, small = true)
+            Modifier.size(size).liquidGlass(backdrop, style.copy(refractionHeight = 8f, refractionAmount = 12f), style.round(30, small = true, r = style.folderRoundness, dropletShape = false), surfaceAlpha = style.surfaceAlpha + 0.08f, small = true, innerShadowCentered = true)
                 .padding(size * 0.1f),
         ) {
             val mini = size * 0.24f
