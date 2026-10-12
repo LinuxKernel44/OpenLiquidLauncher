@@ -46,6 +46,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -54,6 +55,7 @@ import androidx.compose.ui.unit.IntSize
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.linuxkernel44.openliquidlauncher.R
 import com.linuxkernel44.openliquidlauncher.data.AppInfo
 import com.linuxkernel44.openliquidlauncher.data.AppItem
 import com.linuxkernel44.openliquidlauncher.data.FolderItem
@@ -86,10 +88,10 @@ fun DropZones(state: LauncherState, backdrop: Backdrop, style: GlassStyle) {
         Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars).padding(top = 10.dp).alpha(visible),
         horizontalArrangement = Arrangement.Center,
     ) {
-        Zone("Remove", state.dropTarget == DropTarget.Remove, backdrop, style, Modifier.onGloballyPositioned { state.removeRect = it.boundsInRoot() })
+        Zone(stringResource(R.string.overlay_zone_remove), state.dropTarget == DropTarget.Remove, backdrop, style, Modifier.onGloballyPositioned { state.removeRect = it.boundsInRoot() })
         if (payload?.isApp == true) {
             Box(Modifier.width(14.dp))
-            Zone("Uninstall", state.dropTarget == DropTarget.Uninstall, backdrop, style, Modifier.onGloballyPositioned { state.uninstallRect = it.boundsInRoot() })
+            Zone(stringResource(R.string.overlay_zone_uninstall), state.dropTarget == DropTarget.Uninstall, backdrop, style, Modifier.onGloballyPositioned { state.uninstallRect = it.boundsInRoot() })
         }
     }
 }
@@ -148,18 +150,26 @@ fun ItemMenu(state: LauncherState, menu: MenuState, backdrop: Backdrop, style: G
                 val icon = remember(s) { state.shortcutIcon(s)?.toBitmapSafe()?.asImageBitmap() }
                 MenuRow((s.shortLabel ?: s.longLabel ?: "").toString(), icon) { state.startShortcut(s) }
             }
-            if (app != null) MenuRow("App info", null) { state.closeMenu(); state.appInfo(app, menu.anchor) }
+            if (app != null) MenuRow(stringResource(R.string.menu_app_info), null) { state.closeMenu(); state.appInfo(app, menu.anchor) }
             when {
                 payload.item != null -> MenuRow(
-                    when (payload.item) { is WidgetItem -> "Remove widget"; is FolderItem -> "Remove folder"; else -> "Remove from Home" }, null,
+                    when (payload.item) {
+                        is WidgetItem -> stringResource(R.string.menu_remove_widget)
+                        is FolderItem -> stringResource(R.string.menu_remove_folder)
+                        else -> stringResource(R.string.menu_remove_from_home)
+                    },
+                    null,
                 ) { state.removeFromHome(payload.item) }
-                app != null && payload.fromFolderId == null -> MenuRow("Add to Home", null) {
-                    state.closeMenu()
-                    state.layout.addToFirstFree(AppItem(state.layout.newId(), app.id))
-                    state.activity.toast("Added to Home")
+                app != null && payload.fromFolderId == null -> {
+                    val added = stringResource(R.string.toast_added_to_home)
+                    MenuRow(stringResource(R.string.menu_add_to_home), null) {
+                        state.closeMenu()
+                        state.layout.addToFirstFree(AppItem(state.layout.newId(), app.id))
+                        state.activity.toast(added)
+                    }
                 }
             }
-            if (app != null) MenuRow("Uninstall", null, destructive = true) { state.uninstall(app) }
+            if (app != null) MenuRow(stringResource(R.string.overlay_zone_uninstall), null, destructive = true) { state.uninstall(app) }
         }
     }
 }
@@ -317,10 +327,10 @@ private fun androidx.compose.foundation.layout.RowScope.EditButton(
 @Composable
 fun EditBar(state: LauncherState, backdrop: Backdrop, style: GlassStyle, onWallpaper: () -> Unit, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth().padding(horizontal = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        EditButton("Widgets", EditIconKind.Widgets, backdrop, style) { state.showWidgetPicker = true }
-        EditButton("Wallpaper", EditIconKind.Wallpaper, backdrop, style, onWallpaper)
-        EditButton("Settings", EditIconKind.Settings, backdrop, style) { state.showSettings = true }
-        EditButton("Done", EditIconKind.Done, backdrop, style) { state.editMode = false }
+        EditButton(stringResource(R.string.widgets_title), EditIconKind.Widgets, backdrop, style) { state.showWidgetPicker = true }
+        EditButton(stringResource(R.string.edit_wallpaper), EditIconKind.Wallpaper, backdrop, style, onWallpaper)
+        EditButton(stringResource(R.string.settings_title), EditIconKind.Settings, backdrop, style) { state.showSettings = true }
+        EditButton(stringResource(R.string.common_done), EditIconKind.Done, backdrop, style) { state.editMode = false }
     }
 }
 
@@ -345,7 +355,7 @@ fun WidgetPicker(state: LauncherState, backdrop: Backdrop, style: GlassStyle, on
                 .liquidGlass(backdrop, style.copy(refractionHeight = minOf(style.refractionHeight, 5f), blur = style.blur * 4f), (38.dp * 2f * style.roundness).coerceAtLeast(2.dp).let { RoundedCornerShape(topStart = it, topEnd = it) }, surfaceAlpha = style.surfaceAlpha + 0.12f)
                 .clickable(interactionSource = null, indication = null) { },
         ) {
-            GText("Widgets", Modifier.padding(start = 68.dp, top = 20.dp, bottom = 20.dp), size = 20f, weight = FontWeight.Bold)
+            GText(stringResource(R.string.widgets_title), Modifier.padding(start = 68.dp, top = 20.dp, bottom = 20.dp), size = 20f, weight = FontWeight.Bold)
             LazyColumn(Modifier.weight(1f).padding(horizontal = 60.dp)) {
                 items(rows) { r ->
                     Row(
@@ -357,7 +367,7 @@ fun WidgetPicker(state: LauncherState, backdrop: Backdrop, style: GlassStyle, on
                         }
                         Column(Modifier.padding(start = 14.dp)) {
                             GText(r.label, size = 15f, weight = FontWeight.SemiBold, align = androidx.compose.ui.text.style.TextAlign.Start)
-                            GText("${r.appLabel} · ${r.span.first}×${r.span.second}", size = 12f, color = Color.White.copy(alpha = 0.7f), align = androidx.compose.ui.text.style.TextAlign.Start)
+                            GText(stringResource(R.string.widget_dimensions, r.appLabel, r.span.first, r.span.second), size = 12f, color = Color.White.copy(alpha = 0.7f), align = androidx.compose.ui.text.style.TextAlign.Start)
                         }
                     }
                 }
@@ -386,23 +396,23 @@ fun ImportDialogs(state: LauncherState, backdrop: Backdrop, style: GlassStyle) {
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             when {
-                state.importBusy -> GText("Importing…", size = 18f, weight = FontWeight.SemiBold)
+                state.importBusy -> GText(stringResource(R.string.import_in_progress), size = 18f, weight = FontWeight.SemiBold)
                 confirm != null -> {
-                    GText("Import home layout", size = 20f, weight = FontWeight.Bold)
+                    GText(stringResource(R.string.import_confirm_title), size = 20f, weight = FontWeight.Bold)
                     val what = when (confirm) {
-                        is ImportRequest.FromLauncher -> "from " + confirm.sources.joinToString(", ") { it.label }
-                        is ImportRequest.FromFile -> "from the selected launcher.db"
+                        is ImportRequest.FromLauncher -> stringResource(R.string.import_confirm_from_sources, confirm.sources.joinToString(", ") { it.label })
+                        is ImportRequest.FromFile -> stringResource(R.string.import_confirm_from_file)
                     }
-                    GText("This replaces your current home screen and dock with the layout $what.", size = 14f, maxLines = 6)
+                    GText(stringResource(R.string.import_confirm_body, what), size = 14f, maxLines = 6)
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        GlassButton("Cancel", backdrop, style) { state.importConfirm = null }
-                        GlassButton("Import", backdrop, style) { state.activity.runImport(confirm) }
+                        GlassButton(stringResource(R.string.common_cancel), backdrop, style) { state.importConfirm = null }
+                        GlassButton(stringResource(R.string.import_button), backdrop, style) { state.activity.runImport(confirm) }
                     }
                 }
                 message != null -> {
-                    GText("Import", size = 20f, weight = FontWeight.Bold)
+                    GText(stringResource(R.string.import_button), size = 20f, weight = FontWeight.Bold)
                     GText(message, size = 13f, maxLines = 12, align = androidx.compose.ui.text.style.TextAlign.Start)
-                    GlassButton("OK", backdrop, style) { state.importMessage = null; state.activity.continueWidgetImport() }
+                    GlassButton(stringResource(R.string.common_ok), backdrop, style) { state.importMessage = null; state.activity.continueWidgetImport() }
                 }
             }
         }

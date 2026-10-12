@@ -26,6 +26,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import com.linuxkernel44.openliquidlauncher.LauncherActivity
 import com.linuxkernel44.openliquidlauncher.LauncherApp
+import com.linuxkernel44.openliquidlauncher.R
 import com.linuxkernel44.openliquidlauncher.data.AppInfo
 import com.linuxkernel44.openliquidlauncher.data.AppItem
 import com.linuxkernel44.openliquidlauncher.data.FolderItem
@@ -104,6 +105,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     }
     var showSettings by mutableStateOf(false)
     var showLicenses by mutableStateOf(false)
+    var showOnboarding by mutableStateOf(false)
     /** Picked but not-yet-cropped wallpaper image; non-null shows the crop screen. */
     var wallpaperCropSource by mutableStateOf<android.graphics.Bitmap?>(null)
     var showWidgetPicker by mutableStateOf(false)
@@ -144,7 +146,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     var importBusy by mutableStateOf(false)
     val importer by lazy { LauncherImporter(activity, apps, layout) }
 
-    val anyOverlay get() = drawerTarget || openFolderId != null || showSettings || showLicenses || wallpaperCropSource != null || showWidgetPicker || editMode || menu != null
+    val anyOverlay get() = drawerTarget || openFolderId != null || showSettings || showLicenses || showOnboarding || wallpaperCropSource != null || showWidgetPicker || editMode || menu != null
 
     var pagerState: PagerState? = null
     var homeSignal by mutableIntStateOf(0)
@@ -302,12 +304,13 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
                 stack.forEach { layout.removeAppItems(it) }
                 // The held app's item: where it is now (moved or not), if it still exists on the home screen.
                 val item = (placed ?: payload.item)?.let { layout.findItem(it.id) } as? AppItem
-                if (item != null) layout.swapItem(item.id, FolderItem(layout.newId(), "Folder", ids))
-                else layout.addToFirstFree(FolderItem(layout.newId(), "Folder", ids))
+                val defaultName = activity.getString(R.string.item_default_folder_name)
+                if (item != null) layout.swapItem(item.id, FolderItem(layout.newId(), defaultName, ids))
+                else layout.addToFirstFree(FolderItem(layout.newId(), defaultName, ids))
             }
         }
         layout.normalize(apps.apps.value.mapTo(HashSet()) { it.id })
-        activity.toast("Folder created")
+        activity.toast(activity.getString(R.string.toast_folder_created))
     }
 
     private fun computeTarget(p: Offset): DropTarget? {
@@ -452,14 +455,14 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
             sbm.javaClass.getMethod("expandNotificationsPanel").invoke(sbm)
         }.isSuccess
         if (!viaReflection && !GestureAccessibilityService.openNotifications()) {
-            activity.toast("Enable \"OpenLiquidLauncher gestures\" in Accessibility settings")
+            activity.toast(activity.getString(R.string.toast_enable_gestures))
             openAccessibilitySettings()
         }
     }
 
     fun lockScreen() {
         if (!GestureAccessibilityService.lockScreen()) {
-            activity.toast("Enable \"OpenLiquidLauncher gestures\" in Accessibility settings")
+            activity.toast(activity.getString(R.string.toast_enable_gestures))
             openAccessibilitySettings()
         }
     }
@@ -476,17 +479,17 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         wallpaperCropSource = null
         (uiScope ?: return).launch {
             val ok = app.wallpaper.importCustomBitmap(bitmap)
-            if (ok) { app.wallpaper.refresh(force = true); activity.toast("Wallpaper applied") } else activity.toast("Could not save wallpaper")
+            if (ok) { app.wallpaper.refresh(force = true); activity.toast(activity.getString(R.string.toast_wallpaper_applied)) } else activity.toast(activity.getString(R.string.toast_wallpaper_save_failed))
         }
     }
 
     /** Settings "Done": confirm, close the screen, then fully recreate the activity so every setting re-applies from scratch. */
     fun applySettingsAndRestart() {
         showSettings = false
-        activity.toast("Settings applied")
+        activity.toast(activity.getString(R.string.toast_settings_applied))
         (uiScope ?: run { activity.recreate(); return }).launch {
             delay(700)
-            activity.toast("Restarting…")
+            activity.toast(activity.getString(R.string.toast_restarting))
             delay(400)
             activity.recreate()
         }
@@ -494,7 +497,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
 
     // ---- folders ----
     fun renameFolder(id: Long, name: String) {
-        (layout.findItem(id) as? FolderItem)?.let { layout.replaceItem(it.copy(name = name.ifBlank { "Folder" })) }
+        (layout.findItem(id) as? FolderItem)?.let { layout.replaceItem(it.copy(name = name.ifBlank { activity.getString(R.string.item_default_folder_name) })) }
     }
 
     // ---- widgets ----
@@ -522,7 +525,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
             if (layout.isFree(page, x, y, sx, sy)) { layout.placeOnWorkspace(item, page, x, y); placed = true; break@outer }
         }
         if (!placed) placed = layout.addToFirstFree(item, sx, sy)
-        if (!placed) { app.widgetHost.deleteAppWidgetId(widgetId); activity.toast("No space for this widget") }
+        if (!placed) { app.widgetHost.deleteAppWidgetId(widgetId); activity.toast(activity.getString(R.string.toast_no_space_widget)) }
     }
 
     // ---- first run ----

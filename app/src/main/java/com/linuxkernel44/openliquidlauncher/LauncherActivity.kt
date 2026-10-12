@@ -16,6 +16,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
+import com.linuxkernel44.openliquidlauncher.R
 import com.linuxkernel44.openliquidlauncher.data.ImportException
 import com.linuxkernel44.openliquidlauncher.data.ImportPlan
 import com.linuxkernel44.openliquidlauncher.data.PendingWidget
@@ -40,7 +41,7 @@ class LauncherActivity : ComponentActivity() {
     private val pickImage = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) lifecycleScope.launch {
             val bmp = app.wallpaper.decodeForCrop(uri)
-            if (bmp != null) state.wallpaperCropSource = bmp else toast("Could not load that image")
+            if (bmp != null) state.wallpaperCropSource = bmp else toast(getString(R.string.toast_could_not_load_image))
         }
     }
 
@@ -96,7 +97,7 @@ class LauncherActivity : ComponentActivity() {
         window.attributes = window.attributes.also { it.preferredDisplayModeId = id }
     }
 
-    private fun isDefaultHome(): Boolean {
+    fun isDefaultHome(): Boolean {
         val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
         return packageManager.resolveActivity(home, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName == packageName
     }
@@ -105,7 +106,7 @@ class LauncherActivity : ComponentActivity() {
     private fun handleAppIconLaunch(i: Intent?) {
         if (i == null || !i.hasCategory(Intent.CATEGORY_LAUNCHER) || i.hasCategory(Intent.CATEGORY_HOME)) return
         state.showSettings = true
-        if (!isDefaultHome()) toast("Set OpenLiquidLauncher as your default home app (button at the bottom of Settings)")
+        if (!isDefaultHome()) toast(getString(R.string.toast_set_default_hint))
     }
 
     /** Debug builds only: `--es importDb <path>` triggers the file import without the document picker. */
@@ -166,17 +167,17 @@ class LauncherActivity : ComponentActivity() {
     // ---- import the layout of another launcher (e.g. OnePlus / OxygenOS) ----
     fun beginImportFromLauncher() {
         val sources = runCatching { state.importer.findSources() }.getOrDefault(emptyList())
-        if (sources.isEmpty()) state.importMessage = "No other launcher was found on this device."
+        if (sources.isEmpty()) state.importMessage = getString(R.string.import_no_launcher_found)
         else state.importConfirm = ImportRequest.FromLauncher(sources)
     }
 
     fun beginImportWithShizuku() {
         when {
-            !ShizukuBridge.isInstalled(this) -> state.importMessage = "Shizuku isn't installed. Get it from github.com/RikkaApps/Shizuku, start it, then try again."
-            !ShizukuBridge.isRunning() -> state.importMessage = "Shizuku isn't running. Start it from the Shizuku app, then try again."
+            !ShizukuBridge.isInstalled(this) -> state.importMessage = getString(R.string.import_shizuku_not_installed)
+            !ShizukuBridge.isRunning() -> state.importMessage = getString(R.string.import_shizuku_not_running)
             else -> {
                 val sources = runCatching { state.importer.findSources() }.getOrDefault(emptyList())
-                if (sources.isEmpty()) state.importMessage = "No other launcher was found on this device."
+                if (sources.isEmpty()) state.importMessage = getString(R.string.import_no_launcher_found)
                 else state.importConfirm = ImportRequest.FromLauncher(sources, shizuku = true)
             }
         }
@@ -197,7 +198,7 @@ class LauncherActivity : ComponentActivity() {
                         is ImportRequest.FromFile -> {
                             val tmp = File(cacheDir, "import.tmp")
                             contentResolver.openInputStream(req.uri)?.use { i -> tmp.outputStream().use { o -> i.copyTo(o) } }
-                                ?: throw ImportException("Could not open that file.")
+                                ?: throw ImportException(getString(R.string.import_could_not_open_file))
                             try {
                                 val head = tmp.inputStream().use { it.readNBytes(15).decodeToString() }
                                 // A launcher.db (SQLite) or a text dump of the launcher (adb shell dumpsys activity ...).
@@ -209,7 +210,7 @@ class LauncherActivity : ComponentActivity() {
                 }
             }
             state.importBusy = false
-            result.onSuccess(::applyImport).onFailure { state.importMessage = it.message ?: "Import failed." }
+            result.onSuccess(::applyImport).onFailure { state.importMessage = it.message ?: getString(R.string.import_failed_generic) }
         }
     }
 
@@ -219,8 +220,8 @@ class LauncherActivity : ComponentActivity() {
         // Shizuku (shell rights) is used when asked for, or automatically if it already runs and we hold its permission.
         var useShizuku = shizukuOnly || ShizukuBridge.hasPermission()
         if (shizukuOnly) {
-            if (!ShizukuBridge.isRunning()) throw ImportException("Shizuku isn't running. Start it from the Shizuku app, then try again.")
-            if (!ShizukuBridge.requestPermission()) throw ImportException("Shizuku permission was denied. Allow OpenLiquidLauncher in the Shizuku app and try again.")
+            if (!ShizukuBridge.isRunning()) throw ImportException(getString(R.string.import_shizuku_not_running))
+            if (!ShizukuBridge.requestPermission()) throw ImportException(getString(R.string.import_shizuku_permission_denied))
         }
         for (src in sources) {
             if (!shizukuOnly) try { return withContext(Dispatchers.IO) { state.importer.importFromProvider(src) } } catch (e: ImportException) { errors += e.message.orEmpty() }
@@ -256,10 +257,10 @@ class LauncherActivity : ComponentActivity() {
         state.layout.normalize(state.apps.apps.value.mapTo(HashSet()) { it.id })
         state.showSettings = false
         state.importMessage = buildString {
-            append("Imported ${plan.apps} apps and ${plan.folders} folders on ${state.layout.pages} page(s).")
-            if (plan.skipped > 0) append("\n${plan.skipped} item(s) couldn't be imported (not installed or unsupported).")
-            if (plan.partialFolders > 0) append("\n${plan.partialFolders} folder(s) hold more apps than the launcher shows in their preview; only the visible ones were imported.")
-            if (plan.widgets.isNotEmpty()) append("\n${plan.widgets.size} widget(s) will now ask for your confirmation.")
+            append(getString(R.string.import_summary, plan.apps, plan.folders, state.layout.pages))
+            if (plan.skipped > 0) append(getString(R.string.import_summary_skipped, plan.skipped))
+            if (plan.partialFolders > 0) append(getString(R.string.import_summary_partial_folders, plan.partialFolders))
+            if (plan.widgets.isNotEmpty()) append(getString(R.string.import_summary_widgets, plan.widgets.size))
         }
         importQueue.clear(); importQueue += plan.widgets
         // Widgets are processed once the user dismisses the summary.

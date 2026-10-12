@@ -3,4 +3,172 @@
     <string name="app_name">OpenLiquidLauncher</string>
     <string name="accessibility_label">OpenLiquidLauncher gestures</string>
     <string name="accessibility_description">Lets OpenLiquidLauncher lock the screen on double tap and open the notification shade on swipe down. It does not read any content.</string>
+
+    <!-- Common -->
+    <string name="common_done">Done</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_ok">OK</string>
+    <string name="common_skip">Skip</string>
+    <string name="common_next">Next</string>
+    <string name="common_back">Back</string>
+    <string name="common_default_suffix">%1$s (default)</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_launch_animation">Launch animation</string>
+    <string name="settings_launch_animation_hint">How the home screen appears when you come back from an app or start the launcher.</string>
+    <string name="settings_style_label">Style</string>
+    <string name="settings_speed_label">Speed</string>
+    <string name="settings_preview_button">Preview</string>
+    <string name="settings_section_performance">Performance</string>
+    <string name="settings_performance_hint">Lower these if the launcher feels less smooth; raise them for the richest glass. Applied live. Double-tap any slider to reset it.</string>
+    <string name="settings_effects_quality">Effects quality</string>
+    <string name="settings_effects_resolution">Effects resolution</string>
+    <string name="settings_reset_performance">Reset performance</string>
+    <string name="settings_section_liquid_glass">Liquid glass</string>
+    <string name="settings_roundness">Roundness</string>
+    <string name="settings_roundness_hint">Corner roundness of folders, the dock, menus, cards and sheets. 50 = the original look.</string>
+    <string name="settings_folder_roundness">Folder roundness</string>
+    <string name="settings_folder_roundness_hint">Corner roundness of folders only: the icon on the home screen and the opened folder.</string>
+    <string name="settings_droplet_look">Droplet look</string>
+    <string name="settings_droplet_look_hint">Makes folders, the dock, buttons, the scroll handle and menus clearer, rounder and more refractive, like a drop of water. 0 = the original look.</string>
+    <string name="settings_blur">Blur</string>
+    <string name="settings_refraction_height">Refraction height</string>
+    <string name="settings_refraction_strength">Refraction strength</string>
+    <string name="settings_surface_opacity">Surface opacity</string>
+    <string name="settings_chromatic_dispersion">Chromatic dispersion</string>
+    <string name="settings_reset_glass">Reset glass</string>
+    <string name="settings_section_wallpaper">Wallpaper</string>
+    <string name="settings_choose_image">Choose image…</string>
+    <string name="settings_set_system_wallpaper">Also set as system wallpaper</string>
+    <string name="settings_wallpaper_hint">Android no longer lets apps read the current system wallpaper directly, so pick the image here once; toggle above to also apply it system-wide.</string>
+    <string name="settings_section_home_screen">Home screen</string>
+    <string name="settings_app_icon_roundness">App icon roundness</string>
+    <string name="settings_app_icon_roundness_system">System</string>
+    <string name="settings_app_icon_roundness_hint">0 = the system\'s icon shape. Above 0 uses our own mask, from a rounded square to a circle (adaptive icons).</string>
+    <string name="settings_columns">Columns</string>
+    <string name="settings_rows">Rows</string>
+    <string name="settings_dock_icons">Dock icons</string>
+    <string name="settings_icon_size">Icon size</string>
+    <string name="settings_show_labels">Show labels</string>
+    <string name="settings_themed_icons">Themed icons (Android 13+)</string>
+    <string name="settings_auto_add_new_apps">Add new apps to the home screen</string>
+    <string name="settings_auto_add_hint">Apps installed from a store, sideloaded or via adb are placed on the first free spot after the main page.</string>
+    <string name="settings_notification_badges">Notification badges</string>
+    <string name="settings_badges_need_access_hint">Badges need notification access.</string>
+    <string name="settings_grant_notification_access">Grant notification access</string>
+    <string name="settings_section_gestures">Gestures</string>
+    <string name="settings_swipe_up">Swipe up: app drawer</string>
+    <string name="settings_swipe_down">Swipe down: notifications</string>
+    <string name="settings_double_tap_lock">Double tap: lock screen</string>
+    <string name="settings_pinch_edit">Pinch: edit home</string>
+    <string name="settings_gesture_service_hint">Lock screen and notifications use an accessibility service that reads no content.</string>
+    <string name="settings_enable_gesture_service">Enable gesture service</string>
+    <string name="settings_section_import">Import</string>
+    <string name="settings_import_hint">Bring your home screen over from another launcher, like the stock OnePlus (OxygenOS) one.</string>
+    <string name="settings_import_current">Import from my current launcher</string>
+    <string name="settings_import_shizuku">Import using Shizuku (recommended on OxygenOS)</string>
+    <string name="settings_import_file">Import from launcher.db / dump file…</string>
+    <string name="settings_section_system">System</string>
+    <string name="settings_set_default_launcher">Set as default launcher</string>
+    <string name="settings_open_source_licenses">Open source licenses</string>
+    <string name="settings_replay_onboarding">Replay welcome guide</string>
+    <string name="settings_footer">OpenLiquidLauncher 1.9.1 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass</string>
+    <string name="settings_refresh_rate">Refresh rate</string>
+    <string name="settings_refresh_auto">Auto</string>
+    <string name="settings_refresh_max">Max</string>
+    <string name="settings_refresh_rate_hint">Auto lets the system decide. A fixed value asks for it; some phones (OxygenOS) may still override it.</string>
+
+    <string-array name="settings_quality_labels">
+        <item>Minimum</item>
+        <item>Low</item>
+        <item>Current</item>
+        <item>High</item>
+        <item>Maximum</item>
+    </string-array>
+    <string-array name="settings_intro_style_labels">
+        <item>None</item>
+        <item>Soft fade</item>
+        <item>Zoom</item>
+        <item>Cascade</item>
+        <item>Slide &amp; spring</item>
+    </string-array>
+    <string-array name="settings_intro_speed_labels">
+        <item>Fast</item>
+        <item>Normal</item>
+        <item>Slow</item>
+    </string-array>
+
+    <!-- Overlays: zones, context menu, widgets, import dialogs -->
+    <string name="overlay_zone_remove">Remove</string>
+    <string name="overlay_zone_uninstall">Uninstall</string>
+    <string name="menu_app_info">App info</string>
+    <string name="menu_remove_widget">Remove widget</string>
+    <string name="menu_remove_folder">Remove folder</string>
+    <string name="menu_remove_from_home">Remove from Home</string>
+    <string name="menu_add_to_home">Add to Home</string>
+    <string name="toast_added_to_home">Added to Home</string>
+    <string name="item_default_folder_name">Folder</string>
+    <string name="widgets_title">Widgets</string>
+    <string name="widget_dimensions">%1$s · %2$d×%3$d</string>
+    <string name="edit_wallpaper">Wallpaper</string>
+    <string name="import_in_progress">Importing…</string>
+    <string name="import_confirm_title">Import home layout</string>
+    <string name="import_confirm_from_sources">from %1$s</string>
+    <string name="import_confirm_from_file">from the selected launcher.db</string>
+    <string name="import_confirm_body">This replaces your current home screen and dock with the layout %1$s.</string>
+    <string name="import_button">Import</string>
+
+    <!-- Drawer -->
+    <string name="drawer_no_apps_found">No apps found</string>
+    <string name="drawer_search_placeholder">Search apps</string>
+
+    <!-- Wallpaper crop -->
+    <string name="crop_instructions">Pinch to zoom, drag to position</string>
+    <string name="crop_use_photo">Use photo</string>
+
+    <!-- Licenses -->
+    <string name="licenses_title">Open source licenses</string>
+    <string name="licenses_app_notice">Licensed under the Apache License, Version 2.0. Full source: github.com/LinuxKernel44/OpenLiquidLauncher</string>
+
+    <!-- Toasts / import messages -->
+    <string name="toast_could_not_load_image">Could not load that image</string>
+    <string name="toast_set_default_hint">Set OpenLiquidLauncher as your default home app (button at the bottom of Settings)</string>
+    <string name="import_no_launcher_found">No other launcher was found on this device.</string>
+    <string name="import_shizuku_not_installed">Shizuku isn\'t installed. Get it from github.com/RikkaApps/Shizuku, start it, then try again.</string>
+    <string name="import_shizuku_not_running">Shizuku isn\'t running. Start it from the Shizuku app, then try again.</string>
+    <string name="import_shizuku_permission_denied">Shizuku permission was denied. Allow OpenLiquidLauncher in the Shizuku app and try again.</string>
+    <string name="import_could_not_open_file">Could not open that file.</string>
+    <string name="import_failed_generic">Import failed.</string>
+    <string name="import_summary">Imported %1$d apps and %2$d folders on %3$d page(s).</string>
+    <string name="import_summary_skipped">\n%1$d item(s) couldn\'t be imported (not installed or unsupported).</string>
+    <string name="import_summary_partial_folders">\n%1$d folder(s) hold more apps than the launcher shows in their preview; only the visible ones were imported.</string>
+    <string name="import_summary_widgets">\n%1$d widget(s) will now ask for your confirmation.</string>
+    <string name="toast_folder_created">Folder created</string>
+    <string name="toast_enable_gestures">Enable \"OpenLiquidLauncher gestures\" in Accessibility settings</string>
+    <string name="toast_wallpaper_applied">Wallpaper applied</string>
+    <string name="toast_wallpaper_save_failed">Could not save wallpaper</string>
+    <string name="toast_settings_applied">Settings applied</string>
+    <string name="toast_restarting">Restarting…</string>
+    <string name="toast_no_space_widget">No space for this widget</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Welcome to OpenLiquidLauncher</string>
+    <string name="onboarding_welcome_body">A quick setup, then you\'re done. You can skip any step and change everything later in Settings.</string>
+    <string name="onboarding_get_started">Get started</string>
+    <string name="onboarding_wallpaper_title">Choose your wallpaper</string>
+    <string name="onboarding_wallpaper_body">Pick an image from your gallery. The glass throughout the app refracts it live.</string>
+    <string name="onboarding_default_title">Set as default launcher</string>
+    <string name="onboarding_default_body">Make OpenLiquidLauncher your home screen so it opens automatically when you press Home.</string>
+    <string name="onboarding_default_done">You\'re all set — OpenLiquidLauncher is your default launcher.</string>
+    <string name="onboarding_permissions_title">Optional permissions</string>
+    <string name="onboarding_permissions_body">Both are off by default and read no content — enable only what you want.</string>
+    <string name="onboarding_gestures_label">Gesture shortcuts</string>
+    <string name="onboarding_gestures_body">Double-tap to lock the screen, swipe down to open notifications.</string>
+    <string name="onboarding_import_title">Bring your layout with you</string>
+    <string name="onboarding_import_body">Copy your dock, folders and pages from your current launcher.</string>
+    <string name="onboarding_import_button">Import now</string>
+    <string name="onboarding_done_title">You\'re ready</string>
+    <string name="onboarding_done_body">Enjoy the glass. Revisit this guide anytime from Settings → System.</string>
+    <string name="onboarding_finish">Start using OpenLiquidLauncher</string>
 </resources>

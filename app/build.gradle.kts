@@ -28,7 +28,7 @@ android {
         targetSdk = 36
         versionCode = 68
         versionName = "1.16.14"
-        androidResources.localeFilters += arrayOf("en")
+        androidResources.localeFilters += arrayOf("en", "fr", "de", "es", "it", "pt")
     }
 
     signingConfigs {

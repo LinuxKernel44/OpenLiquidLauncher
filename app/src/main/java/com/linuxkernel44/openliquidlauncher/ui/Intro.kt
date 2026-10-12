@@ -10,8 +10,6 @@ const val INTRO_ZOOM = 2
 const val INTRO_CASCADE = 3
 const val INTRO_SLIDE = 4
 
-val INTRO_STYLE_LABELS = listOf("None", "Soft fade", "Zoom", "Cascade", "Slide & spring")
-val INTRO_SPEED_LABELS = listOf("Fast", "Normal", "Slow")
 val INTRO_DURATIONS_MS = intArrayOf(260, 420, 700)
 
 private fun easeOutCubic(x: Float): Float { val i = 1f - x; return 1f - i * i * i }

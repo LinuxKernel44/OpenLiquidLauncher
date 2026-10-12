@@ -36,10 +36,12 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
+import com.linuxkernel44.openliquidlauncher.R
 
 /**
  * Pinch-to-zoom / drag-to-pan crop over the whole screen, so the exported bitmap matches exactly
@@ -93,7 +95,7 @@ fun WallpaperCropScreen(
             Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars).padding(24.dp),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            GText("Pinch to zoom, drag to position", modifier = Modifier.fillMaxWidth(), size = 14f, color = Color.White.copy(alpha = 0.85f), align = TextAlign.Start)
+            GText(stringResource(R.string.crop_instructions), modifier = Modifier.fillMaxWidth(), size = 14f, color = Color.White.copy(alpha = 0.85f), align = TextAlign.Start)
             Row(
                 Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.navigationBars).padding(bottom = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -101,7 +103,7 @@ fun WallpaperCropScreen(
                 Box(
                     Modifier.weight(1f).background(Color.White.copy(alpha = 0.16f), RoundedCornerShape(50)).clickable { onCancel() }.padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center,
-                ) { GText("Cancel", size = 15f, weight = FontWeight.SemiBold) }
+                ) { GText(stringResource(R.string.common_cancel), size = 15f, weight = FontWeight.SemiBold) }
                 Box(
                     Modifier.weight(1f).background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(50))
                         .clickable {
@@ -118,7 +120,7 @@ fun WallpaperCropScreen(
                         }
                         .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center,
-                ) { GText("Use photo", size = 15f, weight = FontWeight.Bold, color = Color.Black) }
+                ) { GText(stringResource(R.string.crop_use_photo), size = 15f, weight = FontWeight.Bold, color = Color.Black) }
             }
         }
     }

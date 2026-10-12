@@ -18,10 +18,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.kyant.backdrop.Backdrop
+import com.linuxkernel44.openliquidlauncher.R
 
 /** One third-party dependency credited in NOTICE, kept in sync with it. */
 private data class ThirdPartyLicense(val name: String, val license: String, val notes: String, val url: String)
@@ -56,8 +58,8 @@ fun LicensesScreen(
                 Modifier.fillMaxWidth().padding(horizontal = 66.dp).padding(top = 48.dp, bottom = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                GText("Open source licenses", size = 24f, weight = FontWeight.Bold, align = TextAlign.Start, modifier = Modifier.weight(1f))
-                GlassButton("Done", backdrop, style) { state.showLicenses = false }
+                GText(stringResource(R.string.licenses_title), size = 24f, weight = FontWeight.Bold, align = TextAlign.Start, modifier = Modifier.weight(1f))
+                GlassButton(stringResource(R.string.common_done), backdrop, style) { state.showLicenses = false }
             }
 
             Column(
@@ -66,7 +68,7 @@ fun LicensesScreen(
             ) {
 
             Section("OpenLiquidLauncher", backdrop, style) {
-                Hint("Licensed under the Apache License, Version 2.0. Full source: github.com/LinuxKernel44/OpenLiquidLauncher")
+                Hint(stringResource(R.string.licenses_app_notice))
             }
 
             THIRD_PARTY_LICENSES.forEach { lib ->

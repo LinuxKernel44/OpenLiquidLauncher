@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 val GLASS_RESOLUTIONS = floatArrayOf(0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f)
-val GLASS_QUALITY_LABELS = listOf("Minimum", "Low", "Current", "High", "Maximum")
 
 data class LauncherSettings(
     val columns: Int = 5,
@@ -18,6 +17,7 @@ data class LauncherSettings(
     val showBadges: Boolean = true,
     val autoAddNewApps: Boolean = true,
     val setSystemWallpaperToo: Boolean = true,
+    val onboardingCompleted: Boolean = false,
     // Liquid glass tuning
     val glassBlur: Float = 0.46288183f,
     val glassRefractionHeight: Float = 14f,
@@ -73,6 +73,7 @@ class SettingsStore(context: Context) {
             showBadges = prefs.getBoolean("showBadges", d.showBadges),
             autoAddNewApps = prefs.getBoolean("autoAddNewApps", d.autoAddNewApps),
             setSystemWallpaperToo = prefs.getBoolean("setSystemWallpaperToo", d.setSystemWallpaperToo),
+            onboardingCompleted = prefs.getBoolean("onboardingCompleted", d.onboardingCompleted),
             glassBlur = prefs.getFloat("glassBlur", d.glassBlur),
             glassRefractionHeight = prefs.getFloat("glassRefractionHeight", d.glassRefractionHeight),
             glassRefractionAmount = prefs.getFloat("glassRefractionAmount", d.glassRefractionAmount),
@@ -101,6 +102,7 @@ class SettingsStore(context: Context) {
             .putBoolean("showLabels", s.showLabels).putBoolean("themedIcons", s.themedIcons)
             .putBoolean("showBadges", s.showBadges).putBoolean("autoAddNewApps", s.autoAddNewApps)
             .putBoolean("setSystemWallpaperToo", s.setSystemWallpaperToo)
+            .putBoolean("onboardingCompleted", s.onboardingCompleted)
             .putFloat("glassBlur", s.glassBlur)
             .putFloat("glassRefractionHeight", s.glassRefractionHeight)
             .putFloat("glassRefractionAmount", s.glassRefractionAmount)

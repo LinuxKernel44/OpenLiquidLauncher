@@ -45,10 +45,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
+import com.linuxkernel44.openliquidlauncher.R
 import com.linuxkernel44.openliquidlauncher.data.AppInfo
 import com.linuxkernel44.openliquidlauncher.data.LauncherSettings
 
@@ -162,7 +164,7 @@ fun AppDrawer(
                         }
                     }
                 }
-                if (filtered.isEmpty()) GText("No apps found", Modifier.align(Alignment.Center), size = 16f)
+                if (filtered.isEmpty()) GText(stringResource(R.string.drawer_no_apps_found), Modifier.align(Alignment.Center), size = 16f)
             }
             if (pageCount > 1 && !imeOpen) PageDots(pageCount, pager.currentPage, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp))
             val requester = remember { FocusRequester() }
@@ -182,7 +184,7 @@ fun AppDrawer(
                     keyboardActions = KeyboardActions(onSearch = { filtered.firstOrNull()?.let { state.launch(it, null) } }),
                     modifier = Modifier.fillMaxWidth().focusRequester(requester),
                     decorationBox = { inner ->
-                        if (query.isEmpty()) GText("Search apps", color = Color.White.copy(alpha = 0.65f), size = 16f, align = androidx.compose.ui.text.style.TextAlign.Start)
+                        if (query.isEmpty()) GText(stringResource(R.string.drawer_search_placeholder), color = Color.White.copy(alpha = 0.65f), size = 16f, align = androidx.compose.ui.text.style.TextAlign.Start)
                         inner()
                     },
                 )

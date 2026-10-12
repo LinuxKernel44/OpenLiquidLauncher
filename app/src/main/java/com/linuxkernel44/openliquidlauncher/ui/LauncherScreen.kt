@@ -62,6 +62,8 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
         if (loaded) state.ensureInitialLayout()
         // First launch of the process (cold start): play the launch animation once the home screen can be shown.
         if (loaded && !state.introPlayed) { state.introPlayed = true; state.playIntro() }
+        // First-ever launch (not just first process start): guide the user through setup once.
+        if (loaded && !state.settings.current.onboardingCompleted) state.showOnboarding = true
     }
     LaunchedEffect(state.introRequest) {
         if (state.introRequest == 0) return@LaunchedEffect
@@ -225,6 +227,7 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
         if (state.showWidgetPicker) WidgetPicker(state, homeBackdrop, style) { onPickWidget(it) }
         if (state.showSettings) Box(Modifier.graphicsLayer { alpha = if (state.previewing) 0f else 1f }) { SettingsScreen(state, settings, backdrop, style, onPickWallpaper) } // wallpaper only: home icons would clutter a full-screen page
         if (state.showLicenses) LicensesScreen(state, backdrop, style)
+        if (state.showOnboarding) OnboardingScreen(state, backdrop, style, onPickWallpaper)
         state.wallpaperCropSource?.let { bmp ->
             WallpaperCropScreen(bmp, onConfirm = { state.confirmWallpaperCrop(it) }, onCancel = { state.wallpaperCropSource = null })
         }

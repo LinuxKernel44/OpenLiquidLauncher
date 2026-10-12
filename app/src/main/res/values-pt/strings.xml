@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OpenLiquidLauncher</string>
+    <string name="accessibility_label">Gestos do OpenLiquidLauncher</string>
+    <string name="accessibility_description">Permite que o OpenLiquidLauncher bloqueie o ecrã com um duplo toque e abra as notificações ao deslizar para baixo. Não lê qualquer conteúdo.</string>
+
+    <!-- Common -->
+    <string name="common_done">Concluído</string>
+    <string name="common_cancel">Cancelar</string>
+    <string name="common_ok">OK</string>
+    <string name="common_skip">Ignorar</string>
+    <string name="common_next">Seguinte</string>
+    <string name="common_back">Voltar</string>
+    <string name="common_default_suffix">%1$s (predefinido)</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Definições</string>
+    <string name="settings_section_launch_animation">Animação de arranque</string>
+    <string name="settings_launch_animation_hint">Como o ecrã principal aparece ao voltar de uma app ou ao iniciar o launcher.</string>
+    <string name="settings_style_label">Estilo</string>
+    <string name="settings_speed_label">Velocidade</string>
+    <string name="settings_preview_button">Pré-visualizar</string>
+    <string name="settings_section_performance">Desempenho</string>
+    <string name="settings_performance_hint">Reduz estes valores se o launcher não estiver fluido; aumenta-os para um vidro mais rico. Aplicado em tempo real. Toque duplo num controlo para repor.</string>
+    <string name="settings_effects_quality">Qualidade dos efeitos</string>
+    <string name="settings_effects_resolution">Resolução dos efeitos</string>
+    <string name="settings_reset_performance">Repor desempenho</string>
+    <string name="settings_section_liquid_glass">Vidro líquido</string>
+    <string name="settings_roundness">Arredondamento</string>
+    <string name="settings_roundness_hint">Arredondamento dos cantos de pastas, dock, menus, cartões e painéis. 50 = o aspeto original.</string>
+    <string name="settings_folder_roundness">Arredondamento das pastas</string>
+    <string name="settings_folder_roundness_hint">Arredondamento apenas das pastas: o ícone no ecrã principal e a pasta aberta.</string>
+    <string name="settings_droplet_look">Aspeto de gota</string>
+    <string name="settings_droplet_look_hint">Torna pastas, dock, botões, o cursor de deslocamento e menus mais nítidos, arredondados e refrativos, como uma gota de água. 0 = o aspeto original.</string>
+    <string name="settings_blur">Desfoque</string>
+    <string name="settings_refraction_height">Altura de refração</string>
+    <string name="settings_refraction_strength">Força de refração</string>
+    <string name="settings_surface_opacity">Opacidade da superfície</string>
+    <string name="settings_chromatic_dispersion">Dispersão cromática</string>
+    <string name="settings_reset_glass">Repor vidro</string>
+    <string name="settings_section_wallpaper">Papel de parede</string>
+    <string name="settings_choose_image">Escolher imagem…</string>
+    <string name="settings_set_system_wallpaper">Também definir como papel de parede do sistema</string>
+    <string name="settings_wallpaper_hint">O Android já não permite que as apps leiam diretamente o papel de parede atual do sistema; escolhe a imagem aqui uma vez e usa o interruptor acima para também a aplicar em todo o sistema.</string>
+    <string name="settings_section_home_screen">Ecrã principal</string>
+    <string name="settings_app_icon_roundness">Arredondamento dos ícones</string>
+    <string name="settings_app_icon_roundness_system">Sistema</string>
+    <string name="settings_app_icon_roundness_hint">0 = a forma de ícone do sistema. Acima de 0 usa a nossa própria máscara, de um quadrado ligeiramente arredondado a um círculo (ícones adaptativos).</string>
+    <string name="settings_columns">Colunas</string>
+    <string name="settings_rows">Linhas</string>
+    <string name="settings_dock_icons">Ícones do dock</string>
+    <string name="settings_icon_size">Tamanho dos ícones</string>
+    <string name="settings_show_labels">Mostrar nomes</string>
+    <string name="settings_themed_icons">Ícones temáticos (Android 13+)</string>
+    <string name="settings_auto_add_new_apps">Adicionar novas apps ao ecrã principal</string>
+    <string name="settings_auto_add_hint">As apps instaladas a partir de uma loja, por sideload ou via adb são colocadas no primeiro espaço livre após a página principal.</string>
+    <string name="settings_notification_badges">Emblemas de notificação</string>
+    <string name="settings_badges_need_access_hint">Os emblemas precisam de acesso às notificações.</string>
+    <string name="settings_grant_notification_access">Conceder acesso às notificações</string>
+    <string name="settings_section_gestures">Gestos</string>
+    <string name="settings_swipe_up">Deslizar para cima: gaveta de apps</string>
+    <string name="settings_swipe_down">Deslizar para baixo: notificações</string>
+    <string name="settings_double_tap_lock">Duplo toque: bloquear ecrã</string>
+    <string name="settings_pinch_edit">Beliscar: editar ecrã principal</string>
+    <string name="settings_gesture_service_hint">O bloqueio de ecrã e as notificações usam um serviço de acessibilidade que não lê qualquer conteúdo.</string>
+    <string name="settings_enable_gesture_service">Ativar serviço de gestos</string>
+    <string name="settings_section_import">Importar</string>
+    <string name="settings_import_hint">Traz o teu ecrã principal de outro launcher, como o launcher de origem da OnePlus (OxygenOS).</string>
+    <string name="settings_import_current">Importar do meu launcher atual</string>
+    <string name="settings_import_shizuku">Importar usando o Shizuku (recomendado no OxygenOS)</string>
+    <string name="settings_import_file">Importar de launcher.db / ficheiro dump…</string>
+    <string name="settings_section_system">Sistema</string>
+    <string name="settings_set_default_launcher">Definir como launcher predefinido</string>
+    <string name="settings_open_source_licenses">Licenças de código aberto</string>
+    <string name="settings_replay_onboarding">Rever o guia de boas-vindas</string>
+    <string name="settings_footer">OpenLiquidLauncher 1.9.1 · Apache-2.0 · vidro líquido por Kyant0/AndroidLiquidGlass</string>
+    <string name="settings_refresh_rate">Taxa de atualização</string>
+    <string name="settings_refresh_auto">Automática</string>
+    <string name="settings_refresh_max">Máx.</string>
+    <string name="settings_refresh_rate_hint">A automática deixa o sistema decidir. Um valor fixo é solicitado ao sistema; alguns telemóveis (OxygenOS) podem mesmo assim ignorá-lo.</string>
+
+    <string-array name="settings_quality_labels">
+        <item>Mínima</item>
+        <item>Baixa</item>
+        <item>Atual</item>
+        <item>Alta</item>
+        <item>Máxima</item>
+    </string-array>
+    <string-array name="settings_intro_style_labels">
+        <item>Nenhuma</item>
+        <item>Fade suave</item>
+        <item>Zoom</item>
+        <item>Cascata</item>
+        <item>Deslizar elástico</item>
+    </string-array>
+    <string-array name="settings_intro_speed_labels">
+        <item>Rápida</item>
+        <item>Normal</item>
+        <item>Lenta</item>
+    </string-array>
+
+    <!-- Overlays: zones, context menu, widgets, import dialogs -->
+    <string name="overlay_zone_remove">Remover</string>
+    <string name="overlay_zone_uninstall">Desinstalar</string>
+    <string name="menu_app_info">Informações da app</string>
+    <string name="menu_remove_widget">Remover widget</string>
+    <string name="menu_remove_folder">Remover pasta</string>
+    <string name="menu_remove_from_home">Remover do ecrã principal</string>
+    <string name="menu_add_to_home">Adicionar ao ecrã principal</string>
+    <string name="toast_added_to_home">Adicionado ao ecrã principal</string>
+    <string name="item_default_folder_name">Pasta</string>
+    <string name="widgets_title">Widgets</string>
+    <string name="widget_dimensions">%1$s · %2$d×%3$d</string>
+    <string name="edit_wallpaper">Papel de parede</string>
+    <string name="import_in_progress">A importar…</string>
+    <string name="import_confirm_title">Importar esquema do ecrã principal</string>
+    <string name="import_confirm_from_sources">de %1$s</string>
+    <string name="import_confirm_from_file">do launcher.db selecionado</string>
+    <string name="import_confirm_body">Isto substitui o teu ecrã principal e dock atuais pelo esquema %1$s.</string>
+    <string name="import_button">Importar</string>
+
+    <!-- Drawer -->
+    <string name="drawer_no_apps_found">Nenhuma app encontrada</string>
+    <string name="drawer_search_placeholder">Pesquisar apps</string>
+
+    <!-- Wallpaper crop -->
+    <string name="crop_instructions">Belisca para ampliar, arrasta para posicionar</string>
+    <string name="crop_use_photo">Usar foto</string>
+
+    <!-- Licenses -->
+    <string name="licenses_title">Licenças de código aberto</string>
+    <string name="licenses_app_notice">Licenciado sob a Apache License, versão 2.0. Código-fonte completo: github.com/LinuxKernel44/OpenLiquidLauncher</string>
+
+    <!-- Toasts / import messages -->
+    <string name="toast_could_not_load_image">Não foi possível carregar essa imagem</string>
+    <string name="toast_set_default_hint">Define o OpenLiquidLauncher como a tua app de ecrã principal predefinida (botão no final das Definições)</string>
+    <string name="import_no_launcher_found">Não foi encontrado nenhum outro launcher neste dispositivo.</string>
+    <string name="import_shizuku_not_installed">O Shizuku não está instalado. Obtém-o em github.com/RikkaApps/Shizuku, inicia-o e tenta novamente.</string>
+    <string name="import_shizuku_not_running">O Shizuku não está em execução. Inicia-o a partir da app Shizuku e tenta novamente.</string>
+    <string name="import_shizuku_permission_denied">A permissão do Shizuku foi negada. Permite o OpenLiquidLauncher na app Shizuku e tenta novamente.</string>
+    <string name="import_could_not_open_file">Não foi possível abrir esse ficheiro.</string>
+    <string name="import_failed_generic">A importação falhou.</string>
+    <string name="import_summary">%1$d apps e %2$d pastas importadas em %3$d página(s).</string>
+    <string name="import_summary_skipped">\n%1$d item(ns) não puderam ser importados (não instalados ou não suportados).</string>
+    <string name="import_summary_partial_folders">\n%1$d pasta(s) contêm mais apps do que as mostradas na pré-visualização do launcher; só as visíveis foram importadas.</string>
+    <string name="import_summary_widgets">\n%1$d widget(s) vão agora pedir a tua confirmação.</string>
+    <string name="toast_folder_created">Pasta criada</string>
+    <string name="toast_enable_gestures">Ativa «Gestos do OpenLiquidLauncher» nas definições de acessibilidade</string>
+    <string name="toast_wallpaper_applied">Papel de parede aplicado</string>
+    <string name="toast_wallpaper_save_failed">Não foi possível guardar o papel de parede</string>
+    <string name="toast_settings_applied">Definições aplicadas</string>
+    <string name="toast_restarting">A reiniciar…</string>
+    <string name="toast_no_space_widget">Sem espaço para este widget</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Bem-vindo ao OpenLiquidLauncher</string>
+    <string name="onboarding_welcome_body">Uma configuração rápida e está pronto. Podes ignorar qualquer etapa e alterar tudo mais tarde nas Definições.</string>
+    <string name="onboarding_get_started">Começar</string>
+    <string name="onboarding_wallpaper_title">Escolhe o teu papel de parede</string>
+    <string name="onboarding_wallpaper_body">Escolhe uma imagem da tua galeria. O vidro em toda a app refrata-a em tempo real.</string>
+    <string name="onboarding_default_title">Definir como launcher predefinido</string>
+    <string name="onboarding_default_body">Torna o OpenLiquidLauncher o teu ecrã principal para que abra automaticamente ao premir Início.</string>
+    <string name="onboarding_default_done">Pronto — o OpenLiquidLauncher é o teu launcher predefinido.</string>
+    <string name="onboarding_permissions_title">Permissões opcionais</string>
+    <string name="onboarding_permissions_body">Ambas estão desativadas por predefinição e não leem qualquer conteúdo — ativa apenas o que quiseres.</string>
+    <string name="onboarding_gestures_label">Atalhos de gestos</string>
+    <string name="onboarding_gestures_body">Duplo toque para bloquear o ecrã, deslizar para baixo para abrir as notificações.</string>
+    <string name="onboarding_import_title">Leva o teu esquema contigo</string>
+    <string name="onboarding_import_body">Copia o dock, as pastas e as páginas do teu launcher atual.</string>
+    <string name="onboarding_import_button">Importar agora</string>
+    <string name="onboarding_done_title">Está tudo pronto</string>
+    <string name="onboarding_done_body">Aproveita o vidro. Revê este guia quando quiseres em Definições → Sistema.</string>
+    <string name="onboarding_finish">Começar a usar o OpenLiquidLauncher</string>
+</resources>
