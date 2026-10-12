@@ -1,0 +1,60 @@
+OpenLiquidLauncher
+Copyright 2025-2026 David Pallier (LinuxKernel44)
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It includes third-party software, listed below.
+
+--------------------------------------------------------------------------------
+
+AndroidLiquidGlass (com.kyant.backdrop)
+Copyright Kyant0
+Licensed under the Apache License, Version 2.0
+https://github.com/Kyant0/AndroidLiquidGlass
+Vendored and modified (added a render-resolution scale option) in
+app/src/main/java/com/kyant/backdrop/ — see app/src/main/java/com/kyant/backdrop/NOTICE
+for the original project's own notices, if any.
+
+--------------------------------------------------------------------------------
+
+Shapes (io.github.kyant0:shapes)
+Copyright Kyant0
+Licensed under the Apache License, Version 2.0
+https://github.com/Kyant0/Shapes
+
+--------------------------------------------------------------------------------
+
+Shizuku API / Provider (dev.rikka.shizuku:api, dev.rikka.shizuku:provider)
+Copyright Rikka (RikkaApps)
+Licensed under the MIT License
+https://github.com/RikkaApps/Shizuku-API
+
+--------------------------------------------------------------------------------
+
+AndroidX (androidx.core:core-ktx, androidx.activity:activity-compose)
+Copyright The Android Open Source Project
+Licensed under the Apache License, Version 2.0
+https://developer.android.com/jetpack/androidx
+
+--------------------------------------------------------------------------------
+
+JetBrains Compose Multiplatform (org.jetbrains.compose.foundation, org.jetbrains.compose.ui,
+org.jetbrains.compose.ui:ui-graphics, org.jetbrains.compose.material:material-ripple)
+Copyright JetBrains s.r.o. and Google LLC
+Licensed under the Apache License, Version 2.0
+https://github.com/JetBrains/compose-multiplatform
+
+--------------------------------------------------------------------------------
+
+JetBrains Annotations (org.jetbrains:annotations)
+Copyright JetBrains s.r.o.
+Licensed under the Apache License, Version 2.0
+https://github.com/JetBrains/java-annotations
+
+--------------------------------------------------------------------------------
+
+For each Apache License, Version 2.0 above, a copy of the license text is available at:
+http://www.apache.org/licenses/LICENSE-2.0
+
+For the MIT License above, a copy of the license text is available at:
+https://opensource.org/license/mit

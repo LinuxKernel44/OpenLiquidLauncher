@@ -166,6 +166,7 @@ fun SettingsScreen(
 
             Section("System", backdrop, style) {
                 ButtonRow("Set as default launcher") { state.openDefaultHomeSettings() }
+                ButtonRow("Open source licenses") { state.showLicenses = true }
                 Hint("OpenLiquidLauncher 1.9.1 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
             }
         }
@@ -173,7 +174,7 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun Section(title: String, backdrop: Backdrop, style: GlassStyle, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+internal fun Section(title: String, backdrop: Backdrop, style: GlassStyle, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
     Column(
         Modifier.fillMaxWidth().liquidGlass(backdrop, style.copy(refractionHeight = 8f, refractionAmount = 14f, blur = style.blur * 2.5f), style.roundDp(28.dp), surfaceAlpha = 0.12f, tint = Color.Black.copy(alpha = 0.20f))
             .padding(16.dp),
@@ -185,7 +186,7 @@ private fun Section(title: String, backdrop: Backdrop, style: GlassStyle, conten
 }
 
 @Composable
-private fun Hint(text: String) = GText(text, size = 12f, color = Color.White.copy(alpha = 0.65f), maxLines = 3, align = TextAlign.Start)
+internal fun Hint(text: String) = GText(text, size = 12f, color = Color.White.copy(alpha = 0.65f), maxLines = 3, align = TextAlign.Start)
 
 @Composable
 private fun SwitchRow(label: String, value: Boolean, onChange: (Boolean) -> Unit) {

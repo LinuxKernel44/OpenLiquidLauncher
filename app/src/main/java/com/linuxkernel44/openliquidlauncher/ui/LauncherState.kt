@@ -102,6 +102,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         }
     }
     var showSettings by mutableStateOf(false)
+    var showLicenses by mutableStateOf(false)
     var showWidgetPicker by mutableStateOf(false)
     var editMode by mutableStateOf(false)
     var menu by mutableStateOf<MenuState?>(null)
@@ -140,7 +141,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     var importBusy by mutableStateOf(false)
     val importer by lazy { LauncherImporter(activity, apps, layout) }
 
-    val anyOverlay get() = drawerTarget || openFolderId != null || showSettings || showWidgetPicker || editMode || menu != null
+    val anyOverlay get() = drawerTarget || openFolderId != null || showSettings || showLicenses || showWidgetPicker || editMode || menu != null
 
     var pagerState: PagerState? = null
     var homeSignal by mutableIntStateOf(0)
@@ -151,7 +152,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     /** Home press: everything transient goes away at once (not just the top-most layer). */
     suspend fun dismissAll() {
         cancelInteractions()
-        closeMenu(); showSettings = false; showWidgetPicker = false; openFolderId = null; editMode = false
+        closeMenu(); showSettings = false; showLicenses = false; showWidgetPicker = false; openFolderId = null; editMode = false
         importConfirm = null
         if (drawerTarget || drawerProgress.value > 0f) closeDrawer()
     }
@@ -168,6 +169,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
             importConfirm != null -> importConfirm = null
             importMessage != null -> { importMessage = null; activity.continueWidgetImport() }
             menu != null -> closeMenu()
+            showLicenses -> showLicenses = false
             showSettings -> showSettings = false
             showWidgetPicker -> showWidgetPicker = false
             openFolderId != null -> closeFolder()
