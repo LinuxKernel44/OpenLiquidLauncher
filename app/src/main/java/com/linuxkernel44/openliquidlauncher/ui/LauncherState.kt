@@ -36,6 +36,7 @@ import com.linuxkernel44.openliquidlauncher.data.PendingWidget
 import com.linuxkernel44.openliquidlauncher.data.WidgetItem
 import com.linuxkernel44.openliquidlauncher.service.GestureAccessibilityService
 import kotlin.math.ceil
+import kotlinx.coroutines.delay
 
 /** What is being dragged. [item] is an existing home item; otherwise [app] is a fresh copy (drawer/folder). */
 class DragPayload(
@@ -103,6 +104,8 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     }
     var showSettings by mutableStateOf(false)
     var showLicenses by mutableStateOf(false)
+    /** Picked but not-yet-cropped wallpaper image; non-null shows the crop screen. */
+    var wallpaperCropSource by mutableStateOf<android.graphics.Bitmap?>(null)
     var showWidgetPicker by mutableStateOf(false)
     var editMode by mutableStateOf(false)
     var menu by mutableStateOf<MenuState?>(null)
@@ -141,7 +144,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     var importBusy by mutableStateOf(false)
     val importer by lazy { LauncherImporter(activity, apps, layout) }
 
-    val anyOverlay get() = drawerTarget || openFolderId != null || showSettings || showLicenses || showWidgetPicker || editMode || menu != null
+    val anyOverlay get() = drawerTarget || openFolderId != null || showSettings || showLicenses || wallpaperCropSource != null || showWidgetPicker || editMode || menu != null
 
     var pagerState: PagerState? = null
     var homeSignal by mutableIntStateOf(0)
@@ -152,7 +155,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     /** Home press: everything transient goes away at once (not just the top-most layer). */
     suspend fun dismissAll() {
         cancelInteractions()
-        closeMenu(); showSettings = false; showLicenses = false; showWidgetPicker = false; openFolderId = null; editMode = false
+        closeMenu(); showSettings = false; showLicenses = false; wallpaperCropSource = null; showWidgetPicker = false; openFolderId = null; editMode = false
         importConfirm = null
         if (drawerTarget || drawerProgress.value > 0f) closeDrawer()
     }
@@ -169,6 +172,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
             importConfirm != null -> importConfirm = null
             importMessage != null -> { importMessage = null; activity.continueWidgetImport() }
             menu != null -> closeMenu()
+            wallpaperCropSource != null -> wallpaperCropSource = null
             showLicenses -> showLicenses = false
             showSettings -> showSettings = false
             showWidgetPicker -> showWidgetPicker = false
@@ -465,6 +469,27 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
 
     fun openDefaultHomeSettings() = runCatching {
         activity.startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
+    /** Wallpaper crop screen "Use photo": save, apply, confirm. */
+    fun confirmWallpaperCrop(bitmap: android.graphics.Bitmap) {
+        wallpaperCropSource = null
+        (uiScope ?: return).launch {
+            val ok = app.wallpaper.importCustomBitmap(bitmap)
+            if (ok) { app.wallpaper.refresh(force = true); activity.toast("Wallpaper applied") } else activity.toast("Could not save wallpaper")
+        }
+    }
+
+    /** Settings "Done": confirm, close the screen, then fully recreate the activity so every setting re-applies from scratch. */
+    fun applySettingsAndRestart() {
+        showSettings = false
+        activity.toast("Settings applied")
+        (uiScope ?: run { activity.recreate(); return }).launch {
+            delay(700)
+            activity.toast("Restarting…")
+            delay(400)
+            activity.recreate()
+        }
     }
 
     // ---- folders ----

@@ -39,7 +39,8 @@ class LauncherActivity : ComponentActivity() {
 
     private val pickImage = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) lifecycleScope.launch {
-            if (app.wallpaper.importCustom(uri)) app.wallpaper.refresh() else toast("Could not load that image")
+            val bmp = app.wallpaper.decodeForCrop(uri)
+            if (bmp != null) state.wallpaperCropSource = bmp else toast("Could not load that image")
         }
     }
 

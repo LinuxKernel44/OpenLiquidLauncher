@@ -68,15 +68,19 @@ fun SettingsScreen(
             .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur * 5f), RoundedCornerShape(0.dp), surfaceAlpha = style.surfaceAlpha + 0.10f, tint = Color.Black.copy(alpha = 0.18f), edges = false)
             .clickable(interactionSource = null, indication = null) { },
     ) {
-        Column(
-            Modifier.fillMaxSize().padding(48.dp).windowInsetsPadding(WindowInsets.statusBars).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp)
-                .padding(bottom = 120.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars)) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 66.dp).padding(top = 48.dp, bottom = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 GText("Settings", size = 28f, weight = FontWeight.Bold, align = TextAlign.Start, modifier = Modifier.weight(1f))
-                GlassButton("Done", backdrop, style) { state.showSettings = false }
+                GlassButton("Done", backdrop, style) { state.applySettingsAndRestart() }
             }
+
+            Column(
+                Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 66.dp).padding(bottom = 120.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
 
             Section("Launch animation", backdrop, style) {
                 Hint("How the home screen appears when you come back from an app or start the launcher.")
@@ -160,6 +164,7 @@ fun SettingsScreen(
                 ButtonRow("Set as default launcher") { state.openDefaultHomeSettings() }
                 ButtonRow("Open source licenses") { state.showLicenses = true }
                 Hint("OpenLiquidLauncher 1.9.1 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass")
+            }
             }
         }
     }

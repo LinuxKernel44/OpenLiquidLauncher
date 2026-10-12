@@ -225,6 +225,9 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
         if (state.showWidgetPicker) WidgetPicker(state, homeBackdrop, style) { onPickWidget(it) }
         if (state.showSettings) Box(Modifier.graphicsLayer { alpha = if (state.previewing) 0f else 1f }) { SettingsScreen(state, settings, backdrop, style, onPickWallpaper) } // wallpaper only: home icons would clutter a full-screen page
         if (state.showLicenses) LicensesScreen(state, backdrop, style)
+        state.wallpaperCropSource?.let { bmp ->
+            WallpaperCropScreen(bmp, onConfirm = { state.confirmWallpaperCrop(it) }, onCancel = { state.wallpaperCropSource = null })
+        }
         DropZones(state, backdrop, style)
         ImportDialogs(state, homeBackdrop, style)
         state.menu?.let { ItemMenu(state, it, homeBackdrop, style) }

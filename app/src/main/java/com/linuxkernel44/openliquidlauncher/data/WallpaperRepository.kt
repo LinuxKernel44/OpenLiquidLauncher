@@ -47,25 +47,27 @@ class WallpaperRepository(private val context: Context, private val settings: Se
 
     val hasCustom: Boolean get() = customFile.exists()
 
-    /** Copies the picked image into app storage; optionally also applies it as the system wallpaper. */
-    suspend fun importCustom(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+    /** Decodes the picked image for the crop screen: sampled generously (not down to screen size) so pinch-zoom still looks sharp. */
+    suspend fun decodeForCrop(uri: Uri): Bitmap? = withContext(Dispatchers.IO) {
+        runCatching { decodeSampled(maxOf(targetW, targetH) * 2) { context.contentResolver.openInputStream(uri) } }.getOrNull()
+    }
+
+    /** Saves an already-cropped bitmap (screen-sized) as the wallpaper; optionally also applies it as the system wallpaper. */
+    suspend fun importCustomBitmap(bmp: Bitmap): Boolean = withContext(Dispatchers.IO) {
         runCatching {
-            val bmp = decodeSampled { context.contentResolver.openInputStream(uri) } ?: return@runCatching false
             customFile.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 95, it) }
-            if (settings.current.setSystemWallpaperToo) {
-                context.contentResolver.openInputStream(uri)?.use { WallpaperManager.getInstance(context).setStream(it) }
-            }
+            if (settings.current.setSystemWallpaperToo) WallpaperManager.getInstance(context).setBitmap(bmp)
             true
         }.getOrDefault(false)
     }
 
-    private fun loadCustom(): Bitmap? = if (customFile.exists()) decodeSampled { customFile.inputStream() } else null
+    private fun loadCustom(): Bitmap? = if (customFile.exists()) decodeSampled(maxOf(targetW, targetH)) { customFile.inputStream() } else null
 
-    private fun decodeSampled(open: () -> java.io.InputStream?): Bitmap? {
+    private fun decodeSampled(maxDimension: Int = maxOf(targetW, targetH), open: () -> java.io.InputStream?): Bitmap? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         open()?.use { BitmapFactory.decodeStream(it, null, bounds) }
         var sample = 1
-        while (bounds.outWidth / (sample * 2) >= targetW * 1.2f && bounds.outHeight / (sample * 2) >= targetH * 1.2f) sample *= 2
+        while (bounds.outWidth / (sample * 2) >= maxDimension * 1.2f && bounds.outHeight / (sample * 2) >= maxDimension * 1.2f) sample *= 2
         val opts = BitmapFactory.Options().apply { inSampleSize = sample }
         return open()?.use { BitmapFactory.decodeStream(it, null, opts) }
     }

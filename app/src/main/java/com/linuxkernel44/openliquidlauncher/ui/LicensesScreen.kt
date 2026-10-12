@@ -51,15 +51,19 @@ fun LicensesScreen(
             .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur * 5f), RoundedCornerShape(0.dp), surfaceAlpha = style.surfaceAlpha + 0.10f, tint = Color.Black.copy(alpha = 0.18f), edges = false)
             .clickable(interactionSource = null, indication = null) { },
     ) {
-        Column(
-            Modifier.fillMaxSize().padding(48.dp).windowInsetsPadding(WindowInsets.statusBars).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp)
-                .padding(bottom = 120.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars)) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 66.dp).padding(top = 48.dp, bottom = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 GText("Open source licenses", size = 24f, weight = FontWeight.Bold, align = TextAlign.Start, modifier = Modifier.weight(1f))
                 GlassButton("Done", backdrop, style) { state.showLicenses = false }
             }
+
+            Column(
+                Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 66.dp).padding(bottom = 120.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
 
             Section("OpenLiquidLauncher", backdrop, style) {
                 Hint("Licensed under the Apache License, Version 2.0. Full source: github.com/LinuxKernel44/OpenLiquidLauncher")
@@ -71,6 +75,7 @@ fun LicensesScreen(
                     if (lib.notes.isNotEmpty()) Hint(lib.notes)
                     Hint(lib.url)
                 }
+            }
             }
         }
     }
