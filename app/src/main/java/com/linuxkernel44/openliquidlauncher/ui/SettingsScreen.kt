@@ -40,7 +40,6 @@ import com.kyant.backdrop.Backdrop
 import com.linuxkernel44.openliquidlauncher.data.GLASS_QUALITY_LABELS
 import com.linuxkernel44.openliquidlauncher.data.GLASS_RESOLUTIONS
 import com.linuxkernel44.openliquidlauncher.data.LauncherSettings
-import com.linuxkernel44.openliquidlauncher.data.WallpaperMode
 import com.linuxkernel44.openliquidlauncher.service.BadgeListenerService
 import com.linuxkernel44.openliquidlauncher.service.GestureAccessibilityService
 import androidx.compose.runtime.mutableIntStateOf
@@ -113,16 +112,9 @@ fun SettingsScreen(
             }
 
             Section("Wallpaper", backdrop, style) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Segment("Custom image", settings.wallpaperMode == WallpaperMode.Custom) { store.update { copy(wallpaperMode = WallpaperMode.Custom) }; state.activity.refreshWallpaper() }
-                    Segment("System wallpaper", settings.wallpaperMode == WallpaperMode.System) { store.update { copy(wallpaperMode = WallpaperMode.System) }; state.activity.refreshWallpaper() }
-                }
                 ButtonRow("Choose image…", onPickWallpaper)
                 SwitchRow("Also set as system wallpaper", settings.setSystemWallpaperToo) { store.update { copy(setSystemWallpaperToo = it) } }
-                if (settings.wallpaperMode == WallpaperMode.System) {
-                    Hint("Reading the system wallpaper needs \"All files access\" on Android 13+.")
-                    ButtonRow("Grant file access") { state.openAllFilesAccess() }
-                }
+                Hint("Android no longer lets apps read the current system wallpaper directly, so pick the image here once; toggle above to also apply it system-wide.")
             }
 
             Section("Home screen", backdrop, style) {

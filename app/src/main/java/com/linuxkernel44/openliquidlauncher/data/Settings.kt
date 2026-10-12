@@ -8,8 +8,6 @@ import kotlinx.coroutines.flow.asStateFlow
 val GLASS_RESOLUTIONS = floatArrayOf(0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f)
 val GLASS_QUALITY_LABELS = listOf("Minimum", "Low", "Current", "High", "Maximum")
 
-enum class WallpaperMode { System, Custom }
-
 data class LauncherSettings(
     val columns: Int = 5,
     val rows: Int = 7,
@@ -19,7 +17,6 @@ data class LauncherSettings(
     val themedIcons: Boolean = false,
     val showBadges: Boolean = true,
     val autoAddNewApps: Boolean = true,
-    val wallpaperMode: WallpaperMode = WallpaperMode.Custom,
     val setSystemWallpaperToo: Boolean = true,
     // Liquid glass tuning
     val glassBlur: Float = 0.46288183f,
@@ -75,7 +72,6 @@ class SettingsStore(context: Context) {
             themedIcons = prefs.getBoolean("themedIcons", d.themedIcons),
             showBadges = prefs.getBoolean("showBadges", d.showBadges),
             autoAddNewApps = prefs.getBoolean("autoAddNewApps", d.autoAddNewApps),
-            wallpaperMode = WallpaperMode.entries.getOrElse(prefs.getInt("wallpaperMode", d.wallpaperMode.ordinal)) { d.wallpaperMode },
             setSystemWallpaperToo = prefs.getBoolean("setSystemWallpaperToo", d.setSystemWallpaperToo),
             glassBlur = prefs.getFloat("glassBlur", d.glassBlur),
             glassRefractionHeight = prefs.getFloat("glassRefractionHeight", d.glassRefractionHeight),
@@ -104,7 +100,6 @@ class SettingsStore(context: Context) {
             .putFloat("iconScale", s.iconScale)
             .putBoolean("showLabels", s.showLabels).putBoolean("themedIcons", s.themedIcons)
             .putBoolean("showBadges", s.showBadges).putBoolean("autoAddNewApps", s.autoAddNewApps)
-            .putInt("wallpaperMode", s.wallpaperMode.ordinal)
             .putBoolean("setSystemWallpaperToo", s.setSystemWallpaperToo)
             .putFloat("glassBlur", s.glassBlur)
             .putFloat("glassRefractionHeight", s.glassRefractionHeight)

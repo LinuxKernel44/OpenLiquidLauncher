@@ -13,7 +13,6 @@ import android.net.Uri
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.createBitmap
-import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,15 +33,7 @@ class WallpaperRepository(private val context: Context, private val settings: Se
     private var loadedSignature: String? = null
 
     /** Cheap fingerprint of what the wallpaper currently is, so returning to the launcher doesn't re-decode it. */
-    private fun signature(): String {
-        val mode = settings.current.wallpaperMode
-        return when (mode) {
-            WallpaperMode.Custom -> "custom:${customFile.lastModified()}:${customFile.length()}"
-            WallpaperMode.System -> "system:" + runCatching {
-                WallpaperManager.getInstance(context).getWallpaperId(WallpaperManager.FLAG_SYSTEM)
-            }.getOrDefault(-1)
-        }
-    }
+    private fun signature(): String = "custom:${customFile.lastModified()}:${customFile.length()}"
 
     /** Reloads the wallpaper unless it is already loaded and unchanged ([force] to always reload). */
     suspend fun refresh(force: Boolean = false) {
@@ -50,11 +41,7 @@ class WallpaperRepository(private val context: Context, private val settings: Se
         if (!force && sig == loadedSignature && _bitmap.value != null) return
         loadedSignature = sig
         _bitmap.value = withContext(Dispatchers.IO) {
-            val bmp = when (settings.current.wallpaperMode) {
-                WallpaperMode.Custom -> loadCustom()
-                WallpaperMode.System -> loadSystem()
-            }
-            (bmp ?: generateDefault(targetW, targetH)).asImageBitmap()
+            (loadCustom() ?: generateDefault(targetW, targetH)).asImageBitmap()
         }
     }
 
@@ -73,11 +60,6 @@ class WallpaperRepository(private val context: Context, private val settings: Se
     }
 
     private fun loadCustom(): Bitmap? = if (customFile.exists()) decodeSampled { customFile.inputStream() } else null
-
-    private fun loadSystem(): Bitmap? = runCatching {
-        // Needs all-files access on Android 13+; falls back to the built-in wallpaper when denied.
-        WallpaperManager.getInstance(context).peekDrawable()?.toBitmap()
-    }.getOrNull()
 
     private fun decodeSampled(open: () -> java.io.InputStream?): Bitmap? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }

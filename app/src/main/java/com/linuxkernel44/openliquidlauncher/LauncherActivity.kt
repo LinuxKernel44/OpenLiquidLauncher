@@ -20,7 +20,6 @@ import com.linuxkernel44.openliquidlauncher.data.ImportException
 import com.linuxkernel44.openliquidlauncher.data.ImportPlan
 import com.linuxkernel44.openliquidlauncher.data.PendingWidget
 import com.linuxkernel44.openliquidlauncher.data.ShizukuBridge
-import com.linuxkernel44.openliquidlauncher.data.WallpaperMode
 import com.linuxkernel44.openliquidlauncher.ui.ImportRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -40,10 +39,7 @@ class LauncherActivity : ComponentActivity() {
 
     private val pickImage = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) lifecycleScope.launch {
-            if (app.wallpaper.importCustom(uri)) {
-                app.settings.update { copy(wallpaperMode = WallpaperMode.Custom) }
-                app.wallpaper.refresh()
-            } else toast("Could not load that image")
+            if (app.wallpaper.importCustom(uri)) app.wallpaper.refresh() else toast("Could not load that image")
         }
     }
 
@@ -63,7 +59,7 @@ class LauncherActivity : ComponentActivity() {
         // Show the wallpaper right away instead of a black window while Compose composes the first frame.
         runCatching {
             val f = File(filesDir, "wallpaper.jpg")
-            if (f.exists() && app.settings.current.wallpaperMode == WallpaperMode.Custom) {
+            if (f.exists()) {
                 val bmp = android.graphics.BitmapFactory.decodeFile(f.path, android.graphics.BitmapFactory.Options().apply { inSampleSize = 4 })
                 window.setBackgroundDrawable(android.graphics.drawable.BitmapDrawable(resources, bmp))
             }

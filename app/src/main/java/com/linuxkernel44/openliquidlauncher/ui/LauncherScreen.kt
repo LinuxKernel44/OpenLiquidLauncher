@@ -92,7 +92,7 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
     }
     // Apps uninstalled (or hidden) while we were away: drop them from the home screen as soon as the real list is known.
     LaunchedEffect(synced, appList) { if (synced) state.layout.normalize(appList.mapTo(HashSet()) { it.id }) }
-    LaunchedEffect(settings.wallpaperMode) { state.app.wallpaper.refresh() }
+    LaunchedEffect(Unit) { state.app.wallpaper.refresh() }
     LaunchedEffect(state.homeSignal) {
         if (state.homeSignal > 0) {
             state.dismissAll()
