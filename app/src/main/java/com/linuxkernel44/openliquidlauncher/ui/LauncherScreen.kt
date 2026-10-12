@@ -155,8 +155,10 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
             } else Box(Modifier.fillMaxSize().layerBackdrop(backdrop).background(Color(0xFF0B1030)))
             Box(Modifier.fillMaxSize().padding(24.dp)) {
         // ---- home ----
-        // Home items resolve apps through AppRepository (not snapshot state), so wait until it is loaded.
-        if (loaded) Column(
+        // Render right away even before AppRepository finishes loading: icon lookups are null-safe and just show a
+        // blank cell until the app resolves, so a cold start (process killed in the background) shows the grid
+        // immediately instead of only the wallpaper while icons decode.
+        Column(
             Modifier.fillMaxSize()
                 .graphicsLayer {
                     alpha = (1f - p * 1.4f).coerceIn(0f, 1f)
