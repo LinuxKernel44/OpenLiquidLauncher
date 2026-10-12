@@ -243,7 +243,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
             dragFromOverlay = drawerTarget || openFolderId != null
             dragPayload = p
             previewKey = null
-            preview = layout.pageOf(p.itemId)?.let { layout.simulate(p.itemId, it, null) } ?: emptyMap()
+            preview = emptyMap()
         }
         dragPointer = pointer
         dropTarget = computeTarget(pointer)
@@ -256,8 +256,8 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         previewKey = key; previewJob?.cancel()
         // An app dragged out of a folder or the drawer isn't on the home screen yet: it still pushes the others aside.
         val id = dragPayload?.itemId?.takeIf { it >= 0 } ?: NEW_ITEM
-        // Without a hovered cell the icons just close the hole left by the lifted one.
-        preview = layout.pageOf(id)?.let { layout.simulate(id, it, null) } ?: emptyMap()
+        // Without a hovered cell nothing moves: the cell the icon is lifted from just stays empty.
+        preview = emptyMap()
         if (key == null || dragPayload == null) return
         previewJob = activity.lifecycleScope.launch {
             kotlinx.coroutines.delay(260) // dwell, like OxygenOS / One UI: icons move aside only if you linger
@@ -362,8 +362,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
 
     private fun drop(payload: DragPayload, target: DropTarget?): Item? {
         val newItem: Item? = payload.item ?: payload.app?.let { AppItem(layout.newId(), it.id) }
-        // Same as the live preview: the lifted icon leaves a hole that the following icons close.
-        if (target != null && payload.item != null) layout.closeGapFor(payload.item.id)
+        // The cell the icon is lifted from just stays empty; only the destination cell pushes icons aside.
         when (target) {
             null -> return payload.item
             DropTarget.Remove -> {
