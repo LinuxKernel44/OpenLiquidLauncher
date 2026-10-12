@@ -5,9 +5,6 @@
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
-    <uses-permission
-        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
 
     <!-- Optional: let us read the home layout of other launchers when they allow it (Import in Settings). -->
     <!-- Optional, granted once over adb: lets the importer read the stock launcher's layout via dumpsys. -->
