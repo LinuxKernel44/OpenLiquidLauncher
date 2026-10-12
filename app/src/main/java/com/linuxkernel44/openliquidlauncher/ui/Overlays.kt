@@ -222,7 +222,7 @@ fun FolderOverlay(state: LauncherState, folderId: Long, settings: LauncherSettin
                         scaleX = sc; scaleY = sc
                     }
                 }
-                .liquidGlass(blurredBackdrop, style, style.roundDp(38.dp, style.folderRoundness), surfaceAlpha = style.surfaceAlpha + 0.04f, small = true)
+                .liquidGlass(blurredBackdrop, style, style.roundDp(38.dp, style.folderRoundness), surfaceAlpha = style.surfaceAlpha + 0.16f, tint = Color.Black.copy(alpha = 0.12f), small = true)
                 .clickable(interactionSource = null, indication = null) { }
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
