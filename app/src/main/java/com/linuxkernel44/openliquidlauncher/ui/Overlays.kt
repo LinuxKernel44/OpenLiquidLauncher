@@ -187,10 +187,16 @@ fun FolderOverlay(state: LauncherState, folderId: Long, settings: LauncherSettin
     var screen by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
     var panel by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
     Box(
-        Modifier.fillMaxSize().onSizeChanged { screen = it }.background(Color.Black.copy(alpha = 0.28f * fade * e))
+        Modifier.fillMaxSize().onSizeChanged { screen = it }
             .clickable(interactionSource = null, indication = null) { state.renameFolder(folderId, name); state.closeFolder() },
         contentAlignment = Alignment.Center,
     ) {
+        // Blur + dim the home screen behind the folder (iOS-style), ramping in with the open animation.
+        Box(
+            Modifier.fillMaxSize().graphicsLayer { alpha = fade * e }
+                .bleed()
+                .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur * 4f), RoundedCornerShape(0.dp), surfaceAlpha = 0f, tint = Color.Black.copy(alpha = 0.22f), edges = false),
+        )
         Column(
             Modifier.padding(horizontal = 26.dp).fillMaxWidth().onSizeChanged { panel = it }
                 .graphicsLayer {
