@@ -27,6 +27,8 @@ class ImportPlan(
     val partial: List<PartialFolder> = emptyList(),
     val stockCurrentPage: Int = 0,
     val screenW: Int = 0,
+    /** True when this plan came from a Samsung One UI (Honeyspace) dump rather than a Launcher3-style one. */
+    val honeyspace: Boolean = false,
 )
 
 /** [itemId] is our FolderItem; [tapX]/[tapY] are screen coordinates of its icon while its [page] is the visible one. */
@@ -188,13 +190,20 @@ class LauncherImporter(private val context: Context, private val apps: AppReposi
         return text
     }
 
-    fun hasLayout(dump: String) = dump.contains("Workspace{") && dump.contains("CellLayout{")
+    /** Samsung One UI's launcher ("Honeyspace") uses its own view hierarchy, not Launcher3's. */
+    fun hasHoneyspaceLayout(dump: String) = dump.contains("app:id/wsCellLayout") && dump.contains("workspace_fast_recycler_view")
+
+    fun hasLayout(dump: String) = (dump.contains("Workspace{") && dump.contains("CellLayout{")) || hasHoneyspaceLayout(dump)
+
+    /** Dispatches to the Launcher3 or the One UI parser depending on which hierarchy the dump contains. */
+    fun importFromDump(dump: String): ImportPlan =
+        if (hasHoneyspaceLayout(dump)) importFromHoneyspaceDump(dump) else importFromLauncher3Dump(dump)
 
     /**
      * Rebuilds the home screen from the view hierarchy that Launcher3-based launchers (incl. OxygenOS) print in
      * `dumpsys activity`. Pages are the CellLayouts under the Workspace; positions come from view bounds / cell size.
      */
-    fun importFromDump(dump: String): ImportPlan {
+    private fun importFromLauncher3Dump(dump: String): ImportPlan {
         if (!hasLayout(dump)) throw ImportException("That text doesn't contain a launcher workspace. Open the launcher's home screen and dump it again.")
         val lines = dump.split('\n')
         fun indentOf(l: String) = l.length - l.trimStart().length
@@ -329,12 +338,141 @@ class LauncherImporter(private val context: Context, private val apps: AppReposi
     }
 
     /**
+     * Rebuilds the home screen from a Samsung One UI ("Honeyspace") `dumpsys activity` dump. Unlike Launcher3,
+     * each icon already reports its own cell (x=, y=) so there's no grid math, but folders never list their
+     * members inline - they're filled in afterward by [completeHoneyspaceFolders] (tap, dump, read, close).
+     */
+    private fun importFromHoneyspaceDump(dump: String): ImportPlan {
+        val lines = dump.split('\n')
+        fun indentOf(l: String) = l.length - l.trimStart().length
+        val boundsRe = Regex("""\s(-?\d+),(-?\d+)-(-?\d+),(-?\d+)\s""")
+        val labelRe = Regex("""\}\s*-\s*(.+?),\s*visibility:""")
+        val xyRe = Regex("""x=(\d+),\s*y=(\d+)""")
+
+        class Raw(val page: Int, val x: Int, val y: Int, val isFolder: Boolean, val label: String, val tapX: Int, val tapY: Int)
+        class HRaw(val x: Int, val label: String)
+        val desktop = ArrayList<Raw>()
+        val hotseat = ArrayList<HRaw>()
+
+        var inWorkspace = false; var wsIndent = -1
+        var page = -1; var containerLeft = 0; var containerTop = 0
+        var cellIndent = -1; var cellLocalLeft = 0; var cellLocalTop = 0
+        var inHotseatCell = false; var screenW = 0
+
+        for (raw in lines) {
+            if (raw.isBlank()) continue
+            val ind = indentOf(raw); val l = raw.trimStart()
+            if (l.contains("WorkspaceFastRecyclerView{") && l.contains("workspace_fast_recycler_view")) {
+                inWorkspace = true; wsIndent = ind; page = -1
+                boundsRe.find(l)?.let { screenW = it.groupValues[3].toInt() - it.groupValues[1].toInt() }
+                continue
+            }
+            if (inWorkspace && ind <= wsIndent) inWorkspace = false
+
+            if (l.contains("HotseatCellLayout{") && l.contains("hotseat_layout")) { inHotseatCell = true; cellIndent = ind; continue }
+            if (inHotseatCell && ind <= cellIndent) inHotseatCell = false
+            if (inHotseatCell) {
+                val xy = xyRe.find(l) ?: continue
+                val label = labelRe.find(l)?.groupValues?.get(1)?.trim() ?: continue
+                hotseat += HRaw(xy.groupValues[1].toInt(), label)
+                continue
+            }
+
+            if (!inWorkspace) continue
+            if (l.contains("WorkspaceCellLayoutContainer{")) {
+                page++
+                boundsRe.find(l)?.let { containerLeft = it.groupValues[1].toInt(); containerTop = it.groupValues[2].toInt() }
+                continue
+            }
+            if (page < 0) continue
+            if (l.contains("WorkspaceCellLayout{") && l.contains("wsCellLayout")) {
+                cellIndent = ind
+                boundsRe.find(l)?.let { cellLocalLeft = it.groupValues[1].toInt(); cellLocalTop = it.groupValues[2].toInt() }
+                continue
+            }
+            if (cellIndent < 0 || ind <= cellIndent) continue
+            val isFolder = l.contains("FolderIconView{")
+            if (!isFolder && !l.contains("IconView{")) continue
+            val xy = xyRe.find(l) ?: continue
+            val label = labelRe.find(l)?.groupValues?.get(1)?.trim() ?: continue
+            val b = boundsRe.find(l) ?: continue
+            val (L, T, R, B) = b.destructured
+            desktop += Raw(
+                page, xy.groupValues[1].toInt(), xy.groupValues[2].toInt(), isFolder, label,
+                tapX = containerLeft + cellLocalLeft + (L.toInt() + R.toInt()) / 2,
+                tapY = containerTop + cellLocalTop + (T.toInt() + B.toInt()) / 2,
+            )
+        }
+        if (desktop.isEmpty() && hotseat.isEmpty()) throw ImportException("No icons were found in the launcher dump.")
+
+        fun appByTitle(t: String): AppInfo? = apps.apps.value.firstOrNull { it.label.equals(t.trim(), ignoreCase = true) }
+        var appCount = 0; var folderCount = 0; var skipped = 0
+        val partial = ArrayList<PartialFolder>()
+        fun toItem(r: Raw): Item? = if (r.isFolder) {
+            folderCount++
+            FolderItem(layout.newId(), r.label.ifBlank { "Folder" }, emptyList())
+        } else appByTitle(r.label)?.let { appCount++; AppItem(layout.newId(), it.id) } ?: run { skipped++; null }
+
+        val placed = ArrayList<Placed>()
+        for (r in desktop.sortedWith(compareBy({ it.page }, { it.y }, { it.x }))) {
+            val item = toItem(r) ?: continue
+            placed += Placed(item, r.page, r.x, r.y)
+            if (item is FolderItem) partial += PartialFolder(item.id, r.page, 0, r.tapX, r.tapY)
+        }
+
+        val dockSize = (if (hotseat.isEmpty()) 5 else maxOf(hotseat.maxOf { it.x } + 1, 5)).coerceIn(3, 6)
+        val dock = arrayOfNulls<Item>(dockSize).toMutableList()
+        for (r in hotseat.sortedBy { it.x }) {
+            val slot = r.x.coerceIn(0, dockSize - 1)
+            if (dock[slot] == null) dock[slot] = appByTitle(r.label)?.let { appCount++; AppItem(layout.newId(), it.id) }
+        }
+
+        if (appCount == 0 && partial.isEmpty()) throw ImportException("Found the layout, but none of its apps are installed here.")
+        return ImportPlan(
+            placed, dock, emptyList(),
+            (desktop.maxOfOrNull { it.x + 1 } ?: 5).coerceIn(4, 8),
+            (desktop.maxOfOrNull { it.y + 1 } ?: 5).coerceIn(4, 8),
+            dockSize, appCount, folderCount, skipped, partialFolders = partial.size,
+            partial = partial, screenW = screenW, honeyspace = true,
+        )
+    }
+
+    /**
+     * One UI folders never list their members in the dump: tap each one open (it must already be on the visible
+     * page), read its `OpenFolderCellLayout`, then close it. [sh] runs a shell command (Shizuku), [dump] re-dumps.
+     */
+    suspend fun completeHoneyspaceFolders(plan: ImportPlan, sh: (Array<String>) -> String, dump: () -> String): ImportPlan {
+        if (plan.partial.isEmpty()) return plan
+        val memberRe = Regex("""IconView\{[^\n}]*\}\s*-\s*(.+?),\s*visibility:""")
+        fun appByTitle(t: String): AppInfo? = apps.apps.value.firstOrNull { it.label.equals(t.trim(), ignoreCase = true) }
+        val updated = HashMap<Long, List<String>>()
+        for (pf in plan.partial) {
+            sh(arrayOf("input", "tap", pf.tapX.toString(), pf.tapY.toString()))
+            kotlinx.coroutines.delay(900)
+            val text = dump()
+            val folderSection = text.substringAfter("OpenFolderCellLayout{", "").substringBefore("PageIndicatorView")
+            val ids = memberRe.findAll(folderSection).map { it.groupValues[1].trim() }.mapNotNull { appByTitle(it)?.id }.distinct().toList()
+            sh(arrayOf("input", "keyevent", "KEYCODE_BACK"))
+            kotlinx.coroutines.delay(600)
+            if (ids.size > 1) updated[pf.itemId] = ids
+        }
+        if (updated.isEmpty()) return plan
+        fun fix(i: Item?): Item? = if (i is FolderItem && updated.containsKey(i.id)) i.copy(appIds = updated.getValue(i.id)) else i
+        return ImportPlan(
+            plan.placed.map { it.copy(item = fix(it.item)!!) }, plan.dock.map(::fix), plan.widgets, plan.columns, plan.rows, plan.dockSize,
+            plan.apps + updated.values.sumOf { it.size }, plan.folders, plan.skipped, plan.partialFolders - updated.size,
+            honeyspace = true,
+        )
+    }
+
+    /**
      * The dump only lists the first 9 apps of a folder. For bigger ones, open the folder in the (visible) source launcher
      * with simulated taps, dump again to read every member, then close it. [sh] runs a shell command (Shizuku).
      */
     suspend fun completeFolders(
         plan: ImportPlan, sh: (Array<String>) -> String, dump: () -> String,
     ): ImportPlan {
+        if (plan.honeyspace) return completeHoneyspaceFolders(plan, sh, dump)
         if (plan.partial.isEmpty() || plan.screenW <= 0) return plan
         val updated = HashMap<Long, List<String>>()
         val memberRe = Regex("""WorkspaceItemInfo\(id=(\d+) type=\w+ container=(\d+) targetComponent=ComponentInfo\{([^}]*)\}""")
