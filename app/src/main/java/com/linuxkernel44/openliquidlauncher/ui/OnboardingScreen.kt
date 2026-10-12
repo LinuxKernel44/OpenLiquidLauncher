@@ -111,7 +111,7 @@ fun OnboardingScreen(
                 }
             }
 
-            Column(Modifier.padding(bottom = 36.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.padding(bottom = 64.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 PageDots(PAGE_DONE + 1, page, Modifier.fillMaxWidth().padding(bottom = 4.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (page != PAGE_DONE) {
