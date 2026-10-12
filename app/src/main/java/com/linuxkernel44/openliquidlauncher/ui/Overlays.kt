@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.IntSize
 import com.kyant.backdrop.Backdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.linuxkernel44.openliquidlauncher.data.AppInfo
 import com.linuxkernel44.openliquidlauncher.data.AppItem
 import com.linuxkernel44.openliquidlauncher.data.FolderItem
@@ -186,6 +188,9 @@ fun FolderOverlay(state: LauncherState, folderId: Long, settings: LauncherSettin
     val grows = state.folderGrows
     var screen by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
     var panel by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+    // The folder panel's own glass reads from this (not the raw wallpaper `backdrop`), so the blur is
+    // visible through its translucency too, instead of showing the sharp home screen through the glass.
+    val blurredBackdrop = rememberLayerBackdrop()
     Box(
         Modifier.fillMaxSize().onSizeChanged { screen = it }
             .clickable(interactionSource = null, indication = null) { state.renameFolder(folderId, name); state.closeFolder() },
@@ -195,7 +200,8 @@ fun FolderOverlay(state: LauncherState, folderId: Long, settings: LauncherSettin
         Box(
             Modifier.fillMaxSize().graphicsLayer { alpha = fade * e }
                 .bleed()
-                .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur * 4f), RoundedCornerShape(0.dp), surfaceAlpha = 0f, tint = Color.Black.copy(alpha = 0.22f), edges = false),
+                .liquidGlass(backdrop, style.copy(refractionHeight = 0f, blur = style.blur * 4f), RoundedCornerShape(0.dp), surfaceAlpha = 0f, tint = Color.Black.copy(alpha = 0.22f), edges = false)
+                .layerBackdrop(blurredBackdrop),
         )
         Column(
             Modifier.padding(horizontal = 26.dp).fillMaxWidth().onSizeChanged { panel = it }
@@ -216,7 +222,7 @@ fun FolderOverlay(state: LauncherState, folderId: Long, settings: LauncherSettin
                         scaleX = sc; scaleY = sc
                     }
                 }
-                .liquidGlass(backdrop, style, style.roundDp(38.dp, style.folderRoundness), surfaceAlpha = style.surfaceAlpha + 0.1f)
+                .liquidGlass(blurredBackdrop, style, style.roundDp(38.dp, style.folderRoundness), surfaceAlpha = style.surfaceAlpha + 0.1f)
                 .clickable(interactionSource = null, indication = null) { }
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
