@@ -94,6 +94,9 @@ fun Modifier.liquidGlass(
     /** The inner shadow normally offsets downward (shadow reads at the top, like light from above). On a small
      *  tile where that top band would cover real content (folder previews), center it so it spreads evenly. */
     innerShadowCentered: Boolean = false,
+    /** Forces a (bigger) centered inner shadow even on a non-[small] element, for more edge depth on big panels
+     *  like the opened folder - normally only small elements get one (see [innerShadow] below). */
+    relief: Boolean = false,
 ): Modifier = if (!GlassGate.ready) {
     (if (layerBlock != null) Modifier.graphicsLayer(layerBlock) else Modifier)
         .background(Color.White.copy(alpha = surfaceAlpha + 0.06f), shape)
@@ -130,10 +133,13 @@ fun Modifier.liquidGlass(
     },
     highlight = if (edges && style.quality >= 1) ({ if (d > 0f) Highlight(width = (0.5f + 1.5f * d).dp, alpha = 1f) else Highlight.Default }) else null,
     shadow = if (edges && style.quality >= 2) ({ if (d > 0f) Shadow(radius = (24f + 10f * d).dp, color = Color.Black.copy(alpha = 0.1f + 0.1f * d)) else Shadow.Default }) else null,
-    // The inner shadow reads as a second contour on big cards and sheets, so only small elements get it.
+    // The inner shadow reads as a second contour on big cards and sheets, so only small elements get it,
+    // except when `relief` asks for one anyway (bigger radius here - a small tile's shadow would be too subtle).
     innerShadow = if (small && (style.quality >= 3 || d > 0f)) ({
         val radius = (10f + 8f * d).dp
         InnerShadow(radius = radius, offset = if (innerShadowCentered) DpOffset.Zero else DpOffset(0f.dp, radius), color = Color.Black.copy(alpha = 0.08f + 0.10f * d))
+    }) else if (relief) ({
+        InnerShadow(radius = 26.dp, offset = DpOffset.Zero, color = Color.Black.copy(alpha = 0.22f))
     }) else null,
     layerBlock = layerBlock,
     onDrawSurface = {
