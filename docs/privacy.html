@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OpenLiquidLauncher — Privacy Policy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { font: 16px/1.6 -apple-system, system-ui, sans-serif; max-width: 680px; margin: 48px auto; padding: 0 20px; color: #1a1a1a; }
+  h1 { font-size: 1.6em; }
+  h2 { font-size: 1.15em; margin-top: 2em; }
+  code { background: #f2f2f2; padding: 0.1em 0.4em; border-radius: 4px; }
+  footer { margin-top: 3em; color: #666; font-size: 0.9em; }
+</style>
+</head>
+<body>
+<h1>OpenLiquidLauncher — Privacy Policy</h1>
+<p><strong>Last updated:</strong> October 12, 2026</p>
+
+<p>OpenLiquidLauncher is an open-source Android home-screen launcher. This policy explains what data it does — and does not — handle.</p>
+
+<h2>Summary</h2>
+<p>OpenLiquidLauncher collects <strong>no data</strong>, sends <strong>no data</strong> anywhere, and has <strong>no internet access</strong> (the app declares no <code>INTERNET</code> permission). Everything it stores stays on your device, in the app's own private storage, and is removed when you uninstall it.</p>
+
+<h2>What the app stores locally</h2>
+<ul>
+  <li><strong>Your home screen layout</strong> (apps, folders, widgets, dock, pages) — saved as a local JSON file in the app's private storage.</li>
+  <li><strong>Your chosen wallpaper image</strong>, if you pick one from your gallery via the system Photo Picker — kept locally to render the glass effect.</li>
+  <li><strong>Your settings</strong> (glass appearance, grid size, gestures, etc.).</li>
+</ul>
+<p>None of this ever leaves your device. It is never transmitted, uploaded, sold, or shared with the developer or any third party, because the app has no network code at all.</p>
+
+<h2>Permissions, and why</h2>
+<ul>
+  <li><strong>Notification access</strong> (optional, off by default): used only to show unread-count badges on app icons. The app does not read notification content.</li>
+  <li><strong>Accessibility service</strong> (optional, off by default): used only to trigger the "lock screen" and "open notification shade" system actions for gesture shortcuts (e.g. swipe down, double tap). It does not read screen content, your inputs, or any other app's data.</li>
+  <li><strong>Set wallpaper</strong>: only used if you choose to also apply your picked image as the system wallpaper.</li>
+  <li><strong>Delete packages</strong>: only used when you explicitly uninstall an app from the launcher's UI.</li>
+  <li><strong>Import from another launcher</strong> (optional, manual, Settings → Import): reads another launcher's layout (app positions, folder names) on your own device, with your explicit action and consent each time, to copy it into OpenLiquidLauncher. This data stays local and is used only to build your new layout.</li>
+</ul>
+
+<h2>Third-party code</h2>
+<p>The glass rendering is powered by the open-source <a href="https://github.com/Kyant0/AndroidLiquidGlass">Kyant0/AndroidLiquidGlass</a> library (Apache-2.0), vendored in the app. It does not add any network or data-collection behavior.</p>
+
+<h2>Children's privacy</h2>
+<p>The app does not knowingly collect any data from anyone, including children, because it does not collect data from anyone at all.</p>
+
+<h2>Changes to this policy</h2>
+<p>If this policy ever changes, the updated version will be published at this same address and in the project's <a href="https://github.com/LinuxKernel44/OpenLiquidLauncher">GitHub repository</a>.</p>
+
+<h2>Contact</h2>
+<p>Questions: open an issue at <a href="https://github.com/LinuxKernel44/OpenLiquidLauncher/issues">github.com/LinuxKernel44/OpenLiquidLauncher/issues</a>.</p>
+
+<footer>OpenLiquidLauncher is open source (Apache-2.0). Source code: <a href="https://github.com/LinuxKernel44/OpenLiquidLauncher">github.com/LinuxKernel44/OpenLiquidLauncher</a></footer>
+</body>
+</html>
