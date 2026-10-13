@@ -6,6 +6,12 @@
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
+    <!-- Optional, Settings -> System -> "Keep launcher running": a foreground service to resist background kills. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <!-- Optional: let us read the home layout of other launchers when they allow it (Import in Settings). -->
     <!-- Optional, granted once over adb: lets the importer read the stock launcher's layout via dumpsys. -->
     <uses-permission android:name="android.permission.DUMP" tools:ignore="ProtectedPermissions" />
@@ -75,6 +81,15 @@
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
+        </service>
+
+        <service
+            android:name=".service.KeepAliveService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the launcher process alive so Home does not need a cold restart" />
         </service>
 
         <service

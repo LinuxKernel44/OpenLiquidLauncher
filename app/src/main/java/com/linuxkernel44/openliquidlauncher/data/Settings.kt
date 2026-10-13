@@ -18,6 +18,9 @@ data class LauncherSettings(
     val autoAddNewApps: Boolean = true,
     val setSystemWallpaperToo: Boolean = true,
     val onboardingCompleted: Boolean = false,
+    /** Runs a minimal always-on foreground service so Android is less likely to kill the launcher process
+     * in the background, which is what causes Home to sometimes need a second press after another app. */
+    val keepAliveService: Boolean = false,
     // Liquid glass tuning
     val glassBlur: Float = 0.46288183f,
     val glassRefractionHeight: Float = 14f,
@@ -74,6 +77,7 @@ class SettingsStore(context: Context) {
             autoAddNewApps = prefs.getBoolean("autoAddNewApps", d.autoAddNewApps),
             setSystemWallpaperToo = prefs.getBoolean("setSystemWallpaperToo", d.setSystemWallpaperToo),
             onboardingCompleted = prefs.getBoolean("onboardingCompleted", d.onboardingCompleted),
+            keepAliveService = prefs.getBoolean("keepAliveService", d.keepAliveService),
             glassBlur = prefs.getFloat("glassBlur", d.glassBlur),
             glassRefractionHeight = prefs.getFloat("glassRefractionHeight", d.glassRefractionHeight),
             glassRefractionAmount = prefs.getFloat("glassRefractionAmount", d.glassRefractionAmount),
@@ -103,6 +107,7 @@ class SettingsStore(context: Context) {
             .putBoolean("showBadges", s.showBadges).putBoolean("autoAddNewApps", s.autoAddNewApps)
             .putBoolean("setSystemWallpaperToo", s.setSystemWallpaperToo)
             .putBoolean("onboardingCompleted", s.onboardingCompleted)
+            .putBoolean("keepAliveService", s.keepAliveService)
             .putFloat("glassBlur", s.glassBlur)
             .putFloat("glassRefractionHeight", s.glassRefractionHeight)
             .putFloat("glassRefractionAmount", s.glassRefractionAmount)

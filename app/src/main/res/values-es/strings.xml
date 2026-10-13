@@ -73,6 +73,11 @@
     <string name="settings_set_default_launcher">Definir como launcher predeterminado</string>
     <string name="settings_open_source_licenses">Licencias de código abierto</string>
     <string name="settings_replay_onboarding">Volver a ver la guía de bienvenida</string>
+    <string name="settings_keep_alive">Mantener el launcher activo</string>
+    <string name="settings_keep_alive_hint">Muestra una notificación permanente y silenciosa para que Android tenga menos probabilidades de cerrar el launcher en segundo plano. Soluciona que a veces haya que pulsar Inicio dos veces. Usa algo más de batería.</string>
+    <string name="keep_alive_channel_name">Launcher mantenido activo</string>
+    <string name="keep_alive_notification_title">OpenLiquidLauncher</string>
+    <string name="keep_alive_notification_text">Activo para abrir Inicio al instante</string>
     <string name="settings_footer">OpenLiquidLauncher 1.9.1 · Apache-2.0 · cristal líquido por Kyant0/AndroidLiquidGlass</string>
     <string name="settings_refresh_rate">Tasa de refresco</string>
     <string name="settings_refresh_auto">Auto</string>

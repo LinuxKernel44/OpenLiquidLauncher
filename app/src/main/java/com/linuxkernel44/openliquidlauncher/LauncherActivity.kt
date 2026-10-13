@@ -5,8 +5,10 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProviderInfo
 import android.content.Intent
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
+import com.linuxkernel44.openliquidlauncher.service.KeepAliveService
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -73,7 +75,27 @@ class LauncherActivity : ComponentActivity() {
         handleAppIconLaunch(intent)
         initRefreshRates()
         lifecycleScope.launch { app.settings.state.map { it.refreshRate }.distinctUntilChanged().collect(::applyRefreshRate) }
+        // The service is foreground-only (not boot-persisted), so re-arm it every time the process starts.
+        if (app.settings.current.keepAliveService) KeepAliveService.start(this)
     }
+
+    private val requestNotifPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) KeepAliveService.start(this)
+    }
+
+    /** Settings -> System -> "Keep launcher running": starts the foreground service and, if needed, asks to
+     * be exempted from battery optimizations (OxygenOS and similar OEM skins otherwise still kill it). */
+    fun enableKeepAlive() {
+        val needsNotifPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (needsNotifPermission) requestNotifPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS) else KeepAliveService.start(this)
+        val pm = getSystemService(android.os.PowerManager::class.java)
+        if (pm?.isIgnoringBatteryOptimizations(packageName) != true) {
+            runCatching { startActivity(Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, android.net.Uri.parse("package:$packageName"))) }
+        }
+    }
+
+    fun disableKeepAlive() = KeepAliveService.stop(this)
 
     /** Display modes of the screen's current resolution: their distinct refresh rates (Hz). */
     private fun displayModes(): List<android.view.Display.Mode> {

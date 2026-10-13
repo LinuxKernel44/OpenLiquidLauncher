@@ -73,6 +73,11 @@
     <string name="settings_set_default_launcher">Imposta come launcher predefinito</string>
     <string name="settings_open_source_licenses">Licenze open source</string>
     <string name="settings_replay_onboarding">Rivedi la guida di benvenuto</string>
+    <string name="settings_keep_alive">Mantieni il launcher attivo</string>
+    <string name="settings_keep_alive_hint">Mostra una notifica permanente e silenziosa in modo che Android abbia meno probabilità di chiudere il launcher in background. Risolve il problema di dover premere Home due volte. Consuma un po\' più batteria.</string>
+    <string name="keep_alive_channel_name">Launcher mantenuto attivo</string>
+    <string name="keep_alive_notification_title">OpenLiquidLauncher</string>
+    <string name="keep_alive_notification_text">Mantenuto attivo per aprire Home all\'istante</string>
     <string name="settings_footer">OpenLiquidLauncher 1.9.1 · Apache-2.0 · vetro liquido di Kyant0/AndroidLiquidGlass</string>
     <string name="settings_refresh_rate">Frequenza di aggiornamento</string>
     <string name="settings_refresh_auto">Auto</string>

@@ -168,6 +168,11 @@ fun SettingsScreen(
 
             Section(stringResource(R.string.settings_section_system), backdrop, style) {
                 ButtonRow(stringResource(R.string.settings_set_default_launcher)) { state.openDefaultHomeSettings() }
+                SwitchRow(stringResource(R.string.settings_keep_alive), settings.keepAliveService) { on ->
+                    store.update { copy(keepAliveService = on) }
+                    if (on) state.activity.enableKeepAlive() else state.activity.disableKeepAlive()
+                }
+                Hint(stringResource(R.string.settings_keep_alive_hint))
                 ButtonRow(stringResource(R.string.settings_open_source_licenses)) { state.showLicenses = true }
                 ButtonRow(stringResource(R.string.settings_replay_onboarding)) { state.showOnboarding = true }
                 Hint(stringResource(R.string.settings_footer))

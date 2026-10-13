@@ -73,6 +73,11 @@
     <string name="settings_set_default_launcher">Set as default launcher</string>
     <string name="settings_open_source_licenses">Open source licenses</string>
     <string name="settings_replay_onboarding">Replay welcome guide</string>
+    <string name="settings_keep_alive">Keep launcher running</string>
+    <string name="settings_keep_alive_hint">Runs a silent permanent notification so Android is less likely to kill the launcher in the background. Fixes Home sometimes needing a second press. Uses a bit more battery.</string>
+    <string name="keep_alive_channel_name">Launcher kept alive</string>
+    <string name="keep_alive_notification_title">OpenLiquidLauncher</string>
+    <string name="keep_alive_notification_text">Kept alive so Home opens instantly</string>
     <string name="settings_footer">OpenLiquidLauncher 1.9.1 · Apache-2.0 · liquid glass by Kyant0/AndroidLiquidGlass</string>
     <string name="settings_refresh_rate">Refresh rate</string>
     <string name="settings_refresh_auto">Auto</string>
