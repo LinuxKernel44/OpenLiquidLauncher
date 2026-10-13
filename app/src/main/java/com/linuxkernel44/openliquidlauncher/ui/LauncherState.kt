@@ -400,8 +400,9 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
                 occ == null -> DropTarget.Cell(page, cx, cy)
                 // On the centre of an app/folder: merge into a folder. Elsewhere on the cell: the icons move aside (pushed).
                 payload.isApp && centre && (occ.item is AppItem || occ.item is FolderItem) -> DropTarget.Cell(page, cx, cy, mergeWith = occ.item.id)
-                occ.spanX == 1 && occ.spanY == 1 -> DropTarget.Cell(page, cx, cy, push = true)
-                else -> null
+                // A widget covers this cell: push still lands the icon on the nearest free cell (insertPushing
+                // already skips over multi-span occupants) instead of silently discarding the drop.
+                else -> DropTarget.Cell(page, cx, cy, push = true)
             }
         }
         return null
