@@ -166,6 +166,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     fun cancelInteractions() {
         clearPreview()
         dragPayload = null; dropTarget = null; pendingPayload = null; holdPayload = null; stackIds.clear(); dragFromOverlay = false
+        folderDragOrder = null
     }
 
     /** Back / home press. Returns true if something was dismissed. */
@@ -191,6 +192,8 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     var dockRect by mutableStateOf(Rect.Zero)
     var removeRect by mutableStateOf(Rect.Zero)
     var uninstallRect by mutableStateOf(Rect.Zero)
+    /** Bounds of the open folder's icon grid (root coordinates), used to reorder apps inside it. */
+    var folderGridRect by mutableStateOf(Rect.Zero)
 
     /** Offset of the window on screen, to convert raw touch coordinates of embedded views. */
     fun screenToRoot(screen: Offset): Offset {
@@ -217,6 +220,9 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     var preview by mutableStateOf<Map<Long, Pair<Int, Int>>>(emptyMap())
     private var previewKey: DropTarget.Cell? = null
     private var previewJob: kotlinx.coroutines.Job? = null
+
+    /** Live reorder of an open folder's own icons while dragging one of its own apps over the grid. */
+    var folderDragOrder by mutableStateOf<List<String>?>(null)
 
     fun toggleStack(appId: String) {
         val base = holdPayload?.let { it.app?.id ?: (it.item as? AppItem)?.appId }
@@ -246,8 +252,44 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
             preview = emptyMap()
         }
         dragPointer = pointer
-        dropTarget = computeTarget(pointer)
-        schedulePreview(dropTarget as? DropTarget.Cell)
+        val payload = dragPayload ?: return
+        // Dragging one of the open folder's own apps over its own grid reorders it in place instead of
+        // targeting the home screen (which is hidden behind the folder's blur anyway).
+        val fid = payload.fromFolderId
+        if (fid != null && fid == openFolderId && folderGridRect.contains(pointer)) {
+            dropTarget = null
+            clearPreview()
+            updateFolderReorder(payload, pointer)
+        } else {
+            if (folderDragOrder != null) folderDragOrder = null
+            dropTarget = computeTarget(pointer)
+            schedulePreview(dropTarget as? DropTarget.Cell)
+        }
+    }
+
+    /** Recomputes the live preview order of the open folder's apps from the dragged app's position over the grid. */
+    private fun updateFolderReorder(payload: DragPayload, pointer: Offset) {
+        val appId = payload.app?.id ?: return
+        val fid = payload.fromFolderId ?: return
+        val folder = layout.findItem(fid) as? FolderItem ?: return
+        val base = folderDragOrder ?: folder.appIds
+        val cols = 4
+        val rows = ceil(base.size / cols.toFloat()).toInt().coerceAtLeast(1)
+        val cellW = folderGridRect.width / cols
+        val cellH = folderGridRect.height / rows
+        if (cellW <= 0f || cellH <= 0f) return
+        val cx = ((pointer.x - folderGridRect.left) / cellW).toInt().coerceIn(0, cols - 1)
+        val cy = ((pointer.y - folderGridRect.top) / cellH).toInt().coerceIn(0, rows - 1)
+        val from = base.indexOf(appId)
+        val to = (cy * cols + cx).coerceIn(0, base.size - 1)
+        if (from == -1 || from == to) return
+        folderDragOrder = base.toMutableList().also { it.add(to, it.removeAt(from)) }
+    }
+
+    /** Writes the live folder reorder preview back to the folder's own item, if anything moved. */
+    private fun commitFolderReorder(folderId: Long, order: List<String>) {
+        val folder = layout.findItem(folderId) as? FolderItem ?: return
+        if (order != folder.appIds) layout.replaceItem(folder.copy(appIds = order))
     }
 
     private fun schedulePreview(t: DropTarget.Cell?) {
@@ -271,12 +313,18 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         val payload = dragPayload
         val held = holdPayload
         val stack = stackIds.toList()
+        val reorder = folderDragOrder
         clearPreview()
+        folderDragOrder = null
         if (payload != null) {
-            val placedItem = drop(payload, dropTarget)
+            if (reorder != null && payload.fromFolderId == openFolderId) {
+                payload.fromFolderId?.let { commitFolderReorder(it, reorder) }
+            } else {
+                val placedItem = drop(payload, dropTarget)
+                if (stack.isNotEmpty()) groupIntoFolder(payload, placedItem, stack)
+            }
             dragPayload = null
             dropTarget = null
-            if (stack.isNotEmpty()) groupIntoFolder(payload, placedItem, stack)
         } else if (held != null) {
             if (stack.isNotEmpty()) groupIntoFolder(held, null, stack)
             else openMenu(held, holdAnchor)
@@ -286,6 +334,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
 
     fun dragCancel() {
         clearPreview()
+        folderDragOrder = null
         dragPayload = null; dropTarget = null; pendingPayload = null; holdPayload = null; stackIds.clear()
     }
 

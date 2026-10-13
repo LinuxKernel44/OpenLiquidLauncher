@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -62,6 +63,7 @@ import com.linuxkernel44.openliquidlauncher.data.FolderItem
 import com.linuxkernel44.openliquidlauncher.data.LauncherSettings
 import com.linuxkernel44.openliquidlauncher.data.WidgetItem
 import com.linuxkernel44.openliquidlauncher.data.toBitmap
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 // ---- drag layer & drop zones ------------------------------------------------------------------
@@ -244,20 +246,33 @@ fun FolderOverlay(state: LauncherState, folderId: Long, settings: LauncherSettin
                 modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
             )
             val cols = 4
-            val apps = folder.appIds.mapNotNull { state.apps.byId(it) }
-            apps.chunked(cols).forEach { rowApps ->
-                Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                    rowApps.forEach { a ->
-                        val hidden = state.dragPayload?.app?.id == a.id && state.dragPayload?.fromFolderId == folderId
-                        Box(Modifier.weight(1f).alpha(if (hidden) 0f else 1f), contentAlignment = Alignment.Center) {
-                            AppCell(
-                                a, settings, badges[a.packageName] ?: 0,
-                                Modifier.itemGestures(state, { DragPayload(app = a, fromFolderId = folderId) }, onTap = { r -> state.renameFolder(folderId, name); state.closeFolder(); state.launch(a, r) }),
-                                iconSize = 52.dp,
-                            )
-                        }
+            // While an app is being dragged over this grid, state.folderDragOrder holds the live reorder preview.
+            val order = state.folderDragOrder ?: folder.appIds
+            val rows = ceil(order.size / cols.toFloat()).toInt().coerceAtLeast(1)
+            val rowHeight = 86.dp
+            val density = LocalDensity.current
+            BoxWithConstraints(
+                Modifier.fillMaxWidth().height(rowHeight * rows)
+                    .onGloballyPositioned { state.folderGridRect = it.boundsInRoot() },
+            ) {
+                val cellW = maxWidth / cols
+                order.forEachIndexed { idx, id ->
+                    val a = state.apps.byId(id) ?: return@forEachIndexed
+                    val hidden = state.dragPayload?.app?.id == a.id && state.dragPayload?.fromFolderId == folderId
+                    val target = with(density) {
+                        IntOffset((idx % cols) * cellW.roundToPx(), (idx / cols) * rowHeight.roundToPx())
                     }
-                    repeat(cols - rowApps.size) { Box(Modifier.weight(1f)) }
+                    val animated by androidx.compose.animation.core.animateIntOffsetAsState(target, label = "folderReorder")
+                    Box(
+                        Modifier.offset { animated }.width(cellW).height(rowHeight).alpha(if (hidden) 0f else 1f),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        AppCell(
+                            a, settings, badges[a.packageName] ?: 0,
+                            Modifier.itemGestures(state, { DragPayload(app = a, fromFolderId = folderId) }, onTap = { r -> state.renameFolder(folderId, name); state.closeFolder(); state.launch(a, r) }),
+                            iconSize = 52.dp,
+                        )
+                    }
                 }
             }
         }
