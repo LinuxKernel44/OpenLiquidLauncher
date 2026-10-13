@@ -163,7 +163,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
 
     /** Drops any half-finished gesture (drag, held app) so nothing stays hidden or ghosted. */
     fun cancelInteractions() {
-        clearPreview()
+        clearPreview(); clearDockPreview(); clearFolderPreview()
         dragPayload = null; dropTarget = null; pendingPayload = null; dragFromOverlay = false
         folderDragOrder = null
     }
@@ -215,8 +215,15 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     private var previewKey: DropTarget.Cell? = null
     private var previewJob: kotlinx.coroutines.Job? = null
 
+    /** Dock analogue of [preview]: item id -> dock slot index. */
+    var dockPreview by mutableStateOf<Map<Long, Int>>(emptyMap())
+    private var dockPreviewKey: DropTarget.Slot? = null
+    private var dockPreviewJob: kotlinx.coroutines.Job? = null
+
     /** Live reorder of an open folder's own icons while dragging one of its own apps over the grid. */
     var folderDragOrder by mutableStateOf<List<String>?>(null)
+    private var folderPreviewKey: Int? = null
+    private var folderPreviewJob: kotlinx.coroutines.Job? = null
 
     /** True while the item built by [payload] (compared by identity, not by the live [menu] state) has its context menu open. */
     fun isMenuOpenFor(payload: DragPayload): Boolean {
@@ -254,18 +261,20 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         if (fid != null && fid == openFolderId && folderGridRect.contains(pointer)) {
             dragFromOverlay = false
             dropTarget = null
-            clearPreview()
-            updateFolderReorder(payload, pointer)
+            clearPreview(); clearDockPreview()
+            scheduleFolderReorder(payload, pointer)
         } else {
             if (fid != null && fid == openFolderId) dragFromOverlay = true
             if (folderDragOrder != null) folderDragOrder = null
+            clearFolderPreview()
             dropTarget = computeTarget(pointer)
             schedulePreview(dropTarget as? DropTarget.Cell)
+            scheduleDockPreview(dropTarget as? DropTarget.Slot)
         }
     }
 
-    /** Recomputes the live preview order of the open folder's apps from the dragged app's position over the grid. */
-    private fun updateFolderReorder(payload: DragPayload, pointer: Offset) {
+    /** Dwell-based reorder preview of the open folder's apps, like [schedulePreview] for the home grid. */
+    private fun scheduleFolderReorder(payload: DragPayload, pointer: Offset) {
         val appId = payload.app?.id ?: return
         val fid = payload.fromFolderId ?: return
         val folder = layout.findItem(fid) as? FolderItem ?: return
@@ -279,8 +288,15 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         val cy = ((pointer.y - folderGridRect.top) / cellH).toInt().coerceIn(0, rows - 1)
         val from = base.indexOf(appId)
         val to = (cy * cols + cx).coerceIn(0, base.size - 1)
-        if (from == -1 || from == to) return
-        folderDragOrder = base.toMutableList().also { it.add(to, it.removeAt(from)) }
+        if (from == -1 || from == to || to == folderPreviewKey) return
+        folderPreviewKey = to; folderPreviewJob?.cancel()
+        folderPreviewJob = activity.lifecycleScope.launch {
+            kotlinx.coroutines.delay(260) // dwell, same as the home grid and dock
+            val cur = folderDragOrder ?: folder.appIds
+            val curFrom = cur.indexOf(appId)
+            if (curFrom == -1 || curFrom == to) return@launch
+            folderDragOrder = cur.toMutableList().also { it.add(to, it.removeAt(curFrom)) }
+        }
     }
 
     /** Writes the live folder reorder preview back to the folder's own item, if anything moved. */
@@ -304,12 +320,27 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         }
     }
 
+    private fun scheduleDockPreview(t: DropTarget.Slot?) {
+        val key = t?.takeIf { it.push }
+        if (key == dockPreviewKey) return
+        dockPreviewKey = key; dockPreviewJob?.cancel()
+        val id = dragPayload?.itemId?.takeIf { it >= 0 } ?: NEW_ITEM
+        dockPreview = emptyMap()
+        if (key == null || dragPayload == null) return
+        dockPreviewJob = activity.lifecycleScope.launch {
+            kotlinx.coroutines.delay(260) // dwell, same as the home grid
+            dockPreview = layout.simulateDock(id, key.index)
+        }
+    }
+
     private fun clearPreview() { previewJob?.cancel(); previewKey = null; preview = emptyMap() }
+    private fun clearDockPreview() { dockPreviewJob?.cancel(); dockPreviewKey = null; dockPreview = emptyMap() }
+    private fun clearFolderPreview() { folderPreviewJob?.cancel(); folderPreviewKey = null }
 
     fun dragEnd() {
         val payload = dragPayload
         val reorder = folderDragOrder
-        clearPreview()
+        clearPreview(); clearDockPreview(); clearFolderPreview()
         folderDragOrder = null
         if (payload != null) {
             if (reorder != null && payload.fromFolderId == openFolderId) {
@@ -324,7 +355,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     }
 
     fun dragCancel() {
-        clearPreview()
+        clearPreview(); clearDockPreview(); clearFolderPreview()
         folderDragOrder = null
         dragPayload = null; dropTarget = null; pendingPayload = null
     }

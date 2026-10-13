@@ -258,22 +258,27 @@ fun FolderOverlay(state: LauncherState, folderId: Long, settings: LauncherSettin
                 val cellW = maxWidth / cols
                 order.forEachIndexed { idx, id ->
                     val a = state.apps.byId(id) ?: return@forEachIndexed
-                    val hidden = state.dragPayload?.app?.id == a.id && state.dragPayload?.fromFolderId == folderId
-                    val target = with(density) {
-                        IntOffset((idx % cols) * cellW.roundToPx(), (idx / cols) * rowHeight.roundToPx())
-                    }
-                    val animated by androidx.compose.animation.core.animateIntOffsetAsState(target, label = "folderReorder")
-                    Box(
-                        Modifier.offset { animated }.width(cellW).height(rowHeight).alpha(if (hidden) 0f else 1f),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        AppCell(
-                            a, settings, badges[a.packageName] ?: 0,
-                            Modifier
-                                .menuBounce(state.isMenuOpenFor(DragPayload(app = a, fromFolderId = folderId)))
-                                .itemGestures(state, { DragPayload(app = a, fromFolderId = folderId) }, onTap = { r -> state.renameFolder(folderId, name); state.closeFolder(); state.launch(a, r) }),
-                            iconSize = 52.dp,
-                        )
+                    // Keyed by app id (not index/idx): otherwise Compose reuses each grid slot positionally across a
+                    // reorder, so the slot's own offset animation never moves and the icon drawn in it just swaps
+                    // instantly instead of sliding to its new place.
+                    androidx.compose.runtime.key(id) {
+                        val hidden = state.dragPayload?.app?.id == a.id && state.dragPayload?.fromFolderId == folderId
+                        val target = with(density) {
+                            IntOffset((idx % cols) * cellW.roundToPx(), (idx / cols) * rowHeight.roundToPx())
+                        }
+                        val animated by androidx.compose.animation.core.animateIntOffsetAsState(target, androidx.compose.animation.core.spring(0.8f, 400f), label = "folderReorder")
+                        Box(
+                            Modifier.offset { animated }.width(cellW).height(rowHeight).alpha(if (hidden) 0f else 1f),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            AppCell(
+                                a, settings, badges[a.packageName] ?: 0,
+                                Modifier
+                                    .menuBounce(state.isMenuOpenFor(DragPayload(app = a, fromFolderId = folderId)))
+                                    .itemGestures(state, { DragPayload(app = a, fromFolderId = folderId) }, onTap = { r -> state.renameFolder(folderId, name); state.closeFolder(); state.launch(a, r) }),
+                                iconSize = 52.dp,
+                            )
+                        }
                     }
                 }
             }

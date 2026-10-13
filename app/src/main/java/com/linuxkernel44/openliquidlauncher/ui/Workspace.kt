@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.pager.HorizontalPager
@@ -211,18 +212,25 @@ fun Dock(
     ) {
         // Inset from the capsule's own rounded ends, so the first/last icon never sits near the curve -
         // independent of how many icons there are.
-        Row(Modifier.fillMaxSize().padding(horizontal = 10.dp)) {
+        BoxWithConstraints(Modifier.fillMaxSize().padding(horizontal = 10.dp)) {
+            val slotW = maxWidth / n
+            val t = state.dropTarget
+            if (t is DropTarget.Slot) {
+                Box(
+                    Modifier
+                        .offset(x = slotW * t.index + (slotW - 64.dp) / 2, y = (maxHeight - 64.dp) / 2)
+                        .size(64.dp)
+                        .background(Color.White.copy(alpha = if (t.mergeWith != null) 0.3f else 0.16f), RoundedCornerShape(22.dp)),
+                )
+            }
             for (i in 0 until n) {
-                val item = state.layout.dock.getOrNull(i)
-                Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
-                    val t = state.dropTarget
-                    if (t is DropTarget.Slot && t.index == i) {
-                        Box(Modifier.size(64.dp).background(Color.White.copy(alpha = if (t.mergeWith != null) 0.3f else 0.16f), RoundedCornerShape(22.dp)))
-                    }
-                    if (item != null) {
-                        androidx.compose.runtime.key(item.id) {
-                            HomeItemView(item, state, settings, badges, backdrop, style, Modifier.padding(4.dp), showLabel = false)
-                        }
+                val item = state.layout.dock.getOrNull(i) ?: continue
+                androidx.compose.runtime.key(item.id) {
+                    // Live reorder: icons glide aside while you hover a slot, same as the home grid.
+                    val targetIndex = state.dockPreview[item.id] ?: i
+                    val tx by androidx.compose.animation.core.animateDpAsState(slotW * targetIndex, androidx.compose.animation.core.spring(0.8f, 400f), label = "dockX")
+                    Box(Modifier.offset(x = tx).width(slotW).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                        HomeItemView(item, state, settings, badges, backdrop, style, Modifier.padding(4.dp), showLabel = false)
                     }
                 }
             }

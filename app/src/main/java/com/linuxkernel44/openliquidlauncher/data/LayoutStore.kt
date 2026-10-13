@@ -173,6 +173,23 @@ class LayoutStore(private val context: Context, private val settings: SettingsSt
         return result
     }
 
+    /**
+     * Dock analogue of [simulate]: pushes dock icons aside to make room for a carried icon at [slot]. Overflowing
+     * past the end of the dock means no preview (the push would bump an icon out to the home screen).
+     */
+    fun simulateDock(liftedId: Long, slot: Int): Map<Long, Int> {
+        val cells = HashMap<Int, Long>(); val origin = HashMap<Long, Int>()
+        for (i in dock.indices) { val id = dock[i]?.id ?: continue; if (id != liftedId) { cells[i] = id; origin[id] = i } }
+        var carry: Long? = liftedId; var pos = slot
+        while (carry != null) {
+            if (pos >= dock.size) return emptyMap()
+            val occ = cells[pos]; cells[pos] = carry; carry = occ; pos++
+        }
+        val result = LinkedHashMap<Long, Int>()
+        for ((pos, id) in cells) if (id != liftedId && origin[id] != pos) result[id] = pos
+        return result
+    }
+
     /** Removes the home-screen shortcuts (not folder members) of [appId]. */
     fun removeAppItems(appId: String) {
         placed.removeAll { (it.item as? AppItem)?.appId == appId }
