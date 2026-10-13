@@ -77,6 +77,11 @@ fun AppDrawer(
         if (query.isBlank()) base else base.filter { it.label.contains(query.trim(), ignoreCase = true) }
     }
     LaunchedEffect(state.drawerTarget) { if (!state.drawerTarget) { query = ""; focus.clearFocus() } }
+    // Dragging an app out hides the keyboard right away, instead of waiting for the drop to actually close the
+    // drawer: the drawer fade-out (LauncherScreen) already starts at that same instant, so this keeps them in sync.
+    LaunchedEffect(state.dragPayload != null && state.dragFromOverlay) {
+        if (state.dragPayload != null && state.dragFromOverlay) focus.clearFocus()
+    }
 
     val cols = settings.columns
     val rows = settings.rows
