@@ -269,7 +269,9 @@ fun FolderOverlay(state: LauncherState, folderId: Long, settings: LauncherSettin
                     ) {
                         AppCell(
                             a, settings, badges[a.packageName] ?: 0,
-                            Modifier.itemGestures(state, { DragPayload(app = a, fromFolderId = folderId) }, onTap = { r -> state.renameFolder(folderId, name); state.closeFolder(); state.launch(a, r) }),
+                            Modifier
+                                .menuBounce(state.isMenuOpenFor(DragPayload(app = a, fromFolderId = folderId)))
+                                .itemGestures(state, { DragPayload(app = a, fromFolderId = folderId) }, onTap = { r -> state.renameFolder(folderId, name); state.closeFolder(); state.launch(a, r) }),
                             iconSize = 52.dp,
                         )
                     }

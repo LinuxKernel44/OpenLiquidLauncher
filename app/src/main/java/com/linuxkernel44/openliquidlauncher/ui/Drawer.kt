@@ -198,11 +198,8 @@ private fun DrawerCell(app: AppInfo, state: LauncherState, settings: LauncherSet
     AppCell(
         app, settings, badges[app.packageName] ?: 0,
         modifier
-            .graphicsLayer { val sc = if (app.id in state.stackIds) 0.9f else 1f; scaleX = sc; scaleY = sc }
-            .itemGestures(state, { DragPayload(app = app) }, onTap = { r ->
-                if (state.holdPayload != null) state.toggleStack(app.id) else state.launch(app, r)
-            }),
-        selected = app.id in state.stackIds,
+            .menuBounce(state.isMenuOpenFor(DragPayload(app = app)))
+            .itemGestures(state, { DragPayload(app = app) }, onTap = { r -> state.launch(app, r) }),
     )
 }
 

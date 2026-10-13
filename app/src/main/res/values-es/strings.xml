@@ -144,7 +144,6 @@
     <string name="import_summary_skipped">\n%1$d elemento(s) no se pudieron importar (no instalados o no compatibles).</string>
     <string name="import_summary_partial_folders">\n%1$d carpeta(s) contienen más apps de las que muestra la vista previa del launcher; solo se importaron las visibles.</string>
     <string name="import_summary_widgets">\n%1$d widget(s) pedirán ahora tu confirmación.</string>
-    <string name="toast_folder_created">Carpeta creada</string>
     <string name="toast_enable_gestures">Activa «Gestos de OpenLiquidLauncher» en los ajustes de accesibilidad</string>
     <string name="toast_wallpaper_applied">Fondo de pantalla aplicado</string>
     <string name="toast_wallpaper_save_failed">No se pudo guardar el fondo de pantalla</string>

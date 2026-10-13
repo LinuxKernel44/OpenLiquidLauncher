@@ -116,16 +116,6 @@ class LauncherActivity : ComponentActivity() {
         if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE == 0) return
         if (i?.getBooleanExtra("debugManyApps", false) == true) debugManyApps = true
         i?.getStringExtra("importDb")?.let { state.importConfirm = ImportRequest.FromFile(android.net.Uri.fromFile(File(it))) }
-        // Debug only: --es debugGroup "Held,Tapped1,Tapped2" simulates hold + extra-finger taps + release.
-        i?.getStringExtra("debugGroup")?.split(",")?.let { labels ->
-            val byLabel = { l: String -> state.apps.apps.value.firstOrNull { it.label == l } }
-            val held = byLabel(labels[0])?.let { a -> state.layout.placed.map { it.item }.filterIsInstance<com.linuxkernel44.openliquidlauncher.data.AppItem>().firstOrNull { it.appId == a.id } }
-            if (held != null) {
-                state.beginPress(com.linuxkernel44.openliquidlauncher.ui.DragPayload(item = held), androidx.compose.ui.geometry.Rect.Zero, androidx.compose.ui.geometry.Offset.Zero)
-                labels.drop(1).forEach { l -> byLabel(l)?.let { state.toggleStack(it.id) } }
-                state.dragEnd()
-            }
-        }
         if (i?.getBooleanExtra("importDumpsys", false) == true) runImport(ImportRequest.FromLauncher(state.importer.findSources(), shizuku = i.getBooleanExtra("shizuku", false)))
     }
 

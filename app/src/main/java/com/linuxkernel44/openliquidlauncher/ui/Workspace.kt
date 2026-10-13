@@ -26,7 +26,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
@@ -60,24 +59,20 @@ fun HomeItemView(
     when (item) {
         is AppItem -> {
             val app = state.apps.byId(item.appId) ?: return
-            val inStack = app.id in state.stackIds
-            val held = state.holdPayload?.item?.id == item.id
             AppCell(
                 app, settings, badges[app.packageName] ?: 0,
                 m
-                    .graphicsLayer { val sc = if (held) 1.12f else if (inStack) 0.9f else 1f; scaleX = sc; scaleY = sc; alpha = if (inStack) 0.75f else alpha }
-                    .itemGestures(state, { DragPayload(item = item) }, onTap = {
-                        // A finger is holding another app: this tap adds this app to the new folder instead of launching it.
-                        if (state.holdPayload != null) state.toggleStack(app.id) else state.launch(app, it)
-                    }),
+                    .menuBounce(state.isMenuOpenFor(DragPayload(item = item)))
+                    .itemGestures(state, { DragPayload(item = item) }, onTap = { state.launch(app, it) }),
                 iconSize = iconSize,
                 showLabel = showLabel,
-                selected = inStack,
             )
         }
         is FolderItem -> FolderCell(
             item, state.apps::byId, settings, backdrop, style,
-            m.itemGestures(state, { DragPayload(item = item) }, onTap = { state.openFolder(item.id, it) }),
+            m
+                .menuBounce(state.isMenuOpenFor(DragPayload(item = item)))
+                .itemGestures(state, { DragPayload(item = item) }, onTap = { state.openFolder(item.id, it) }),
             iconSize = iconSize,
             showLabel = showLabel,
         )

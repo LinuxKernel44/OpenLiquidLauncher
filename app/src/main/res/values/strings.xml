@@ -144,7 +144,6 @@
     <string name="import_summary_skipped">\n%1$d item(s) couldn\'t be imported (not installed or unsupported).</string>
     <string name="import_summary_partial_folders">\n%1$d folder(s) hold more apps than the launcher shows in their preview; only the visible ones were imported.</string>
     <string name="import_summary_widgets">\n%1$d widget(s) will now ask for your confirmation.</string>
-    <string name="toast_folder_created">Folder created</string>
     <string name="toast_enable_gestures">Enable \"OpenLiquidLauncher gestures\" in Accessibility settings</string>
     <string name="toast_wallpaper_applied">Wallpaper applied</string>
     <string name="toast_wallpaper_save_failed">Could not save wallpaper</string>

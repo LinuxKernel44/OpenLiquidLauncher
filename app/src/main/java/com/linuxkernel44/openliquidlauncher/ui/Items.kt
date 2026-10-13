@@ -2,6 +2,7 @@ package com.linuxkernel44.openliquidlauncher.ui
 
 import android.appwidget.AppWidgetManager
 import android.graphics.drawable.Drawable
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -57,6 +59,24 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 /** Shape of app icons for the "App icon roundness" setting: from a slightly rounded square (0.01) to a circle (1). */
 fun appIconShape(roundness: Float) = RoundedCornerShape(percent = (10 + 40 * roundness).toInt().coerceIn(10, 50))
+
+/** iOS-style up/down bounce for the icon whose context menu is currently open. */
+@Composable
+fun Modifier.menuBounce(active: Boolean): Modifier {
+    if (!active) return this
+    val amplitude = with(LocalDensity.current) { 5.dp.toPx() }
+    val infinite = androidx.compose.animation.core.rememberInfiniteTransition(label = "menuBounce")
+    val t by infinite.animateFloat(
+        initialValue = -1f,
+        targetValue = 1f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            androidx.compose.animation.core.tween(260, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+        ),
+        label = "menuBounceT",
+    )
+    return this.graphicsLayer { translationY = t * amplitude }
+}
 
 /**
  * Renders an app icon: the system's own masked icon by default, our own mask when "App icon roundness" is on (adaptive

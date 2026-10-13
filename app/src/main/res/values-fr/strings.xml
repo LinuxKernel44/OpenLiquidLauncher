@@ -144,7 +144,6 @@
     <string name="import_summary_skipped">\n%1$d élément(s) n\'ont pas pu être importés (non installés ou non pris en charge).</string>
     <string name="import_summary_partial_folders">\n%1$d dossier(s) contiennent plus d\'applications que ce que le launcher affiche en aperçu ; seules celles visibles ont été importées.</string>
     <string name="import_summary_widgets">\n%1$d widget(s) vont maintenant demander votre confirmation.</string>
-    <string name="toast_folder_created">Dossier créé</string>
     <string name="toast_enable_gestures">Activez « Gestes OpenLiquidLauncher » dans les paramètres d\'accessibilité</string>
     <string name="toast_wallpaper_applied">Fond d\'écran appliqué</string>
     <string name="toast_wallpaper_save_failed">Impossible d\'enregistrer le fond d\'écran</string>

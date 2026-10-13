@@ -144,7 +144,6 @@
     <string name="import_summary_skipped">\n%1$d Element(e) konnten nicht importiert werden (nicht installiert oder nicht unterstützt).</string>
     <string name="import_summary_partial_folders">\n%1$d Ordner enthalten mehr Apps, als der Launcher in der Vorschau zeigt; nur die sichtbaren wurden importiert.</string>
     <string name="import_summary_widgets">\n%1$d Widget(s) fragen nun um deine Bestätigung.</string>
-    <string name="toast_folder_created">Ordner erstellt</string>
     <string name="toast_enable_gestures">Aktiviere „OpenLiquidLauncher-Gesten“ in den Bedienungshilfen-Einstellungen</string>
     <string name="toast_wallpaper_applied">Hintergrundbild angewendet</string>
     <string name="toast_wallpaper_save_failed">Hintergrundbild konnte nicht gespeichert werden</string>

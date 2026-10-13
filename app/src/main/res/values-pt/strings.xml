@@ -144,7 +144,6 @@
     <string name="import_summary_skipped">\n%1$d item(ns) não puderam ser importados (não instalados ou não suportados).</string>
     <string name="import_summary_partial_folders">\n%1$d pasta(s) contêm mais apps do que as mostradas na pré-visualização do launcher; só as visíveis foram importadas.</string>
     <string name="import_summary_widgets">\n%1$d widget(s) vão agora pedir a tua confirmação.</string>
-    <string name="toast_folder_created">Pasta criada</string>
     <string name="toast_enable_gestures">Ativa «Gestos do OpenLiquidLauncher» nas definições de acessibilidade</string>
     <string name="toast_wallpaper_applied">Papel de parede aplicado</string>
     <string name="toast_wallpaper_save_failed">Não foi possível guardar o papel de parede</string>
