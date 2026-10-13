@@ -239,7 +239,9 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
             val p = pendingPayload ?: return
             if ((pointer - pressStart).getDistance() < slopPx) return
             menu = null
-            dragFromOverlay = drawerTarget || openFolderId != null
+            // Dragging one of the open folder's own apps starts inside its grid: don't fade the folder away yet,
+            // only once the finger actually leaves its bounds (handled below, every move, in both directions).
+            dragFromOverlay = drawerTarget || (openFolderId != null && p.fromFolderId != openFolderId)
             dragPayload = p
             previewKey = null
             preview = emptyMap()
@@ -250,10 +252,12 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
         // targeting the home screen (which is hidden behind the folder's blur anyway).
         val fid = payload.fromFolderId
         if (fid != null && fid == openFolderId && folderGridRect.contains(pointer)) {
+            dragFromOverlay = false
             dropTarget = null
             clearPreview()
             updateFolderReorder(payload, pointer)
         } else {
+            if (fid != null && fid == openFolderId) dragFromOverlay = true
             if (folderDragOrder != null) folderDragOrder = null
             dropTarget = computeTarget(pointer)
             schedulePreview(dropTarget as? DropTarget.Cell)
