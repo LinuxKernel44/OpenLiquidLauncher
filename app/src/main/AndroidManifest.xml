@@ -92,6 +92,8 @@
                 android:value="Keeps the launcher process alive so Home does not need a cold restart" />
         </service>
 
+        <receiver android:name=".service.WatchdogReceiver" android:exported="false" />
+
         <service
             android:name=".service.GestureAccessibilityService"
             android:exported="true"

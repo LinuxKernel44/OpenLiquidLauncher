@@ -74,7 +74,7 @@
     <string name="settings_open_source_licenses">Licences open source</string>
     <string name="settings_replay_onboarding">Revoir le guide de bienvenue</string>
     <string name="settings_keep_alive">Garder le launcher actif</string>
-    <string name="settings_keep_alive_hint">Affiche une notification permanente et silencieuse pour qu\'Android ait moins tendance à tuer le launcher en arrière-plan. Corrige le souci de devoir appuyer deux fois sur Accueil. Consomme un peu plus de batterie.</string>
+    <string name="settings_keep_alive_hint">Affiche une notification permanente et silencieuse pour qu\'Android ait moins tendance à tuer le launcher en arrière-plan, et relance automatiquement le launcher s\'il est quand même tué. Corrige le souci de devoir appuyer deux fois sur Accueil. Consomme un peu plus de batterie.</string>
     <string name="keep_alive_channel_name">Launcher maintenu actif</string>
     <string name="keep_alive_notification_title">OpenLiquidLauncher</string>
     <string name="keep_alive_notification_text">Maintenu actif pour un retour à l\'accueil instantané</string>

@@ -75,8 +75,8 @@ class LauncherActivity : ComponentActivity() {
         handleAppIconLaunch(intent)
         initRefreshRates()
         lifecycleScope.launch { app.settings.state.map { it.refreshRate }.distinctUntilChanged().collect(::applyRefreshRate) }
-        // The service is foreground-only (not boot-persisted), so re-arm it every time the process starts.
-        if (app.settings.current.keepAliveService) KeepAliveService.start(this)
+        // The service is foreground-only (not boot-persisted), so re-arm it (and its watchdog) every time the process starts.
+        if (app.settings.current.keepAliveService) { KeepAliveService.start(this); KeepAliveService.scheduleWatchdog(this) }
     }
 
     private val requestNotifPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -84,18 +84,24 @@ class LauncherActivity : ComponentActivity() {
     }
 
     /** Settings -> System -> "Keep launcher running": starts the foreground service and, if needed, asks to
-     * be exempted from battery optimizations (OxygenOS and similar OEM skins otherwise still kill it). */
+     * be exempted from battery optimizations (OxygenOS and similar OEM skins otherwise still kill it). Also
+     * arms a periodic watchdog alarm that restarts the service (and the process with it) if it still gets
+     * killed despite that. */
     fun enableKeepAlive() {
         val needsNotifPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
         if (needsNotifPermission) requestNotifPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS) else KeepAliveService.start(this)
+        KeepAliveService.scheduleWatchdog(this)
         val pm = getSystemService(android.os.PowerManager::class.java)
         if (pm?.isIgnoringBatteryOptimizations(packageName) != true) {
             runCatching { startActivity(Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, android.net.Uri.parse("package:$packageName"))) }
         }
     }
 
-    fun disableKeepAlive() = KeepAliveService.stop(this)
+    fun disableKeepAlive() {
+        KeepAliveService.cancelWatchdog(this)
+        KeepAliveService.stop(this)
+    }
 
     /** Display modes of the screen's current resolution: their distinct refresh rates (Hz). */
     private fun displayModes(): List<android.view.Display.Mode> {

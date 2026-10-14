@@ -1,5 +1,6 @@
 package com.linuxkernel44.openliquidlauncher.service
 
+import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -9,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import com.linuxkernel44.openliquidlauncher.LauncherActivity
 import com.linuxkernel44.openliquidlauncher.R
@@ -56,6 +58,7 @@ class KeepAliveService : Service() {
     companion object {
         private const val NOTIFICATION_ID = 7391
         private const val CHANNEL_ID = "keep_alive"
+        private const val WATCHDOG_REQUEST_CODE = 7392
 
         fun start(context: Context) {
             val i = Intent(context, KeepAliveService::class.java)
@@ -64,6 +67,32 @@ class KeepAliveService : Service() {
 
         fun stop(context: Context) {
             context.stopService(Intent(context, KeepAliveService::class.java))
+        }
+
+        /**
+         * Periodic alarm that just calls [start] again: if the process (and the service with it) got killed
+         * in the background since the last tick, this relaunches it; if it's still running, it's a no-op.
+         * Inexact (the OS batches it with other apps' alarms to save battery) - this is a safety net, not a
+         * timer anything depends on firing precisely. Not boot-persisted, same as the service itself: re-armed
+         * every time the process starts (see [com.linuxkernel44.openliquidlauncher.LauncherActivity.onCreate]).
+         */
+        fun scheduleWatchdog(context: Context) {
+            val am = context.getSystemService(AlarmManager::class.java) ?: return
+            am.setInexactRepeating(
+                AlarmManager.ELAPSED_REALTIME,
+                SystemClock.elapsedRealtime() + AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+                AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+                watchdogPendingIntent(context),
+            )
+        }
+
+        fun cancelWatchdog(context: Context) {
+            context.getSystemService(AlarmManager::class.java)?.cancel(watchdogPendingIntent(context))
+        }
+
+        private fun watchdogPendingIntent(context: Context): PendingIntent {
+            val i = Intent(context, WatchdogReceiver::class.java)
+            return PendingIntent.getBroadcast(context, WATCHDOG_REQUEST_CODE, i, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         }
     }
 }

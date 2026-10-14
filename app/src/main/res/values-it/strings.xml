@@ -74,7 +74,7 @@
     <string name="settings_open_source_licenses">Licenze open source</string>
     <string name="settings_replay_onboarding">Rivedi la guida di benvenuto</string>
     <string name="settings_keep_alive">Mantieni il launcher attivo</string>
-    <string name="settings_keep_alive_hint">Mostra una notifica permanente e silenziosa in modo che Android abbia meno probabilità di chiudere il launcher in background. Risolve il problema di dover premere Home due volte. Consuma un po\' più batteria.</string>
+    <string name="settings_keep_alive_hint">Mostra una notifica permanente e silenziosa in modo che Android abbia meno probabilità di chiudere il launcher in background, e lo riavvia automaticamente tramite un watchdog se viene comunque chiuso. Risolve il problema di dover premere Home due volte. Consuma un po\' più batteria.</string>
     <string name="keep_alive_channel_name">Launcher mantenuto attivo</string>
     <string name="keep_alive_notification_title">OpenLiquidLauncher</string>
     <string name="keep_alive_notification_text">Mantenuto attivo per aprire Home all\'istante</string>
