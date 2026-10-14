@@ -23,6 +23,7 @@ import com.linuxkernel44.openliquidlauncher.data.ImportException
 import com.linuxkernel44.openliquidlauncher.data.ImportPlan
 import com.linuxkernel44.openliquidlauncher.data.PendingWidget
 import com.linuxkernel44.openliquidlauncher.data.ShizukuBridge
+import com.linuxkernel44.openliquidlauncher.ui.INTRO_DURATIONS_MS
 import com.linuxkernel44.openliquidlauncher.ui.ImportRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -162,6 +163,13 @@ class LauncherActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         refreshWallpaper() // no-op unless the wallpaper actually changed
+        // onStop hides the home elements until the launch animation brings them back. If that animation never ran or
+        // got stuck (interrupted lifecycle, frame clock paused at the wrong moment), don't leave a bare wallpaper:
+        // anything still hidden once the animation had time to finish is shown.
+        lifecycleScope.launch {
+            kotlinx.coroutines.delay(INTRO_DURATIONS_MS[app.settings.current.introSpeed] + 1200L)
+            if (state.introT < 1f) state.introT = 1f
+        }
     }
 
     override fun onPause() {

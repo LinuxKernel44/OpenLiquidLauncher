@@ -60,10 +60,14 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
     val appList by state.apps.apps.collectAsState()
     LaunchedEffect(loaded) {
         if (loaded) state.ensureInitialLayout()
-        // First launch of the process (cold start): play the launch animation once the home screen can be shown.
-        if (loaded && !state.introPlayed) { state.introPlayed = true; state.playIntro() }
         // First-ever launch (not just first process start): guide the user through setup once.
         if (loaded && !state.settings.current.onboardingCompleted) state.showOnboarding = true
+    }
+    // First composition of this activity (cold start): play the launch animation right away. It must not wait for
+    // AppRepository to finish loading: until the animation runs every home element is transparent, so waiting
+    // would leave only the wallpaper on screen for as long as the icons take to decode after the process was killed.
+    LaunchedEffect(Unit) {
+        if (!state.introPlayed) { state.introPlayed = true; state.playIntro() }
     }
     LaunchedEffect(state.introRequest) {
         if (state.introRequest == 0) return@LaunchedEffect
