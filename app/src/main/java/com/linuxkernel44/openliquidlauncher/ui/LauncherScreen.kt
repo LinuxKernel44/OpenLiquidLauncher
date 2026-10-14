@@ -202,7 +202,7 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
             // Fixed height whether it shows the page dots or the edit bar, so the grid never changes size in edit mode.
             Box(Modifier.fillMaxWidth().height(60.dp).introEffect(state, dock = true), contentAlignment = Alignment.Center) {
                 if (state.editMode) EditBar(state, backdrop, style, onPickWallpaper)
-                else if (layout.pages > 1) PageDots(layout.pages, pagerState.currentPage)
+                else if (layout.pages > 1) PageDots(layout.pages, pagerState.currentPage, hitSlop = 22.dp) { scope.launch { pagerState.scrollThroughTo(it) } }
             }
             Dock(state, settings, badges, backdrop, style, Modifier.padding(bottom = 6.dp).introEffect(state, dock = true))
             Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))

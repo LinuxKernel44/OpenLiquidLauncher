@@ -177,7 +177,7 @@ fun AppDrawer(
                 }
                 if (filtered.isEmpty()) GText(stringResource(R.string.drawer_no_apps_found), Modifier.align(Alignment.Center), size = 16f)
             }
-            if (pageCount > 1 && !imeOpen) PageDots(pageCount, pager.currentPage, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp))
+            if (pageCount > 1 && !imeOpen) PageDots(pageCount, pager.currentPage, Modifier.align(Alignment.CenterHorizontally), hitSlop = 10.dp) { drawerScope.launch { pager.scrollThroughTo(it) } }
             val requester = remember { FocusRequester() }
             Box(
                 Modifier.fillMaxWidth().padding(horizontal = 18.dp).padding(bottom = 14.dp, top = 4.dp).height(52.dp)

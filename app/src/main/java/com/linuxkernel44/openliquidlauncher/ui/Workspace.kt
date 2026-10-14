@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -183,13 +184,35 @@ fun Workspace(
 }
 
 @Composable
-fun PageDots(count: Int, current: Int, modifier: Modifier = Modifier) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
+fun PageDots(count: Int, current: Int, modifier: Modifier = Modifier, hitSlop: androidx.compose.ui.unit.Dp = 0.dp, onSelect: ((Int) -> Unit)? = null) {
+    // The dots keep their look; with [onSelect] the whole row (plus [hitSlop] around it) is one touch target, split
+    // evenly between the dots, so a 6 dp circle is easy to hit and there is no dead zone between two of them.
+    // pointerInput comes before the padding so the touch area includes it.
+    val tap = if (onSelect == null) Modifier else Modifier
+        .pointerInput(count, hitSlop) {
+            detectTapGestures { p ->
+                val slop = hitSlop.toPx()
+                val w = size.width - 2 * slop
+                if (w > 0f) onSelect((((p.x - slop) / w) * count).toInt().coerceIn(0, count - 1))
+            }
+        }
+        .padding(horizontal = hitSlop, vertical = hitSlop)
+    Row(modifier.then(tap), horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
         repeat(count) { i ->
             val a by animateFloatAsState(if (i == current) 1f else 0.38f, label = "dot")
             Box(Modifier.size(if (i == current) 8.dp else 6.dp).background(Color.White.copy(alpha = a), CircleShape))
         }
     }
+}
+
+/** Scrolls to [target] in one continuous motion that passes through every page in between (longer for farther pages). */
+suspend fun androidx.compose.foundation.pager.PagerState.scrollThroughTo(target: Int) {
+    val page = target.coerceIn(0, pageCount - 1)
+    val steps = page - currentPage
+    if (steps == 0) return
+    val distance = (layoutInfo.pageSize + layoutInfo.pageSpacing).toFloat()
+    val ms = 280 + 90 * (kotlin.math.abs(steps) - 1)
+    animateScrollBy((steps - currentPageOffsetFraction) * distance, androidx.compose.animation.core.tween(ms, easing = androidx.compose.animation.core.FastOutSlowInEasing))
 }
 
 @Composable
