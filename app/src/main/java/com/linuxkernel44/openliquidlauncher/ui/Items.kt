@@ -197,12 +197,20 @@ fun Modifier.itemGestures(
                     1 -> Unit
                     else -> {
                         state.beginPress(currentPayload(), c0.boundsInRoot(), c0.localToRoot(down.position))
-                        while (true) {
-                            val ev = awaitPointerEvent()
-                            val c = ev.changes.firstOrNull { it.id == down.id } ?: run { state.dragEnd(); break }
-                            c.consume()
-                            if (!c.pressed) { state.dragEnd(); break }
-                            state.dragMove(coords?.localToRoot(c.position) ?: Offset.Zero, slopPx)
+                        var finished = false
+                        try {
+                            while (true) {
+                                val ev = awaitPointerEvent()
+                                val c = ev.changes.firstOrNull { it.id == down.id } ?: run { state.dragEnd(); break }
+                                c.consume()
+                                if (!c.pressed) { state.dragEnd(); break }
+                                state.dragMove(coords?.localToRoot(c.position) ?: Offset.Zero, slopPx)
+                            }
+                            finished = true
+                        } finally {
+                            // This node left the composition (or the handler was torn down) mid-gesture: nobody will
+                            // ever see the finger lift, so don't leave a drag or its menu stuck on screen.
+                            if (!finished) state.dragCancel()
                         }
                     }
                 }

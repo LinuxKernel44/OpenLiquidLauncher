@@ -136,7 +136,13 @@ fun AppDrawer(
             }
             // With the keyboard open the grid area shrinks. Instead of squeezing the cells (which hides the names), keep
             // the normal cell size and let the grid scroll.
-            val imeOpen = WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
+            val imeNow = WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
+            // Dragging an app out hides the keyboard, which would swap the scrolling grid for the pager and recompose
+            // every cell - including the one whose gesture is driving the drag, which then ends as if released.
+            // So the layout mode stays frozen for as long as a drag is running.
+            val frozenIme = remember { booleanArrayOf(false) }
+            if (state.dragPayload == null) frozenIme[0] = imeNow
+            val imeOpen = if (state.dragPayload == null) imeNow else frozenIme[0]
             var baseCellH by remember { mutableStateOf(0.dp) }
             // The grid (icons + labels) is recorded here so the scroll handle's glass can bend what is under it.
             val gridBackdrop = com.kyant.backdrop.backdrops.rememberLayerBackdrop()
