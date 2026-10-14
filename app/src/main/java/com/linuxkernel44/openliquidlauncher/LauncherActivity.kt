@@ -148,10 +148,18 @@ class LauncherActivity : ComponentActivity() {
         if (i?.getBooleanExtra("importDumpsys", false) == true) runImport(ImportRequest.FromLauncher(state.importer.findSources(), shizuku = i.getBooleanExtra("shizuku", false)))
     }
 
-    override fun onStart() { super.onStart(); app.widgetHost.startListening() }
+    override fun onStart() {
+        super.onStart()
+        // Widgets re-deliver their RemoteViews as soon as we listen: let the first frames of the return animation
+        // go out before that work lands on the main thread.
+        lifecycleScope.launch {
+            kotlinx.coroutines.delay(300)
+            if (lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) app.widgetHost.startListening()
+        }
+    }
 
     /** Back from another app (not a Home press while already here): replay the launch animation. */
-    override fun onRestart() { super.onRestart(); state.playIntro() }
+    override fun onRestart() { super.onRestart(); state.playIntro(quick = true) }
 
     override fun onStop() {
         app.widgetHost.stopListening()
