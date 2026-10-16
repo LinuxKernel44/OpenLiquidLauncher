@@ -48,6 +48,16 @@ Full source code, issue tracker and releases on GitHub: the "OpenLiquidLauncher"
 Requires Android 13 (API 33) or newer, with a GPU/driver that supports the real-time shader effects (most phones from the last few years).
 ```
 
+## Building the Play bundle
+
+`./gradlew :app:bundlePlayRelease` -> `app/build/outputs/bundle/playRelease/app-play-release.aab` (signed with the release key; enable Play App Signing and use this as the upload key). The `play` flavor removes DUMP, the other launchers' READ_SETTINGS, REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, the Shizuku provider/permission, and hides the Import section. GitHub releases use the `full` flavor (`assembleFullRelease`).
+
+Remove the "BRING YOUR LAYOUT WITH YOU" paragraph from the full description for the Play listing (the Play build has no importer).
+
+## Foreground service declaration (Play Console asks)
+
+- Type: special use (`KeepAliveService`), opt-in in Settings -> System -> "Keep launcher running". Reason: keeps the home process alive so pressing Home does not cold-start the launcher.
+
 ## Graphics checklist (to produce separately)
 
 - [ ] App icon 512×512 PNG (already have mipmap source — export at full res)

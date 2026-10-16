@@ -94,7 +94,7 @@ class LauncherActivity : ComponentActivity() {
         if (needsNotifPermission) requestNotifPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS) else KeepAliveService.start(this)
         KeepAliveService.scheduleWatchdog(this)
         val pm = getSystemService(android.os.PowerManager::class.java)
-        if (pm?.isIgnoringBatteryOptimizations(packageName) != true) {
+        if (!BuildConfig.PLAY && pm?.isIgnoringBatteryOptimizations(packageName) != true) {
             runCatching { startActivity(Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, android.net.Uri.parse("package:$packageName"))) }
         }
     }

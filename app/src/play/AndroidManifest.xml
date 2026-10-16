@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Google Play build: drops what Play policy restricts or what only the sideloaded "full" build needs
+     (layout import from other launchers via Shizuku / DUMP / their providers, battery-optimisation exemption). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" tools:node="remove" />
+    <uses-permission android:name="android.permission.DUMP" tools:node="remove" />
+    <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS" tools:node="remove" />
+    <uses-permission android:name="com.android.launcher3.permission.READ_SETTINGS" tools:node="remove" />
+    <uses-permission android:name="net.oneplus.launcher.permission.READ_SETTINGS" tools:node="remove" />
+    <uses-permission android:name="com.oppo.launcher.permission.READ_SETTINGS" tools:node="remove" />
+    <uses-permission android:name="com.oplus.launcher.permission.READ_SETTINGS" tools:node="remove" />
+    <uses-permission android:name="com.google.android.apps.nexuslauncher.permission.READ_SETTINGS" tools:node="remove" />
+
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" tools:node="remove" />
+
+    <queries>
+        <package android:name="moe.shizuku.privileged.api" tools:node="remove" />
+    </queries>
+
+    <application>
+        <provider android:name="rikka.shizuku.ShizukuProvider" android:authorities="${applicationId}.shizuku" tools:node="remove" />
+    </application>
+</manifest>

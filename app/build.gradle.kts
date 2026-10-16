@@ -48,8 +48,22 @@ android {
             signingConfig = signingConfigs.getByName(if (hasReleaseSigning) "release" else "debug")
         }
     }
+    flavorDimensions += "dist"
+    productFlavors {
+        // "full": GitHub releases, with the layout importers (Shizuku / DUMP / other launchers' providers) and the battery-optimisation prompt.
+        create("full") {
+            dimension = "dist"
+            buildConfigField("boolean", "PLAY", "false")
+        }
+        // "play": Google Play build without the permissions and features Play policy restricts (see src/play/AndroidManifest.xml).
+        create("play") {
+            dimension = "dist"
+            buildConfigField("boolean", "PLAY", "true")
+        }
+    }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {

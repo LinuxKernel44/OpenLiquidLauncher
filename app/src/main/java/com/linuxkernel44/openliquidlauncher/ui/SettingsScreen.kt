@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.kyant.backdrop.Backdrop
+import com.linuxkernel44.openliquidlauncher.BuildConfig
 import com.linuxkernel44.openliquidlauncher.R
 import com.linuxkernel44.openliquidlauncher.data.GLASS_RESOLUTIONS
 import com.linuxkernel44.openliquidlauncher.data.LauncherSettings
@@ -159,7 +160,7 @@ fun SettingsScreen(
                 }
             }
 
-            Section(stringResource(R.string.settings_section_import), backdrop, style) {
+            if (!BuildConfig.PLAY) Section(stringResource(R.string.settings_section_import), backdrop, style) {
                 Hint(stringResource(R.string.settings_import_hint))
                 ButtonRow(stringResource(R.string.settings_import_current)) { state.activity.beginImportFromLauncher() }
                 ButtonRow(stringResource(R.string.settings_import_shizuku)) { state.activity.beginImportWithShizuku() }

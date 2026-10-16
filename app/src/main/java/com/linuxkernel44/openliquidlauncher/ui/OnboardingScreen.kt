@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.kyant.backdrop.Backdrop
+import com.linuxkernel44.openliquidlauncher.BuildConfig
 import com.linuxkernel44.openliquidlauncher.R
 import com.linuxkernel44.openliquidlauncher.service.BadgeListenerService
 import com.linuxkernel44.openliquidlauncher.service.GestureAccessibilityService
@@ -68,9 +69,10 @@ fun OnboardingScreen(
         state.settings.update { copy(onboardingCompleted = true) }
         state.showOnboarding = false
     }
-    fun next() { if (page < PAGE_DONE) page++ else finish() }
+    fun skipsImport(p: Int) = BuildConfig.PLAY && p == PAGE_IMPORT // the Play build has no layout importer
+    fun next() { if (page < PAGE_DONE) { page++; if (skipsImport(page)) page++ } else finish() }
 
-    BackHandler(enabled = true) { if (page > PAGE_WELCOME) page-- }
+    BackHandler(enabled = true) { if (page > PAGE_WELCOME) { page--; if (skipsImport(page)) page-- } }
 
     Box(
         Modifier.fillMaxSize()
@@ -112,7 +114,7 @@ fun OnboardingScreen(
             }
 
             Column(Modifier.padding(bottom = 64.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                PageDots(PAGE_DONE + 1, page, Modifier.fillMaxWidth().padding(bottom = 4.dp))
+                PageDots(if (BuildConfig.PLAY) PAGE_DONE else PAGE_DONE + 1, if (BuildConfig.PLAY && page > PAGE_IMPORT) page - 1 else page, Modifier.fillMaxWidth().padding(bottom = 4.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (page != PAGE_DONE) {
                         Box(

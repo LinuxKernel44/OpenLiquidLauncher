@@ -23,7 +23,7 @@ jobs:
             echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
             echo "SIGNING_STORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
           fi
-      - run: ./gradlew :app:assembleRelease --no-daemon
+      - run: ./gradlew :app:assembleFullRelease --no-daemon
         env:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
@@ -31,9 +31,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: OpenLiquidLauncher-release
-          path: app/build/outputs/apk/release/*.apk
+          path: app/build/outputs/apk/full/release/*.apk
       - name: Publish release APK
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/release/*.apk
+          files: app/build/outputs/apk/full/release/*.apk
