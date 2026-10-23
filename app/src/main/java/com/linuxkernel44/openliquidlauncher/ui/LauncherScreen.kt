@@ -74,8 +74,7 @@ fun LauncherScreen(state: LauncherState, onPickWallpaper: () -> Unit, onPickWidg
         val st = state.settings.current
         if (st.introStyle == INTRO_NONE) { state.introT = 1f; return@LaunchedEffect }
         state.introT = 0f
-        val ms = if (state.introQuick) minOf(INTRO_DURATIONS_MS[st.introSpeed], INTRO_QUICK_MS) else INTRO_DURATIONS_MS[st.introSpeed]
-        state.introQuick = false
+        val ms = INTRO_DURATIONS_MS[st.introSpeed]
         androidx.compose.animation.core.animate(
             0f, 1f, animationSpec = androidx.compose.animation.core.tween(ms, easing = androidx.compose.animation.core.LinearEasing),
         ) { v, _ -> state.introT = v }

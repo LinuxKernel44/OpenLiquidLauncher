@@ -23,6 +23,7 @@ import com.linuxkernel44.openliquidlauncher.data.ImportException
 import com.linuxkernel44.openliquidlauncher.data.ImportPlan
 import com.linuxkernel44.openliquidlauncher.data.PendingWidget
 import com.linuxkernel44.openliquidlauncher.data.ShizukuBridge
+import com.linuxkernel44.openliquidlauncher.diag.Diag
 import com.linuxkernel44.openliquidlauncher.ui.INTRO_DURATIONS_MS
 import com.linuxkernel44.openliquidlauncher.ui.ImportRequest
 import kotlinx.coroutines.Dispatchers
@@ -77,7 +78,7 @@ class LauncherActivity : ComponentActivity() {
         initRefreshRates()
         lifecycleScope.launch { app.settings.state.map { it.refreshRate }.distinctUntilChanged().collect(::applyRefreshRate) }
         // The service is foreground-only (not boot-persisted), so re-arm it (and its watchdog) every time the process starts.
-        if (app.settings.current.keepAliveService) { KeepAliveService.start(this); KeepAliveService.scheduleWatchdog(this) }
+        if (app.settings.current.keepAliveService || Diag.enabled) { KeepAliveService.start(this); KeepAliveService.scheduleWatchdog(this) }
     }
 
     private val requestNotifPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -100,6 +101,7 @@ class LauncherActivity : ComponentActivity() {
     }
 
     fun disableKeepAlive() {
+        if (Diag.enabled) return // the diagnostic build's log capture lives in that service
         KeepAliveService.cancelWatchdog(this)
         KeepAliveService.stop(this)
     }
@@ -150,6 +152,7 @@ class LauncherActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        trace("onStart")
         // Widgets re-deliver their RemoteViews as soon as we listen: let the first frames of the return animation
         // go out before that work lands on the main thread.
         lifecycleScope.launch {
@@ -158,29 +161,46 @@ class LauncherActivity : ComponentActivity() {
         }
     }
 
-    /** Back from another app (not a Home press while already here): replay the launch animation. */
-    override fun onRestart() { super.onRestart(); state.playIntro(quick = true) }
+    override fun onRestart() { super.onRestart(); trace("onRestart") }
 
     override fun onStop() {
         app.widgetHost.stopListening()
-        // Hide the home elements right away so the next return doesn't flash the full screen before the animation starts.
-        if (app.settings.current.introStyle != 0) state.introT = 0f
+        trace("onStop")
         super.onStop()
     }
 
     override fun onResume() {
         super.onResume()
+        trace("onResume")
+        Diag.onResumed(this)
         refreshWallpaper() // no-op unless the wallpaper actually changed
-        // onStop hides the home elements until the launch animation brings them back. If that animation never ran or
-        // got stuck (interrupted lifecycle, frame clock paused at the wrong moment), don't leave a bare wallpaper:
-        // anything still hidden once the animation had time to finish is shown.
+        // Only the cold-start animation hides the home elements (introT starts at 0). If it never ran or got stuck
+        // (interrupted lifecycle, frame clock paused at the wrong moment), don't leave a bare wallpaper: anything still
+        // hidden once the animation had time to finish is shown. Same for a drawer left half-closed by a cancelled animation.
         lifecycleScope.launch {
             kotlinx.coroutines.delay(INTRO_DURATIONS_MS[app.settings.current.introSpeed] + 1200L)
             if (state.introT < 1f) state.introT = 1f
+            val d = state.drawerProgress
+            if (!state.drawerTarget && !d.isRunning && d.value > 0f) d.snapTo(0f)
+            trace("resume+settled")
         }
+        // First frame drawn after resuming: shows in logcat how long the window takes to produce pixels.
+        val t0 = android.os.SystemClock.uptimeMillis()
+        android.view.Choreographer.getInstance().postFrameCallback { trace("firstFrame +${android.os.SystemClock.uptimeMillis() - t0}ms") }
     }
 
+    /** Lifecycle breadcrumbs (tag `OLLTrace`): with `adb logcat -s OLLTrace` they show what the launcher saw when the home screen came up bare. */
+    private fun trace(event: String) {
+        if (!::state.isInitialized) return
+        android.util.Log.i("OLLTrace", "$event introT=${state.introT} drawer=${state.drawerProgress.value}/${state.drawerTarget} focus=${hasWindowFocus()} state=${lifecycle.currentState}")
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) { super.onWindowFocusChanged(hasFocus); trace("focus=$hasFocus") }
+
+    override fun onTrimMemory(level: Int) { super.onTrimMemory(level); trace("trimMemory=$level") }
+
     override fun onPause() {
+        trace("onPause")
         // Leaving (Home, an app, the shade...): a gesture in progress can't finish, so cancel it cleanly.
         state.cancelInteractions()
         currentFocus?.clearFocus()
@@ -191,7 +211,44 @@ class LauncherActivity : ComponentActivity() {
         super.onNewIntent(intent)
         handleDebugIntent(intent)
         handleAppIconLaunch(intent)
-        if (intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_HOME)) state.homeSignal++
+        trace("onNewIntent ${intent.action}")
+        if (intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_HOME)) {
+            state.homeSignal++
+            watchForStuckRecents()
+        }
+    }
+
+    // ---- OxygenOS: a second Home gesture during the ~0.6-0.9 s recents animation leaves its (empty) RecentsActivity on top ----
+    private val homeIntentTimes = ArrayList<Long>()
+    private var unstickAttempts = 0
+    private var lastUnstickAt = 0L
+    private val unstick = Runnable {
+        val shown = lifecycle.currentState == androidx.lifecycle.Lifecycle.State.RESUMED && hasWindowFocus()
+        trace("unstick check shown=$shown")
+        if (shown) unstickAttempts = 0
+        else if (!isFinishing && unstickAttempts < 3 && android.os.SystemClock.uptimeMillis() - state.lastLaunchAt > 3000) {
+            unstickAttempts++
+            lastUnstickAt = android.os.SystemClock.uptimeMillis()
+            // Same as pressing Home once more, which is what the user has to do by hand.
+            runCatching { startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            trace("unstick: sent Home again")
+        }
+    }
+
+    /**
+     * The system's gesture handler (OxygenOS' quickstep launcher animates every Home swipe for a third-party launcher) breaks
+     * when a second Home swipe starts while the first animation still runs: it ends up on its own empty recents screen, which
+     * shows only the wallpaper, and our launcher is never brought back. That second swipe reaches us as a Home intent
+     * more than 300 ms after the first (the two intents of a single swipe come 50 ms apart). If, shortly after such a pair, we are
+     * still not the focused screen, send Home again ourselves.
+     */
+    private fun watchForStuckRecents() {
+        val now = android.os.SystemClock.uptimeMillis()
+        homeIntentTimes.removeAll { now - it > 3000 }
+        homeIntentTimes += now
+        window.decorView.removeCallbacks(unstick)
+        // Our own corrective Home is re-checked sooner: when the first one lands while we are still shown as resumed, it changes nothing.
+        if (now - homeIntentTimes.first() > 300) window.decorView.postDelayed(unstick, if (now - lastUnstickAt < 500) 1000L else 1800L)
     }
 
     fun refreshWallpaper() { lifecycleScope.launch { app.wallpaper.refresh() } }

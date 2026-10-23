@@ -16,6 +16,7 @@ class LauncherApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        android.util.Log.i("OLLTrace", "process start pid=${android.os.Process.myPid()}")
         settings = SettingsStore(this)
         apps = AppRepository(this)
         layout = LayoutStore(this, settings)

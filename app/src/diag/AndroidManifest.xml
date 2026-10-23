@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Diagnostic test build: records the system log (needs READ_LOGS, granted once over adb) to hunt the intermittent "bare wallpaper" bug. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.READ_LOGS" tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application>
+        <receiver android:name=".diag.DiagReceiver" android:exported="false" />
+    </application>
+</manifest>

@@ -14,6 +14,7 @@ import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import com.linuxkernel44.openliquidlauncher.LauncherActivity
 import com.linuxkernel44.openliquidlauncher.R
+import com.linuxkernel44.openliquidlauncher.diag.Diag
 
 /**
  * Minimal always-on foreground service. It does no work of its own: its only purpose is to keep the
@@ -28,7 +29,10 @@ class KeepAliveService : Service() {
         startForeground(NOTIFICATION_ID, buildNotification())
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (Diag.enabled) Diag.onServiceStart(this)
+        return START_STICKY
+    }
 
     private fun buildNotification(): Notification {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -52,6 +56,7 @@ class KeepAliveService : Service() {
             .setSilent(true)
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .setContentIntent(openIntent)
+            .apply { Diag.notificationActions(this@KeepAliveService).forEach(::addAction) }
             .build()
     }
 

@@ -42,13 +42,18 @@ object ShizukuBridge {
         }
     }
 
-    /** Runs [cmd] as the shell user through Shizuku and returns its combined output. */
-    fun run(vararg cmd: String): String {
-        // Shizuku.newProcess is private since API 13 but still the simplest way to run a one-off command.
+    /** Starts [cmd] as the shell user through Shizuku (the caller reads and closes it). */
+    fun newProcess(vararg cmd: String): Process {
+        // Shizuku.newProcess is private since API 13 but still the simplest way to run a command.
         val method = Shizuku::class.java.getDeclaredMethod(
             "newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java,
         ).also { it.isAccessible = true }
-        val proc = method.invoke(null, arrayOf(*cmd), null, null) as Process
+        return method.invoke(null, arrayOf(*cmd), null, null) as Process
+    }
+
+    /** Runs [cmd] as the shell user through Shizuku and returns its combined output. */
+    fun run(vararg cmd: String): String {
+        val proc = newProcess(*cmd)
         // Drain stderr on its own thread: reading the two streams one after the other can deadlock when both fill up.
         var err = ""
         val errThread = Thread { err = runCatching { proc.errorStream.bufferedReader().readText() }.getOrDefault("") }.apply { start() }

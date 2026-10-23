@@ -26,8 +26,8 @@ android {
         applicationId = "com.linuxkernel44.openliquidlauncher"
         minSdk = 33
         targetSdk = 36
-        versionCode = 85
-        versionName = "1.23.4"
+        versionCode = 86
+        versionName = "1.23.5"
         androidResources.localeFilters += arrayOf("en", "fr", "de", "es", "it", "pt")
     }
 
@@ -60,6 +60,17 @@ android {
             dimension = "dist"
             buildConfigField("boolean", "PLAY", "true")
         }
+        // "diag": the full build plus a system-log recorder, for chasing the intermittent bare-wallpaper bug (see src/diag). Same applicationId, so it updates in place.
+        create("diag") {
+            dimension = "dist"
+            buildConfigField("boolean", "PLAY", "false")
+            versionNameSuffix = "-diag"
+        }
+    }
+    sourceSets {
+        // The log-capture code only exists in the diag flavor; the others get a no-op stand-in.
+        getByName("full").kotlin.srcDir("src/nodiag/java")
+        getByName("play").kotlin.srcDir("src/nodiag/java")
     }
     buildFeatures {
         compose = true

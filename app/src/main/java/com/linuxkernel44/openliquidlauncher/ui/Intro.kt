@@ -12,10 +12,6 @@ const val INTRO_SLIDE = 4
 
 val INTRO_DURATIONS_MS = intArrayOf(260, 420, 700)
 
-/** Cap for the animation when coming back from another app: the user is waiting for the home screen, so it only
- * softens the reveal instead of replaying the full (possibly 700 ms) cold-start animation. */
-const val INTRO_QUICK_MS = 180
-
 private fun easeOutCubic(x: Float): Float { val i = 1f - x; return 1f - i * i * i }
 
 /** Back-ease-out: overshoots a little before settling, which reads as a spring. */

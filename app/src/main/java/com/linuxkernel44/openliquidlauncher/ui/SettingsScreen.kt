@@ -42,6 +42,8 @@ import com.kyant.backdrop.Backdrop
 import com.linuxkernel44.openliquidlauncher.BuildConfig
 import com.linuxkernel44.openliquidlauncher.R
 import com.linuxkernel44.openliquidlauncher.data.GLASS_RESOLUTIONS
+import com.linuxkernel44.openliquidlauncher.diag.Diag
+import com.linuxkernel44.openliquidlauncher.diag.DiagSettingsSection
 import com.linuxkernel44.openliquidlauncher.data.LauncherSettings
 import com.linuxkernel44.openliquidlauncher.service.BadgeListenerService
 import com.linuxkernel44.openliquidlauncher.service.GestureAccessibilityService
@@ -178,6 +180,7 @@ fun SettingsScreen(
                 ButtonRow(stringResource(R.string.settings_replay_onboarding)) { state.showOnboarding = true }
                 Hint(stringResource(R.string.settings_footer))
             }
+            if (Diag.enabled) DiagSettingsSection(backdrop, style)
             }
         }
     }
@@ -219,7 +222,7 @@ private fun StepperRow(label: String, value: Int, min: Int, max: Int, onChange: 
 }
 
 @Composable
-private fun StepBtn(text: String, onClick: () -> Unit) {
+internal fun StepBtn(text: String, onClick: () -> Unit) {
     Box(Modifier.size(36.dp).background(Color.White.copy(alpha = 0.2f), CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) { GText(text, size = 18f, weight = FontWeight.Bold) }
 }
 

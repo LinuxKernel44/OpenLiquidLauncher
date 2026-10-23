@@ -137,9 +137,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     /** Settings "Preview": the settings page fades out while the animation replays behind it. */
     var previewRequest by mutableIntStateOf(0)
     var previewing by mutableStateOf(false)
-    /** Returning from another app: the next intro run is the short version (see [INTRO_QUICK_MS]). */
-    var introQuick = false
-    fun playIntro(quick: Boolean = false) { introQuick = quick; introRequest++ }
+    fun playIntro() { introRequest++ }
     /** Refresh rates (Hz) the screen supports at its current resolution; filled by the activity. */
     var refreshRates by mutableStateOf<List<Int>>(emptyList())
     var importConfirm by mutableStateOf<ImportRequest?>(null)
@@ -455,7 +453,11 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     fun removeFromHome(item: Item) { menu = null; removeItem(item) }
 
     // ---- launching ----
+    /** Uptime of the last app the user started from the launcher (see LauncherActivity.watchForStuckRecents). */
+    var lastLaunchAt = 0L
+
     fun launch(info: AppInfo, bounds: Rect?) {
+        lastLaunchAt = android.os.SystemClock.uptimeMillis()
         runCatching {
             val b = bounds?.let { AndroidRect(it.left.toInt(), it.top.toInt(), it.right.toInt(), it.bottom.toInt()) }
             val opts = b?.let {
