@@ -14,7 +14,7 @@
 </head>
 <body>
 <h1>OpenLiquidLauncher — Privacy Policy</h1>
-<p><strong>Last updated:</strong> October 12, 2026</p>
+<p><strong>Last updated:</strong> October 23, 2026</p>
 
 <p>OpenLiquidLauncher is an open-source Android home-screen launcher. This policy explains what data it does — and does not — handle.</p>
 
@@ -31,11 +31,12 @@
 
 <h2>Permissions, and why</h2>
 <ul>
-  <li><strong>Notification access</strong> (optional, off by default): used only to show unread-count badges on app icons. The app does not read notification content.</li>
+  <li><strong>Notification access</strong> (optional, off by default): used only to show unread-count badges on app icons. The app reads only the number of notifications per app. It does not read, store or transmit notification content.</li>
   <li><strong>Accessibility service</strong> (optional, off by default): used only to trigger the "lock screen" and "open notification shade" system actions for gesture shortcuts (e.g. swipe down, double tap). It does not read screen content, your inputs, or any other app's data.</li>
+  <li><strong>Foreground service and notifications</strong> (optional, off by default, Settings → System → "Keep launcher running"): keeps the launcher running in the background so pressing Home does not require a cold restart. It shows a persistent notification on your device, which is why the app may ask for the notification permission. Nothing is collected or sent.</li>
   <li><strong>Set wallpaper</strong>: only used if you choose to also apply your picked image as the system wallpaper.</li>
   <li><strong>Delete packages</strong>: only used when you explicitly uninstall an app from the launcher's UI.</li>
-  <li><strong>Import from another launcher</strong> (optional, manual, Settings → Import): reads another launcher's layout (app positions, folder names) on your own device, with your explicit action and consent each time, to copy it into OpenLiquidLauncher. This data stays local and is used only to build your new layout.</li>
+  <li><strong>Import from another launcher</strong> (optional, only in the version distributed outside Google Play, manual, Settings → Import): reads another launcher's layout (app positions, folder names) on your own device, with your explicit action and consent each time, to copy it into OpenLiquidLauncher. This data stays local and is used only to build your new layout.</li>
 </ul>
 
 <h2>Third-party code</h2>
