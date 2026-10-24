@@ -458,6 +458,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
 
     fun launch(info: AppInfo, bounds: Rect?) {
         lastLaunchAt = android.os.SystemClock.uptimeMillis()
+        activity.cancelUnstick()
         runCatching {
             val b = bounds?.let { AndroidRect(it.left.toInt(), it.top.toInt(), it.right.toInt(), it.bottom.toInt()) }
             val opts = b?.let {

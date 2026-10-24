@@ -225,15 +225,35 @@ class LauncherActivity : ComponentActivity() {
     private val unstick = Runnable {
         val shown = lifecycle.currentState == androidx.lifecycle.Lifecycle.State.RESUMED && hasWindowFocus()
         trace("unstick check shown=$shown")
+        val now = android.os.SystemClock.uptimeMillis()
         if (shown) unstickAttempts = 0
-        else if (!isFinishing && unstickAttempts < 3 && android.os.SystemClock.uptimeMillis() - state.lastLaunchAt > 3000) {
-            unstickAttempts++
-            lastUnstickAt = android.os.SystemClock.uptimeMillis()
-            // Same as pressing Home once more, which is what the user has to do by hand.
-            runCatching { startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-            trace("unstick: sent Home again")
+        // Not stuck if the user did something since the Home swipes: touched this screen or started an app from it.
+        else if (!isFinishing && unstickAttempts < 3 && now - state.lastLaunchAt > 3000 && lastTouchAt < (homeIntentTimes.firstOrNull() ?: 0L)) {
+            // With Shizuku we can ask the system who is on top: only the empty recents screen counts as stuck, so an app the user
+            // opened by another route (recents, notification...) is never pulled away. Without it, the checks above have to do.
+            if (ShizukuBridge.hasPermission()) Thread {
+                val top = runCatching { ShizukuBridge.run("sh", "-c", "dumpsys activity activities | grep -m1 topResumedActivity") }.getOrDefault("")
+                runOnUiThread { if (top.contains("RecentsActivity")) sendHomeAgain() else trace("unstick skipped, top: ${top.trim().take(120)}") }
+            }.start() else sendHomeAgain()
         }
     }
+
+    private fun sendHomeAgain() {
+        unstickAttempts++
+        lastUnstickAt = android.os.SystemClock.uptimeMillis()
+        // Same as pressing Home once more, which is what the user has to do by hand.
+        runCatching { startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        trace("unstick: sent Home again")
+    }
+
+    private var lastTouchAt = 0L
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        lastTouchAt = android.os.SystemClock.uptimeMillis()
+        return super.dispatchTouchEvent(ev)
+    }
+
+    /** Called when the user starts an app from the launcher: whatever is on top then is not a stuck recents screen. */
+    fun cancelUnstick() { window.decorView.removeCallbacks(unstick) }
 
     /**
      * The system's gesture handler (OxygenOS' quickstep launcher animates every Home swipe for a third-party launcher) breaks
