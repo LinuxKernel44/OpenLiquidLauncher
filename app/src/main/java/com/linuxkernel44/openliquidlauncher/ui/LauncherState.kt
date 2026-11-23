@@ -453,12 +453,7 @@ class LauncherState(val activity: LauncherActivity, val app: LauncherApp) {
     fun removeFromHome(item: Item) { menu = null; removeItem(item) }
 
     // ---- launching ----
-    /** Uptime of the last app the user started from the launcher (see LauncherActivity.watchForStuckRecents). */
-    var lastLaunchAt = 0L
-
     fun launch(info: AppInfo, bounds: Rect?) {
-        lastLaunchAt = android.os.SystemClock.uptimeMillis()
-        activity.cancelUnstick()
         runCatching {
             val b = bounds?.let { AndroidRect(it.left.toInt(), it.top.toInt(), it.right.toInt(), it.bottom.toInt()) }
             val opts = b?.let {

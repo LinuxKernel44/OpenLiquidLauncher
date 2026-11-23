@@ -214,61 +214,7 @@ class LauncherActivity : ComponentActivity() {
         trace("onNewIntent ${intent.action}")
         if (intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_HOME)) {
             state.homeSignal++
-            watchForStuckRecents()
         }
-    }
-
-    // ---- OxygenOS: a second Home gesture during the ~0.6-0.9 s recents animation leaves its (empty) RecentsActivity on top ----
-    private val homeIntentTimes = ArrayList<Long>()
-    private var unstickAttempts = 0
-    private var lastUnstickAt = 0L
-    private val unstick = Runnable {
-        val shown = lifecycle.currentState == androidx.lifecycle.Lifecycle.State.RESUMED && hasWindowFocus()
-        trace("unstick check shown=$shown")
-        val now = android.os.SystemClock.uptimeMillis()
-        if (shown) unstickAttempts = 0
-        // Not stuck if the user did something since the Home swipes: touched this screen or started an app from it.
-        else if (!isFinishing && unstickAttempts < 3 && now - state.lastLaunchAt > 3000 && lastTouchAt < (homeIntentTimes.firstOrNull() ?: 0L)) {
-            // With Shizuku we can ask the system who is on top: only the empty recents screen counts as stuck, so an app the user
-            // opened by another route (recents, notification...) is never pulled away. Without it, the checks above have to do.
-            if (ShizukuBridge.hasPermission()) Thread {
-                val top = runCatching { ShizukuBridge.run("sh", "-c", "dumpsys activity activities | grep -m1 topResumedActivity") }.getOrDefault("")
-                runOnUiThread { if (top.contains("RecentsActivity")) sendHomeAgain() else trace("unstick skipped, top: ${top.trim().take(120)}") }
-            }.start() else sendHomeAgain()
-        }
-    }
-
-    private fun sendHomeAgain() {
-        unstickAttempts++
-        lastUnstickAt = android.os.SystemClock.uptimeMillis()
-        // Same as pressing Home once more, which is what the user has to do by hand.
-        runCatching { startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-        trace("unstick: sent Home again")
-    }
-
-    private var lastTouchAt = 0L
-    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
-        lastTouchAt = android.os.SystemClock.uptimeMillis()
-        return super.dispatchTouchEvent(ev)
-    }
-
-    /** Called when the user starts an app from the launcher: whatever is on top then is not a stuck recents screen. */
-    fun cancelUnstick() { window.decorView.removeCallbacks(unstick) }
-
-    /**
-     * The system's gesture handler (OxygenOS' quickstep launcher animates every Home swipe for a third-party launcher) breaks
-     * when a second Home swipe starts while the first animation still runs: it ends up on its own empty recents screen, which
-     * shows only the wallpaper, and our launcher is never brought back. That second swipe reaches us as a Home intent
-     * more than 300 ms after the first (the two intents of a single swipe come 50 ms apart). If, shortly after such a pair, we are
-     * still not the focused screen, send Home again ourselves.
-     */
-    private fun watchForStuckRecents() {
-        val now = android.os.SystemClock.uptimeMillis()
-        homeIntentTimes.removeAll { now - it > 3000 }
-        homeIntentTimes += now
-        window.decorView.removeCallbacks(unstick)
-        // Our own corrective Home is re-checked sooner: when the first one lands while we are still shown as resumed, it changes nothing.
-        if (now - homeIntentTimes.first() > 300) window.decorView.postDelayed(unstick, if (now - lastUnstickAt < 500) 1000L else 1800L)
     }
 
     fun refreshWallpaper() { lifecycleScope.launch { app.wallpaper.refresh() } }
